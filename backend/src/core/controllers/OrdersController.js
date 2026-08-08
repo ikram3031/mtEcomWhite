@@ -15,6 +15,8 @@ import {
 
 const { Types } = mongoose;
 
+import { sendOrderEmailsAsynchronously } from '../utils/orderDelivery.js';
+
 // Create a new order from checkout payload and sync related payment/member data.
 export const createOrder = async (req, res, next) => {
   try {
@@ -62,6 +64,9 @@ export const createOrder = async (req, res, next) => {
 
     await syncPaymentDocument(createdOrder);
     await syncMemberOrderSnapshot(orderData.member, createdOrder, payload);
+
+    // Safely trigger non-blocking email notifications for Customer and Admin
+    sendOrderEmailsAsynchronously(createdOrder);
 
     return res.status(201).json({
       status: 'success',
