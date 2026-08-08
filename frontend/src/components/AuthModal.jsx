@@ -113,31 +113,27 @@ export const AuthModal = () => {
     return emailRegex.test(trimmed) ? '' : 'Please enter a valid email address.';
   };
 
+  // Normalize raw suffix input → strips leading 0 → returns 10-digit suffix only
   const normalizePhoneValue = (value) => {
-    const raw = (value || '').toString().trim();
-    if (!raw) return '';
-
-    const digitsOnly = raw.replace(/[^\d+]/g, '');
-    if (digitsOnly.startsWith('+880')) return digitsOnly;
-    if (digitsOnly.startsWith('880')) return `+${digitsOnly}`;
-    if (digitsOnly.startsWith('01')) return `+880${digitsOnly.slice(1)}`;
-    if (/^1[3-9]\d{8}$/.test(digitsOnly)) return `+880${digitsOnly}`;
-    return digitsOnly;
+    const digits = (value || '').replace(/\D/g, '');
+    if (!digits) return '';
+    // Strip leading 0 so user can enter 01XXXXXXXXX or 1XXXXXXXXX
+    return digits.startsWith('0') ? digits.slice(1) : digits;
   };
 
-  const validatePhoneValue = (value) => {
-    const normalized = normalizePhoneValue(value);
-    if (!normalized) return 'Phone number is required.';
-    const phoneRegex = /^\+8801[3-9]\d{8}$/;
-    return phoneRegex.test(normalized)
+  // Validate the suffix (10 digits) by constructing the full +880 number
+  const validatePhoneValue = (suffix) => {
+    if (!suffix) return 'Phone number is required.';
+    const full = `+880${suffix}`;
+    return /^\+8801[3-9]\d{8}$/.test(full)
       ? ''
-      : 'Please enter a valid Bangladeshi number in format +8801[3-9]XXXXXXXX.';
+      : 'Enter a valid number: 1[3-9]XXXXXXXX (after +880)';
   };
 
   const handlePhoneChange = (value) => {
-    const normalized = normalizePhoneValue(value);
-    setPhone(normalized);
-    setPhoneError(validatePhoneValue(normalized));
+    const suffix = normalizePhoneValue(value);
+    setPhone(suffix); // store only the suffix, +880 prefix is fixed in UI
+    if (phoneError) setPhoneError(validatePhoneValue(suffix));
   };
 
   const handleOTPChange = (index, value) => {
@@ -343,7 +339,7 @@ export const AuthModal = () => {
       return;
     }
     if (phoneValidationError) {
-      addToast('Please enter a valid Bangladeshi phone number in format +8801[3-9]XXXXXXXX.', 'error');
+      addToast('Please enter a valid Bangladeshi phone number.', 'error');
       return;
     }
     if (password !== confirmPassword) {
@@ -357,11 +353,11 @@ export const AuthModal = () => {
 
     setIsLoading(true);
     try {
-      const normalizedPhone = normalizePhoneValue(phone);
+      // Combine fixed +880 prefix with the stored suffix to form a full BD number
       const memberPayload = {
         name: name.trim(),
         email: email.trim(),
-        phone: normalizedPhone,
+        phone: `+880${phone}`,
         password,
       };
 
@@ -797,19 +793,26 @@ export const AuthModal = () => {
                   <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold block">
                     Phone Number
                   </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-gold/60 absolute left-3.5 top-3.5" />
-                    <input
-                      type="tel"
-                      placeholder="+8801712345678"
-                      value={phone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      onBlur={(e) => setPhoneError(validatePhoneValue(e.target.value))}
-                      className={`w-full bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus:border-gold/60 rounded-sm py-3.5 pl-11 pr-4 text-xs font-sans text-white focus:outline-none transition-colors placeholder-zinc-500`}
-                      required
-                    />
-                    {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
+                  {/* Fixed +880 prefix block — ইউজার শুধু 1XXXXXXXXX বা 01XXXXXXXXX দেবে */}
+                  <div className={`flex items-stretch bg-zinc-800/80 border ${phoneError ? 'border-rose-500' : 'border-zinc-700/80'} focus-within:border-gold/60 rounded-sm transition-colors`}>
+                    <span className="flex items-center px-3 text-xs text-zinc-400 font-medium border-r border-zinc-700/80 select-none shrink-0">
+                      +880
+                    </span>
+                    <div className="relative flex-1">
+                      <Phone className="w-4 h-4 text-gold/60 absolute left-3 top-3.5" />
+                      <input
+                        type="tel"
+                        placeholder="1712345678"
+                        value={phone}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        onBlur={() => setPhoneError(validatePhoneValue(phone))}
+                        maxLength={11}
+                        className="w-full bg-transparent py-3.5 pl-9 pr-3 text-xs font-sans text-white focus:outline-none placeholder-zinc-500"
+                        required
+                      />
+                    </div>
                   </div>
+                  {phoneError && <p className="mt-1.5 text-[10px] text-rose-400">{phoneError}</p>}
                 </div>
               )}
 
