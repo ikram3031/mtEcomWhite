@@ -27,7 +27,7 @@ const mockReports = [
   { id: 'REP-2026-005', title: 'Out of Stock Products Audit', type: 'Inventory', generatedDate: '2026-07-10', size: '1.2 MB' },
 ];
 
-export default function ReportsPage() {
+const ReportsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
 
@@ -156,3 +156,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+export default ReportsPage;

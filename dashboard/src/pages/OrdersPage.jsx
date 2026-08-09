@@ -35,7 +35,7 @@ import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function OrdersPage() {
+const OrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [paymentFilter, setPaymentFilter] = useState('All');
@@ -357,3 +357,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+export default OrdersPage;

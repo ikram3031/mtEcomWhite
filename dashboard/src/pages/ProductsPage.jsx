@@ -33,7 +33,7 @@ import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function ProductsPage() {
+const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [brandFilter, setBrandFilter] = useState('All');
@@ -371,3 +371,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+export default ProductsPage;

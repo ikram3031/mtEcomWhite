@@ -32,7 +32,7 @@ import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function MembersPage() {
+const MembersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -281,3 +281,5 @@ export default function MembersPage() {
     </div>
   );
 }
+
+export default MembersPage;

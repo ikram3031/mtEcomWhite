@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -17,8 +18,10 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
+const LoginPage = () => {
   const { user, login, loginWithGoogle, isLoading: isAuthLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +30,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(location.search);
       const code = params.get('code');
       if (code) {
         setIsGoogleSigningIn(true);
@@ -39,17 +42,17 @@ export default function LoginPage() {
           .catch((err) => {
             handleGlobalError(err);
             setIsGoogleSigningIn(false);
-            window.location.href = '/login';
+            navigate('/login', { replace: true });
           });
       }
     }
-  }, [loginWithGoogle]);
+  }, [loginWithGoogle, location.search, navigate]);
 
   useEffect(() => {
     if (!isAuthLoading && user) {
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     }
-  }, [user, isAuthLoading]);
+  }, [user, isAuthLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -193,4 +196,6 @@ export default function LoginPage() {
       </motion.div>
     </div>
   );
-}
+};
+
+export default LoginPage;

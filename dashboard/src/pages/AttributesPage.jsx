@@ -32,7 +32,16 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
-export default function AttributesPage() {
+function sortAttributeValues(vals = []) {
+  if (!Array.isArray(vals)) return [];
+  return [...vals].sort((a, b) => {
+    const valA = typeof a === "string" ? a : (a?.name || a?.size || "");
+    const valB = typeof b === "string" ? b : (b?.name || b?.size || "");
+    return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: "base" });
+  });
+}
+
+const AttributesPage = () => {
   const [attributes, setAttributes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,7 +60,12 @@ export default function AttributesPage() {
     setIsLoading(true);
     try {
       const res = await apiClient.get('/api/v1/dashboard/attributes');
-      setAttributes(res.data?.data || []);
+      const raw = res.data?.data || [];
+      const sortedData = raw.map((attr) => ({
+        ...attr,
+        values: sortAttributeValues(attr.values || []),
+      }));
+      setAttributes(sortedData);
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to fetch attributes'));
     } finally {
@@ -88,7 +102,7 @@ export default function AttributesPage() {
     setName(attr.name);
     setSlug(attr.slug);
     setSlugManual(true);
-    setValues(attr.values || []);
+    setValues(sortAttributeValues(attr.values || []));
     setNewValueName('');
     setIsOpen(true);
   };
@@ -103,7 +117,7 @@ export default function AttributesPage() {
       return;
     }
 
-    setValues((prev) => [...prev, { name: trimmed, slug: valueSlug }]);
+    setValues((prev) => sortAttributeValues([...prev, { name: trimmed, slug: valueSlug }]));
     setNewValueName('');
   };
 
@@ -352,3 +366,5 @@ export default function AttributesPage() {
     </div>
   );
 }
+
+export default AttributesPage;

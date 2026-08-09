@@ -77,7 +77,7 @@ function getMethodBadge(method) {
   return <Badge className={`${cls} gap-1`} variant="outline">{method}</Badge>;
 }
 
-export default function PaymentsPage() {
+const PaymentsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [methodFilter, setMethodFilter] = useState('All');
@@ -519,3 +519,5 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
+export default PaymentsPage;

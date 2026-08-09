@@ -33,7 +33,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/error-handler';
 
-export default function UsersPage() {
+const UsersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -320,3 +320,5 @@ export default function UsersPage() {
     </div>
   );
 }
+
+export default UsersPage;

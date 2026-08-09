@@ -273,7 +273,7 @@ function ProductAddDialog({
   );
 }
 
-export default function NewInStoreOrderPage() {
+const NewInStoreOrderPage = () => {
   const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -1045,3 +1045,5 @@ export default function NewInStoreOrderPage() {
     </div>
   );
 }
+
+export default NewInStoreOrderPage;

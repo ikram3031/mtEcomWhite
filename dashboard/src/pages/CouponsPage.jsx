@@ -26,7 +26,7 @@ import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function CouponsPage() {
+const CouponsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -245,3 +245,5 @@ export default function CouponsPage() {
     </div>
   );
 }
+
+export default CouponsPage;

@@ -3,8 +3,8 @@ import { mapRemoteProduct } from "../store/productHelpers";
 // Centralized helper to get the sanitized API base URL from env
 export const getApiBaseUrl = () => {
 	const envUrl =
-		import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "https://server.decantrebd.com";
-	return envUrl ? envUrl.replace(/\/$/, "") : "https://server.decantrebd.com";
+		import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "";
+	return envUrl ? envUrl.replace(/\/$/, "") : "";
 };
 
 // Centralized helper to get the image base URL from env

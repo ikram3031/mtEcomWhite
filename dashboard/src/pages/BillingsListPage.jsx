@@ -52,7 +52,7 @@ function getStatusBadge(status) {
   }
 }
 
-export default function BillingsPage() {
+const BillingsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -310,3 +310,5 @@ export default function BillingsPage() {
     </div>
   );
 }
+
+export default BillingsPage;

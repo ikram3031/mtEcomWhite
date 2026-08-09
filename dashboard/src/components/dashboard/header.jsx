@@ -1,9 +1,16 @@
 import * as React from 'react';
+<<<<<<< HEAD:dashboard/src/components/dashboard/header.jsx
 import { Input } from '@/components/ui/input';
 import { Search, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { Moon, Sun } from 'lucide-react';
+=======
+import { Input } from '@/components/core/ui/input';
+import { Search, Bell, LogOut, Settings, HelpCircle } from 'lucide-react';
+import { Button } from '@/components/core/ui/button';
+import { ThemeToggle } from '@/components/core/ui/theme-toggle';
+>>>>>>> Decantre:dashboard/src/components/core/dashboard/header.jsx
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +23,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useDashboardStore } from '@/store/use-dashboard-store';
 import { useAuth } from '@/lib/auth-context';
 
-export function Header() {
-  const { setTheme } = useTheme();
+export const Header = () => {
   const { searchQuery, setSearchQuery } = useDashboardStore();
   const { user, logout } = useAuth();
 
   const userInitials = user?.name
-    ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    ? user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'AD';
 
   return (
@@ -40,23 +46,8 @@ export function Header() {
             />
           </div>
         </form>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span className="sr-only">Toggle theme</span>
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTheme('light')}>Light</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme('dark')}>Dark</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme('system')}>System</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
 
           <Button variant="outline" size="icon" className="relative">
             <Bell className="h-4 w-4" />
@@ -78,16 +69,24 @@ export function Header() {
                 </Button>
               }
             />
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="font-normal">
+            <DropdownMenuContent align="end" className="w-56 p-1.5">
+              <DropdownMenuLabel className="font-normal px-2 py-1.5">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name || 'Admin User'}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user?.email || 'admin@example.com'}</p>
+                  <p className="text-sm font-semibold leading-none">{user?.name || 'Admin User'}</p>
+                  <p className="text-xs leading-normal text-muted-foreground truncate" title={user?.email || ''}>
+                    {user?.email || 'admin@example.com'}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <HelpCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                Support
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="h-4 w-4 mr-2" />
@@ -99,4 +98,4 @@ export function Header() {
       </div>
     </header>
   );
-}
+};

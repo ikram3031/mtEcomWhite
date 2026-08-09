@@ -35,7 +35,7 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
-export default function BrandsPage() {
+const BrandsPage = () => {
   const { data: brands = [], isLoading } = useBrands();
   const queryClient = useQueryClient();
 
@@ -282,3 +282,5 @@ export default function BrandsPage() {
     </div>
   );
 }
+
+export default BrandsPage;

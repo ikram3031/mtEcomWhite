@@ -1,8 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+<<<<<<<< HEAD:dashboard/src/pages/NewProductPage.jsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
+========
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/core/ui/button";
+import { Input } from "@/components/core/ui/input";
+import { Switch } from "@/components/core/ui/switch";
+import { RichTextEditor } from "@/components/core/dashboard/rich-text-editor";
+>>>>>>>> Decantre:dashboard/src/pages/dashboard/products/newProduct.jsx
 import {
   Select,
   SelectContent,
@@ -15,6 +23,7 @@ import {
   UploadCloud,
   X,
   ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +34,8 @@ import {
 } from "@/lib/category-cache";
 import { getApiErrorMessage } from '@/lib/error-handler';
 
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB limit
+
 const emptyVariant = () => ({
   size: "",
   price: "",
@@ -33,6 +44,7 @@ const emptyVariant = () => ({
   imageUrl: "",
   imageFile: null,
   imagePreview: "",
+  imageError: "",
 });
 
 function slugify(text) {
@@ -47,7 +59,8 @@ function slugify(text) {
 
 const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
-export default function NewProductPage() {
+const NewProductPage = () => {
+  const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
 
   // Basic fields
@@ -61,6 +74,7 @@ export default function NewProductPage() {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [mainImageFile, setMainImageFile] = useState(null);
+  const [mainImageError, setMainImageError] = useState("");
   const fileInputRef = useRef(null);
 
   // Type toggle
@@ -82,7 +96,18 @@ export default function NewProductPage() {
     const fetchAttributes = async () => {
       try {
         const res = await apiClient.get("/api/v1/dashboard/attributes");
-        setAttributeGroups(res.data?.data || []);
+        const rawGroups = res.data?.data || [];
+        const sortedGroups = rawGroups.map((g) => ({
+          ...g,
+          values: Array.isArray(g.values)
+            ? [...g.values].sort((a, b) => {
+                const nameA = String(a.name || a.size || a || "");
+                const nameB = String(b.name || b.size || b || "");
+                return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
+              })
+            : [],
+        }));
+        setAttributeGroups(sortedGroups);
       } catch (err) {
         console.error("Failed to fetch attributes", err);
       }
@@ -93,6 +118,7 @@ export default function NewProductPage() {
   // Category & Brand
   const [categorySlug, setCategorySlug] = useState("");
   const [brandSlug, setBrandSlug] = useState("");
+  const [parentBrandSlug, setParentBrandSlug] = useState("");
 
   // Season
   const [season, setSeason] = useState("All-Season");
@@ -100,6 +126,32 @@ export default function NewProductPage() {
   const queryClient = useQueryClient();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
+
+  // Resolve top-level parent brands
+  const parentBrands = brands.filter((b) => !b.parent);
+
+  // Resolve child brands based on selected parent brand
+  const selectedParentObj = parentBrands.find(
+    (pb) =>
+      (pb.did && pb.did === parentBrandSlug) ||
+      (pb.slug && pb.slug.toLowerCase() === parentBrandSlug?.toLowerCase()) ||
+      (pb._id && String(pb._id) === parentBrandSlug)
+  );
+
+  const childBrands = selectedParentObj
+    ? brands.filter((b) => {
+        if (!b.parent) return false;
+        const parentVal = typeof b.parent === 'object'
+          ? (b.parent?.did || b.parent?.slug || b.parent?._id)
+          : String(b.parent);
+        return (
+          parentVal === selectedParentObj.did ||
+          parentVal === selectedParentObj.slug ||
+          parentVal === selectedParentObj._id ||
+          (selectedParentObj.id && parentVal === String(selectedParentObj.id))
+        );
+      })
+    : [];
 
   const handleNameChange = useCallback(
     (value) => {
@@ -164,6 +216,15 @@ export default function NewProductPage() {
     if (!files || files.length === 0) return;
 
     const file = files[0];
+    if (file.size > MAX_IMAGE_SIZE) {
+      setMainImageError("Maximum size exceeded. Please upload a different image.");
+      setImagePreview("");
+      setMainImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setMainImageError("");
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
     setMainImageFile(file);
@@ -174,6 +235,15 @@ export default function NewProductPage() {
     if (!files || files.length === 0) return;
 
     const file = files[0];
+    if (file.size > MAX_IMAGE_SIZE) {
+      updateVariant(index, "imageError", "Maximum size exceeded. Please upload a different image.");
+      updateVariant(index, "imageFile", null);
+      updateVariant(index, "imagePreview", "");
+      e.target.value = "";
+      return;
+    }
+
+    updateVariant(index, "imageError", "");
     const previewUrl = URL.createObjectURL(file);
     updateVariant(index, "imageFile", file);
     updateVariant(index, "imagePreview", previewUrl);
@@ -183,6 +253,7 @@ export default function NewProductPage() {
     setImagePreview("");
     setUploadedImageUrl("");
     setMainImageFile(null);
+    setMainImageError("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -213,16 +284,26 @@ export default function NewProductPage() {
       }
     }
 
+    // Image is required
+    if (!mainImageFile && !uploadedImageUrl) {
+      toast.error("Product image is required. Please upload an image before saving.");
+      return;
+    }
+
     setIsCreating(true);
     try {
-      let finalMainImageUrl = uploadedImageUrl;
+      let finalMainImageUrl = uploadedImageUrl || "";
+      let finalThumbnailUrl = "";
       if (mainImageFile) {
         const formData = new FormData();
         formData.append("image", mainImageFile);
         formData.append("type", "product");
         formData.append("productSlug", slug.trim());
-        const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData);
-        finalMainImageUrl = uploadRes.data?.data?.imageUrl || "";
+        const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        finalMainImageUrl = uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+        finalThumbnailUrl = uploadRes.data?.data?.thumbnailUrl || uploadRes.data?.thumbnailUrl || "";
       }
 
       const uploadedVariants = [];
@@ -240,7 +321,9 @@ export default function NewProductPage() {
           if (v.size.trim()) {
             formData.append("variantName", v.size.trim());
           }
-          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData);
+          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
           varImageUrl = uploadRes.data?.data?.imageUrl || "";
         }
 
@@ -259,7 +342,8 @@ export default function NewProductPage() {
         slug: slug.trim(),
         description: description.trim() || name.trim(),
         type: productType,
-        imageUrl: finalMainImageUrl || undefined,
+        imageUrl: finalMainImageUrl || "",
+        thumbnailUrl: finalThumbnailUrl || finalMainImageUrl || "",
         season,
         stockStatus,
       };
@@ -278,7 +362,7 @@ export default function NewProductPage() {
       await apiClient.post("/api/v1/products", body);
       toast.success("Product created successfully!");
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      window.location.href = "/dashboard/products";
+      navigate("/dashboard/products");
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to create product.'));
     } finally {
@@ -295,12 +379,12 @@ export default function NewProductPage() {
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between border-b pb-4">
         <div className="space-y-1">
-          <a
-            href="/dashboard/products"
+          <Link
+            to="/dashboard/products"
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to products
-          </a>
+          </Link>
           <h2 className="text-3xl font-bold tracking-tight text-foreground">
             Add New Product
           </h2>
@@ -495,7 +579,9 @@ export default function NewProductPage() {
                       >
                         <div className="flex flex-col items-center gap-1.5 self-center pb-0.5">
                           <span className="text-[10px] font-semibold text-muted-foreground">Image</span>
-                          <div className="relative w-9 h-9 border rounded flex items-center justify-center cursor-pointer overflow-hidden group hover:border-primary">
+                          <div className={`relative w-9 h-9 border rounded flex items-center justify-center cursor-pointer overflow-hidden group ${
+                            v.imageError ? "border-destructive bg-destructive/10 text-destructive" : "hover:border-primary"
+                          }`}>
                             {v.imagePreview ? (
                               <>
                                 <img src={v.imagePreview} alt="variant" className="w-full h-full object-cover" />
@@ -504,6 +590,7 @@ export default function NewProductPage() {
                                   onClick={() => {
                                     updateVariant(i, "imageFile", null);
                                     updateVariant(i, "imagePreview", "");
+                                    updateVariant(i, "imageError", "");
                                   }}
                                   className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
@@ -512,7 +599,7 @@ export default function NewProductPage() {
                               </>
                             ) : (
                               <label htmlFor={`variant-image-${i}`} className="cursor-pointer p-2 text-muted-foreground hover:text-primary flex items-center justify-center w-full h-full">
-                                <UploadCloud className="w-4 h-4" />
+                                <UploadCloud className={`w-4 h-4 ${v.imageError ? "text-destructive" : ""}`} />
                               </label>
                             )}
                             <input
@@ -523,6 +610,12 @@ export default function NewProductPage() {
                               onChange={(e) => handleVariantImageSelect(i, e)}
                             />
                           </div>
+                          {v.imageError && (
+                            <p className="text-[10px] font-semibold text-destructive col-span-full mt-1 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {v.imageError}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-1">
@@ -654,15 +747,25 @@ export default function NewProductPage() {
               {!imagePreview ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border/80 hover:border-primary/50 rounded-xl p-6 text-center cursor-pointer hover:bg-muted/10 transition-all flex flex-col items-center justify-center min-h-[160px]"
+                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
+                    mainImageError
+                      ? "border-destructive bg-destructive/5 text-destructive"
+                      : "border-border/80 hover:border-primary/50 hover:bg-muted/10"
+                  }`}
                 >
-                  <UploadCloud className="h-10 w-10 text-muted-foreground mb-2" />
-                  <span className="text-xs font-medium text-foreground block">
+                  <UploadCloud className={`h-10 w-10 mb-2 ${mainImageError ? "text-destructive" : "text-muted-foreground"}`} />
+                  <span className="text-xs font-medium block">
                     Upload Image
                   </span>
                   <span className="text-[10px] text-muted-foreground block mt-1">
-                    PNG, JPG, WEBP up to 10MB
+                    PNG, JPG, WEBP up to 2MB
                   </span>
+                  {mainImageError && (
+                    <p className="text-xs font-semibold text-destructive mt-2.5 flex items-center justify-center gap-1.5 animate-in fade-in">
+                      <AlertCircle className="h-4 w-4" />
+                      {mainImageError}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="relative rounded-xl border overflow-hidden bg-muted/10 group min-h-[160px] flex items-center justify-center">
@@ -731,28 +834,81 @@ export default function NewProductPage() {
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Brand
-              </label>
-              <Select
-                value={brandSlug || "__none__"}
-                onValueChange={(val) =>
-                  setBrandSlug(val === "__none__" || !val ? "" : val)
-                }
-              >
-                <SelectTrigger className="w-full cursor-pointer">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="__none__">None</SelectItem>
-                  {brands.map((b) => (
-                    <SelectItem key={b.did} value={b.slug}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Brand
+                  </label>
+                  {parentBrandSlug && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParentBrandSlug("");
+                        setBrandSlug("");
+                      }}
+                      className="text-[11px] text-destructive hover:underline flex items-center gap-1 cursor-pointer"
+                      title="Clear brand selection"
+                    >
+                      <X className="h-3 w-3" /> Clear
+                    </button>
+                  )}
+                </div>
+                <Select
+                  value={parentBrandSlug || "__none__"}
+                  onValueChange={(val) => {
+                    const newParent = val === "__none__" || !val ? "" : val;
+                    setParentBrandSlug(newParent);
+                    setBrandSlug("");
+                  }}
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="Select Brand (Niche, Designer...)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-md" side="bottom">
+                    <SelectItem value="__none__">None</SelectItem>
+                    {parentBrands.map((pb) => (
+                      <SelectItem key={pb.did || pb.slug} value={pb.slug || pb.did}>
+                        {pb.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {parentBrandSlug && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Sub Brand
+                  </label>
+                  <Select
+                    value={brandSlug || "__none__"}
+                    onValueChange={(val) =>
+                      setBrandSlug(val === "__none__" || !val ? "" : val)
+                    }
+                  >
+                    <SelectTrigger className="w-full cursor-pointer">
+                      <SelectValue placeholder="Select Sub Brand" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-md" side="bottom">
+                      <SelectItem value="__none__">None</SelectItem>
+                      {childBrands.length > 0
+                        ? childBrands.map((cb) => (
+                            <SelectItem key={cb.did || cb.slug} value={cb.slug || cb.did}>
+                              {cb.name}
+                            </SelectItem>
+                          ))
+                        : parentBrands
+                            .filter((pb) => pb.slug === parentBrandSlug || pb.did === parentBrandSlug)
+                            .map((pb) => (
+                              <SelectItem key={pb.did || pb.slug} value={pb.slug || pb.did}>
+                                {pb.name}
+                              </SelectItem>
+                            ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -799,3 +955,5 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+export default NewProductPage;

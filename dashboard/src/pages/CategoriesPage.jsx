@@ -42,7 +42,7 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
-export default function CategoriesPage() {
+const CategoriesPage = () => {
   const { data: categories = [], isLoading } = useCategories();
   const queryClient = useQueryClient();
 
@@ -310,3 +310,5 @@ export default function CategoriesPage() {
     </div>
   );
 }
+
+export default CategoriesPage;

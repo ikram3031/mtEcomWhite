@@ -28,6 +28,7 @@ services:
       - "${BACKEND_PORT:-5093}:5093"
     volumes:
       - /opt/staging/uploads:/app/uploads
+      - /opt/staging/uploads:/app/src/uploads
     depends_on:
       - mongodb
     networks:

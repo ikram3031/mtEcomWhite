@@ -1,11 +1,13 @@
-import DashboardLayout from '@/pages/DashboardLayout';
-import DashboardOverview from '@/pages/DashboardPage';
+import { RouterProvider } from 'react-router-dom';
+import { ReactQueryProvider } from '@/components/core/providers';
+import { router } from './router';
 
-export default function App() {
+const App = () => {
   return (
-    <DashboardLayout>
-      <DashboardOverview />
-    </DashboardLayout>
+    <ReactQueryProvider>
+      <RouterProvider router={router} />
+    </ReactQueryProvider>
   );
-}
+};
 
+export default App;

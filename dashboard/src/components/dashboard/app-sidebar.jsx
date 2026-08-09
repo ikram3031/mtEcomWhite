@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link, useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -34,7 +35,8 @@ import { DecantreLogo } from "@/components/DecantreLogo"
 import { useAuth } from "@/lib/auth-context"
 
 export function AppSidebar({ ...props }) {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/dashboard'
+  const location = useLocation()
+  const pathname = location.pathname
   const { user } = useAuth()
   const { state, setOpen } = useSidebar()
 
@@ -79,7 +81,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard"}
               tooltip="Overview"
-              render={<a href="/dashboard" />}
+              render={<Link to="/dashboard" />}
             >
               <LayoutDashboard className="h-4 w-4" />
               <span>Overview</span>
@@ -91,7 +93,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname.startsWith("/dashboard/orders")}
               tooltip="Orders"
-              render={<a href="/dashboard/orders" />}
+              render={<Link to="/dashboard/orders" />}
             >
               <ShoppingBag className="h-4 w-4" />
               <span>Orders</span>
@@ -100,7 +102,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/orders/new"}
-                  render={<a href="/dashboard/orders/new" />}
+                  render={<Link to="/dashboard/orders/new" />}
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span>New In-Store Order</span>
@@ -109,7 +111,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/orders"}
-                  render={<a href="/dashboard/orders" />}
+                  render={<Link to="/dashboard/orders" />}
                 >
                   <ListOrdered className="h-3.5 w-3.5" />
                   <span>Orders List</span>
@@ -123,7 +125,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname.startsWith("/dashboard/products")}
               tooltip="Products"
-              render={<a href="/dashboard/products" />}
+              render={<Link to="/dashboard/products" />}
             >
               <Package className="h-4 w-4" />
               <span>Products</span>
@@ -132,7 +134,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/new"}
-                  render={<a href="/dashboard/products/new" />}
+                  render={<Link to="/dashboard/products/new" />}
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span>Add Product</span>
@@ -141,7 +143,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products"}
-                  render={<a href="/dashboard/products" />}
+                  render={<Link to="/dashboard/products" />}
                 >
                   <ListOrdered className="h-3.5 w-3.5" />
                   <span>Product List</span>
@@ -150,7 +152,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/categories"}
-                  render={<a href="/dashboard/products/categories" />}
+                  render={<Link to="/dashboard/products/categories" />}
                 >
                   <Receipt className="h-3.5 w-3.5" />
                   <span>Categories</span>
@@ -159,7 +161,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/brands"}
-                  render={<a href="/dashboard/products/brands" />}
+                  render={<Link to="/dashboard/products/brands" />}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
                   <span>Brands</span>
@@ -168,7 +170,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/attributes"}
-                  render={<a href="/dashboard/products/attributes" />}
+                  render={<Link to="/dashboard/products/attributes" />}
                 >
                   <Sliders className="h-3.5 w-3.5" />
                   <span>Attributes</span>
@@ -177,7 +179,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/coupons"}
-                  render={<a href="/dashboard/products/coupons" />}
+                  render={<Link to="/dashboard/products/coupons" />}
                 >
                   <Ticket className="h-3.5 w-3.5" />
                   <span>Coupons</span>
@@ -191,7 +193,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/products/stock"}
               tooltip="Stock Management"
-              render={<a href="/dashboard/products/stock" />}
+              render={<Link to="/dashboard/products/stock" />}
             >
               <ListOrdered className="h-4 w-4" />
               <span>Stock Management</span>
@@ -203,7 +205,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/members"}
               tooltip="Members"
-              render={<a href="/dashboard/members" />}
+              render={<Link to="/dashboard/members" />}
             >
               <Users className="h-4 w-4" />
               <span>Members</span>
@@ -215,7 +217,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname.startsWith("/dashboard/billing")}
               tooltip="Billing & Payment"
-              render={<a href="/dashboard/billing" />}
+              render={<Link to="/dashboard/billing" />}
             >
               <CreditCard className="h-4 w-4" />
               <span>Billing & Payment</span>
@@ -224,7 +226,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/billing/billings"}
-                  render={<a href="/dashboard/billing/billings" />}
+                  render={<Link to="/dashboard/billing/billings" />}
                 >
                   <Receipt className="h-3.5 w-3.5" />
                   <span>Bills & Invoices</span>
@@ -233,7 +235,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/billing/payments"}
-                  render={<a href="/dashboard/billing/payments" />}
+                  render={<Link to="/dashboard/billing/payments" />}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
                   <span>Payments</span>
@@ -247,7 +249,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/reports"}
               tooltip="Reports"
-              render={<a href="/dashboard/reports" />}
+              render={<Link to="/dashboard/reports" />}
             >
               <BarChart3 className="h-4 w-4" />
               <span>Reports</span>
@@ -259,7 +261,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/users"}
               tooltip="System Users"
-              render={<a href="/dashboard/users" />}
+              render={<Link to="/dashboard/users" />}
             >
               <ShieldAlert className="h-4 w-4" />
               <span>System Users</span>

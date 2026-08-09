@@ -21,7 +21,7 @@ import { Search, Package, AlertTriangle, CheckCircle2, XCircle, TrendingDown } f
 import { useProducts } from '@/hooks/use-products';
 import { useCategories, useBrands } from '@/lib/category-cache';
 
-export default function StockManagementPage() {
+const StockManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [brandFilter, setBrandFilter] = useState('All');
@@ -260,3 +260,5 @@ export default function StockManagementPage() {
     </div>
   );
 }
+
+export default StockManagementPage;

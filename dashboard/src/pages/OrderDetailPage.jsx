@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
 import { useOrder } from "@/hooks/use-orders";
 import { useProducts } from "@/hooks/use-products";
 import { useCategories, useBrands } from "@/lib/category-cache";
@@ -8,6 +9,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+========
+import { useParams } from "react-router-dom";
+import { useOrder } from "@/hooks/core/use-orders";
+import { useAuth } from "@/lib/core/auth-context";
+import { useProducts } from "@/hooks/core/use-products";
+import { useCategories, useBrands } from "@/lib/core/category-cache";
+import { apiClient } from "@/lib/core/api-client";
+import { toast } from "sonner";
+
+import { Button } from "@/components/core/ui/button";
+import { Input } from "@/components/core/ui/input";
+import { Badge } from "@/components/core/ui/badge";
+>>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import {
   Select,
   SelectContent,
@@ -22,21 +36,18 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
 } from "@/components/ui/dialog";
+========
+} from "@/components/core/ui/dialog";
+
+>>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import {
-  Search,
-  Plus,
-  Minus,
-  Trash2,
-  ShoppingBag,
   ArrowLeft,
-  Package,
-  X,
-  Layers,
-  Tag,
-  Edit,
-  Eye,
   Calendar,
+  Eye,
+  Edit,
+  Package,
   User,
   Phone,
   Mail,
@@ -44,23 +55,43 @@ import {
   CreditCard,
   Truck,
   Check,
+  Plus,
+  Minus,
+  Trash2,
+  Layers,
+  ShoppingBag,
+  Search,
+  X,
+  Tag,
 } from "lucide-react";
 
+<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
 import { effectivePrice, formatBDT } from "@/utils/orderHelper";
+========
+import { effectivePrice, formatBDT } from "@/utils/core/orderHelper";
+import {
+  checkIsInStoreOrder,
+  getInitialPaymentMethod,
+  getInitialPaidAmount,
+  extractPaymentPhone,
+  calculatePendingAmount,
+  calculatePaymentStatus,
+  getPaymentBadge,
+  getFulfillmentBadge,
+  resolvePaymentOptions,
+  mapOrderItemsToCart,
+  buildUpdatePayload,
+} from "@/utils/core/orderDetailsHelper";
+>>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import { useQueryClient } from "@tanstack/react-query";
 
-function ProductAddDialog({
-  product,
-  onClose,
-  onAddToCart,
-}) {
+const ProductAddDialog = ({ product, onClose, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
   if (!product) return null;
 
   const isVariant = product.type === "variant" && (product?.variants?.length ?? 0) > 0;
-
   const simplePrice = effectivePrice(product.price, product.offerPrice ?? null);
   const variantPrice = selectedVariant
     ? effectivePrice(selectedVariant.price, selectedVariant.offerPrice ?? null)
@@ -68,26 +99,22 @@ function ProductAddDialog({
 
   const displayPrice = isVariant ? variantPrice : simplePrice;
   const lineTotal = displayPrice != null ? displayPrice * quantity : null;
-
   const canAdd = isVariant ? selectedVariant !== null : true;
 
   const handleAdd = () => {
     if (!canAdd || displayPrice === null) return;
-
-    const cartKey = isVariant
-      ? `${product.id}__${selectedVariant.size}`
-      : product.id;
+    const cartKey = isVariant ? `${product.id}__${selectedVariant.size}` : product.id;
 
     onAddToCart({
       id: cartKey,
-      name: isVariant
-        ? `${product.name} (${selectedVariant.size})`
-        : product.name,
+      name: isVariant ? `${product.name} (${selectedVariant.size})` : product.name,
       price: displayPrice,
       quantity,
       image: product.image,
       sku: isVariant ? selectedVariant.sku || product.sku : product.sku,
       size: isVariant ? selectedVariant.size : "",
+      concentration: product.concentration || "",
+      productDid: product.did || product.id || "",
     });
 
     setSelectedVariant(null);
@@ -96,32 +123,21 @@ function ProductAddDialog({
   };
 
   return (
-    <Dialog
-      open={product !== null}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
+    <Dialog open={product !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md" showCloseButton>
         <DialogHeader>
           <DialogTitle className="text-base font-semibold leading-snug pr-6">
             {product.name}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            {isVariant
-              ? "Select a size / variation to add to order"
-              : "Confirm quantity to add"}
+            {isVariant ? "Select a size / variation to add to order" : "Confirm quantity to add"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-start gap-3 -mt-1">
           <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border">
             {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Package className="h-6 w-6 text-muted-foreground/30" />
@@ -131,19 +147,8 @@ function ProductAddDialog({
           <div className="flex-1 min-w-0 pt-0.5">
             <p className="text-xs text-muted-foreground">{product.sku}</p>
             <div className="flex items-center gap-1.5 mt-1">
-              <Badge
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0 gap-1"
-              >
-                {isVariant ? (
-                  <>
-                    <Layers className="h-2.5 w-2.5" /> Variable
-                  </>
-                ) : (
-                  <>
-                    <Tag className="h-2.5 w-2.5" /> Simple
-                  </>
-                )}
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+                {isVariant ? <><Layers className="h-2.5 w-2.5" /> Variable</> : <><Tag className="h-2.5 w-2.5" /> Simple</>}
               </Badge>
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                 {product.category}
@@ -156,17 +161,11 @@ function ProductAddDialog({
           <div className="bg-muted/50 rounded-lg px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">{formatBDT(simplePrice)}</p>
-              {product.offerPrice != null &&
-                product.offerPrice < product.price && (
-                  <p className="text-xs text-muted-foreground line-through">
-                    {formatBDT(product.price)}
-                  </p>
-                )}
+              {product.offerPrice != null && product.offerPrice < product.price && (
+                <p className="text-xs text-muted-foreground line-through">{formatBDT(product.price)}</p>
+              )}
             </div>
-            <Badge
-              variant={(product.stock ?? 0) > 0 ? "secondary" : "destructive"}
-              className="text-xs"
-            >
+            <Badge variant={(product.stock ?? 0) > 0 ? "secondary" : "destructive"} className="text-xs">
               {(product.stock ?? 0) > 0 ? `${product.stock} in stock` : "Out of Stock"}
             </Badge>
           </div>
@@ -196,42 +195,20 @@ function ProductAddDialog({
                       }}
                       className={`
                         w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm transition-all
-                        ${
-                          isSelected
-                            ? "border-primary bg-primary/8 ring-1 ring-primary/30"
-                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"
-                        }
+                        ${isSelected ? "border-primary bg-primary/8 ring-1 ring-primary/30" : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"}
                       `}
                     >
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`
-                          h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                          ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
-                        `}
-                        >
-                          {isSelected && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                          )}
+                        <span className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
+                          {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                         </span>
                         <span className="font-medium">{v.size}</span>
-                        {hasNoStock && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] px-1 py-0"
-                          >
-                            Out of Stock (DB)
-                          </Badge>
-                        )}
+                        {hasNoStock && <Badge variant="secondary" className="text-[10px] px-1 py-0">Out of Stock (DB)</Badge>}
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-primary">
-                          {formatBDT(vPrice)}
-                        </p>
+                        <p className="font-semibold text-primary">{formatBDT(vPrice)}</p>
                         {v.offerPrice != null && v.offerPrice < v.price && (
-                          <p className="text-[10px] text-muted-foreground line-through">
-                            {formatBDT(v.price)}
-                          </p>
+                          <p className="text-[10px] text-muted-foreground line-through">{formatBDT(v.price)}</p>
                         )}
                       </div>
                     </button>
@@ -245,19 +222,11 @@ function ProductAddDialog({
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Quantity</p>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-              >
+              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
                 <Minus className="h-3 w-3" />
               </button>
-              <span className="w-8 text-center text-sm font-semibold">
-                {quantity}
-              </span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-              >
+              <span className="w-8 text-center text-sm font-semibold">{quantity}</span>
+              <button onClick={() => setQuantity((q) => q + 1)} className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
                 <Plus className="h-3 w-3" />
               </button>
             </div>
@@ -266,32 +235,28 @@ function ProductAddDialog({
           {lineTotal !== null && (
             <div className="flex items-center justify-between bg-primary/5 rounded-lg px-3 py-2">
               <p className="text-sm text-muted-foreground">Subtotal</p>
-              <p className="text-base font-bold text-primary">
-                {formatBDT(lineTotal)}
-              </p>
+              <p className="text-base font-bold text-primary">{formatBDT(lineTotal)}</p>
             </div>
           )}
         </div>
 
         <DialogFooter showCloseButton>
           <Button disabled={!canAdd} onClick={handleAdd} className="gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            Add to Order
+            <ShoppingBag className="h-4 w-4" /> Add to Cart
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export default function OrderDetailsPage({ params }) {
+const OrderDetailsPage = () => {
+  const { id } = useParams();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
-  const id = params?.id || typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const startInEditMode = searchParams.get("edit") === "true";
 
+  const { user } = useAuth();
   const { data: order, isLoading: orderLoading, isError: orderError } = useOrder(id);
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -307,11 +272,13 @@ export default function OrderDetailsPage({ params }) {
   const [customerZip, setCustomerZip] = useState("1000");
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [orderStatus, setorderStatus] = useState("Pending");
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [paymentPhone, setPaymentPhone] = useState("");
 
-  const [cart, setCart] = useState([]);
+  const [orderStatus, setOrderStatus] = useState("Processing");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingFee, setShippingFee] = useState(0);
+  const [cart, setCart] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -325,14 +292,14 @@ export default function OrderDetailsPage({ params }) {
     category: categoryFilter !== "All" ? categoryFilter : undefined,
     brand: brandFilter !== "All" ? brandFilter : undefined,
   });
-  const products = Array.isArray(productsResponse?.data)
-    ? productsResponse.data
-    : [];
+  const products = Array.isArray(productsResponse?.data) ? productsResponse.data : [];
+
+  const isInStoreOrder = useMemo(() => checkIsInStoreOrder(order), [order]);
 
   useEffect(() => {
     if (order) {
       setCustomerName(order.customer?.fullName || order.customerName || "");
-      setCustomerPhone((order.customer?.phone || "").replace(/^\+880/, ""));
+      setCustomerPhone((order.customer?.phone || "").replace(/^\+880?/, ""));
       setCustomerEmail(order.customer?.email || "");
       setCustomerAddress(order.customer?.address || "");
       setCustomerCity(order.customer?.city || "Dhaka");
@@ -340,31 +307,29 @@ export default function OrderDetailsPage({ params }) {
       setCustomerDistrict(order.customer?.district || "Dhaka");
       setCustomerZip(order.customer?.zip || "1000");
 
-      setPaymentMethod(order.paymentMethod || "cash");
-      setorderStatus(order.orderStatus || "Pending");
+      const initMethod = getInitialPaymentMethod(order, isInStoreOrder);
+      setPaymentMethod(initMethod);
+
+      const statusMap = {
+        shipped: "Shipped",
+        completed: "Completed",
+        cancelled: "Cancelled",
+        processing: "Processing",
+      };
+      const curStatus = String(order.status || order.orderStatus || "").toLowerCase();
+      setOrderStatus(statusMap[curStatus] || "Processing");
 
       setDiscountAmount(order.discountTotalAmount || 0);
       setShippingFee(order.totals?.shippingFee ?? order.shippingTotalAmount ?? 0);
-
-      const cartItems = (order.items || []).map((item, idx) => {
-        const idKey = item.size ? `${idx}__${item.size}` : `${idx}`;
-        return {
-          id: idKey,
-          name: item.name,
-          price: item.unitPrice ?? item.price ?? 0,
-          quantity: item.quantity,
-          image: "",
-          sku: "",
-          size: item.size || "",
-        };
-      });
-      setCart(cartItems);
+      setPaidAmount(getInitialPaidAmount(order, initMethod));
+      setPaymentPhone(extractPaymentPhone(order));
+      setCart(mapOrderItemsToCart(order.items));
 
       if (startInEditMode) {
         setIsEditMode(true);
       }
     }
-  }, [order, startInEditMode]);
+  }, [order, startInEditMode, isInStoreOrder]);
 
   const addToCart = useCallback((item) => {
     setCart((prev) => {
@@ -403,14 +368,25 @@ export default function OrderDetailsPage({ params }) {
     [subtotal, shippingFee, discountAmount],
   );
 
-  const getBackendStatus = (fullStatus) => {
-    const s = fullStatus.toLowerCase();
-    if (s === "processing") return "processing";
-    if (s === "shipped") return "shipped";
-    if (s === "cancelled") return "cancelled";
-    if (s === "completed") return "completed";
-    return "received";
-  };
+  const calculatedPendingAmount = useMemo(
+    () => calculatePendingAmount(total, paidAmount),
+    [total, paidAmount],
+  );
+
+  const calculatedPaymentStatus = useMemo(
+    () => calculatePaymentStatus(total, paidAmount),
+    [paidAmount, total],
+  );
+
+  const isDigitalPayment = useMemo(() => {
+    const m = paymentMethod.toLowerCase();
+    return m === "bkash" || m === "nagad" || m === "rocket" || m === "bank";
+  }, [paymentMethod]);
+
+  const paymentOptions = useMemo(
+    () => resolvePaymentOptions(isInStoreOrder),
+    [isInStoreOrder],
+  );
 
   const handleSave = async () => {
     if (cart.length === 0) {
@@ -421,93 +397,46 @@ export default function OrderDetailsPage({ params }) {
       toast.error("Customer Name is required.");
       return;
     }
-    if (customerPhone.trim().length !== 10) {
-      toast.error("Please enter a valid 10-digit Phone Number.");
+    if (customerPhone.replace(/\D/g, "").length < 9) {
+      toast.error("Please enter a valid Phone Number.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const orderPayload = {
-        status: getBackendStatus(orderStatus),
-        paymentMethod: paymentMethod,
-        customer: {
-          fullName: customerName.trim(),
-          phone: `+880${customerPhone.trim()}`,
-          email: customerEmail.trim() || "instore@decantre.com",
-          address: customerAddress.trim() || "In-Store",
-          city: customerCity,
-          thana: customerThana,
-          district: customerDistrict,
-          zip: customerZip,
-          giftWrap: false,
-        },
-        items: cart.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          size: item.size,
-          concentration: "",
-          productDid: "",
-        })),
-        totals: {
-          subtotal,
-          shippingFee,
-          tax: 0,
-          total,
-        },
-        discountTotalAmount: discountAmount,
-        shippingTotalAmount: shippingFee,
-        updatedBy: user?.did || "staff",
-      };
+      const orderPayload = buildUpdatePayload({
+        orderStatus,
+        paymentMethod,
+        paidAmount,
+        paymentPhone,
+        isDigitalPayment,
+        customerName,
+        customerPhone,
+        customerEmail,
+        customerAddress,
+        customerCity,
+        customerThana,
+        customerDistrict,
+        customerZip,
+        isInStoreOrder,
+        cart,
+        subtotal,
+        shippingFee,
+        discountAmount,
+        total,
+        user,
+      });
 
       await apiClient.put(`/api/v1/orders/${id}`, orderPayload);
-
-      toast.success("Order updated successfully!");
+      toast.success("Order updated successfully");
+      queryClient.invalidateQueries(["order", id]);
+      queryClient.invalidateQueries(["orders"]);
       setIsEditMode(false);
-      queryClient.invalidateQueries({ queryKey: ["order", id] });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (err) {
       console.error(err);
       toast.error("Failed to update order.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const getPaymentBadge = (status) => {
-    switch (status) {
-      case 'Paid':
-      case 'paid':
-        return <Badge className="bg-emerald-500 hover:bg-emerald-600 px-3 py-1 text-xs">Paid</Badge>;
-      case 'Pending':
-      case 'pending':
-        return <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 dark:text-amber-400 px-3 py-1 text-xs">Pending</Badge>;
-      case 'Failed':
-      case 'failed':
-        return <Badge variant="destructive" className="px-3 py-1 text-xs">Failed</Badge>;
-      default:
-        return <Badge variant="outline" className="px-3 py-1 text-xs">{status}</Badge>;
-    }
-  };
-
-  const getFulfillmentBadge = (status) => {
-    switch (status) {
-      case 'Shipped':
-      case 'shipped':
-        return <Badge className="bg-emerald-500 hover:bg-emerald-600 px-3 py-1 text-xs">Shipped</Badge>;
-      case 'Processing':
-      case 'processing':
-        return <Badge variant="secondary" className="bg-blue-500/20 text-blue-600 hover:bg-blue-500/30 dark:text-blue-400 px-3 py-1 text-xs">Processing</Badge>;
-      case 'Cancelled':
-      case 'cancelled':
-        return <Badge variant="destructive" className="px-3 py-1 text-xs">Cancelled</Badge>;
-      case 'Pending':
-      case 'pending':
-      case 'received':
-        return <Badge variant="outline" className="px-3 py-1 text-xs">Pending</Badge>;
-      default:
-        return <Badge variant="outline" className="px-3 py-1 text-xs">{status}</Badge>;
     }
   };
 
@@ -535,6 +464,10 @@ export default function OrderDetailsPage({ params }) {
     );
   }
 
+  const effectiveTotal = order.totals?.total ?? order.totalAmount ?? 0;
+  const effectivePaid = order.paymentDetails?.paidAmount ?? order.paidAmount ?? (order.paymentStatus === "Paid" ? effectiveTotal : 0);
+  const effectivePending = calculatePendingAmount(effectiveTotal, effectivePaid);
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b pb-6">
@@ -553,8 +486,8 @@ export default function OrderDetailsPage({ params }) {
                 Order {order.orderNumber}
               </h2>
               <div className="flex gap-1.5">
-                {getFulfillmentBadge(order.orderStatus || order.status || "")}
-                {getPaymentBadge(order.paymentStatus || (order.status === "completed" ? "Paid" : "Pending"))}
+                {getFulfillmentBadge(order.status || order.orderStatus || "")}
+                {getPaymentBadge(order.paymentStatus || (effectivePending === 0 && effectiveTotal > 0 ? "Paid" : effectivePaid > 0 ? "Partial" : "Pending"))}
               </div>
             </div>
             <p className="text-muted-foreground text-xs mt-1 flex items-center gap-1.5">
@@ -597,8 +530,7 @@ export default function OrderDetailsPage({ params }) {
             <div className="bg-card border border-border/80 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-border/60 bg-muted/20">
                 <h3 className="font-semibold text-base flex items-center gap-2">
-                  <Package className="h-4 w-4 text-primary" />
-                  Order Items
+                  <Package className="h-4 w-4 text-primary" /> Order Items
                 </h3>
               </div>
               <div className="overflow-x-auto">
@@ -649,7 +581,7 @@ export default function OrderDetailsPage({ params }) {
 
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
               <h3 className="font-semibold text-base border-b pb-3">Payment Summary</h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span className="font-medium text-foreground">{formatBDT(order.totals?.subtotal ?? 0)}</span>
@@ -666,7 +598,18 @@ export default function OrderDetailsPage({ params }) {
                 ) : null}
                 <div className="flex justify-between text-base font-bold pt-3 border-t border-border/85">
                   <span>Total Amount</span>
-                  <span className="text-primary">{formatBDT(order.totals?.total ?? order.totalAmount ?? 0)}</span>
+                  <span className="text-primary">{formatBDT(effectiveTotal)}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-sm pt-2">
+                  <span className="text-muted-foreground font-medium">Paid Amount</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatBDT(effectivePaid)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground font-medium">Remaining Pending</span>
+                  <span className={`font-bold ${effectivePending > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600"}`}>
+                    {formatBDT(effectivePending)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -675,8 +618,7 @@ export default function OrderDetailsPage({ params }) {
           <div className="space-y-6">
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
-                <User className="h-4 w-4 text-primary" />
-                Customer Info
+                <User className="h-4 w-4 text-primary" /> Customer Info
               </h3>
               <div className="space-y-3.5 text-sm">
                 <div className="flex items-start gap-2.5">
@@ -717,8 +659,7 @@ export default function OrderDetailsPage({ params }) {
 
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
-                <CreditCard className="h-4 w-4 text-primary" />
-                Method Details
+                <CreditCard className="h-4 w-4 text-primary" /> Method Details
               </h3>
               <div className="space-y-3.5 text-sm">
                 <div>
@@ -728,11 +669,20 @@ export default function OrderDetailsPage({ params }) {
                     {order.paymentMethod || "N/A"}
                   </span>
                 </div>
+                {(paymentPhone || (order.paymentMethod || "").includes("+880")) && (
+                  <div>
+                    <span className="text-xs text-muted-foreground block">Payment Account / Phone</span>
+                    <span className="font-semibold text-primary flex items-center gap-1.5 mt-0.5">
+                      <Phone className="h-4 w-4 text-primary" />
+                      {paymentPhone ? `+880${paymentPhone}` : (order.paymentMethod.match(/\+880?\d+/)?.[0] || "N/A")}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <span className="text-xs text-muted-foreground block">Shipping Type</span>
                   <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
                     <Truck className="h-4 w-4 text-primary" />
-                    {(order.totals?.shippingFee ?? order.shippingTotalAmount) === 0 ? "Free Shipping" : "Flat Rate Delivery"}
+                    {(order.totals?.shippingFee ?? order.shippingTotalAmount) === 0 ? "Free Shipping / In-Store" : "Flat Rate Delivery"}
                   </span>
                 </div>
               </div>
@@ -744,71 +694,33 @@ export default function OrderDetailsPage({ params }) {
           <div className="lg:col-span-3 space-y-4 animate-in fade-in duration-300">
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Product Catalogue
+                <Package className="h-5 w-5 text-primary" /> Product Catalogue
               </h3>
 
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <Select
-                  value={categoryFilter}
-                  onValueChange={(v) => setCategoryFilter(v ?? "All")}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Categories</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.did} value={cat.slug || cat.did}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={brandFilter}
-                  onValueChange={(v) => setBrandFilter(v ?? "All")}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Brand" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Brands</SelectItem>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.did} value={brand.slug || brand.did}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search products by name or SKU..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button
-                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products..."
+                    className="pl-8 h-9 text-xs"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {productsLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-24 rounded-lg bg-muted animate-pulse"
-                    />
+                    <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
                   ))}
                 </div>
               ) : products.length === 0 ? (
@@ -819,9 +731,7 @@ export default function OrderDetailsPage({ params }) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1">
                   {products.map((product) => {
-                    const inCart = cart.filter((c) =>
-                      c.name === product.name
-                    );
+                    const inCart = cart.filter((c) => c.name === product.name);
                     const cartQty = inCart.reduce((s, c) => s + c.quantity, 0);
                     const isOutOfStock = product.status === "Out of Stock";
                     const isVariant = product.type === "variant";
@@ -844,11 +754,7 @@ export default function OrderDetailsPage({ params }) {
                       >
                         <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative border border-border/60">
                           {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Package className="h-6 w-6 text-muted-foreground/30" />
@@ -860,22 +766,14 @@ export default function OrderDetailsPage({ params }) {
                           <p className="font-medium text-xs md:text-sm leading-tight truncate">
                             {product.name}
                           </p>
-                          <p className="text-[10px] text-muted-foreground truncate">
-                            {product.sku}
-                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">{product.sku}</p>
                           <div className="flex items-center gap-1 mt-1">
                             <span className="text-xs md:text-sm font-semibold text-primary">
-                              {isVariant
-                                ? `from ${formatBDT(displayPrice)}`
-                                : formatBDT(displayPrice)}
+                              {isVariant ? `from ${formatBDT(displayPrice)}` : formatBDT(displayPrice)}
                             </span>
                             {isVariant && (
-                              <Badge
-                                variant="secondary"
-                                className="text-[8px] px-1 py-0 gap-0.5 scale-90 origin-left"
-                              >
-                                <Layers className="h-2 w-2" />{" "}
-                                {product.variants?.length ?? 0} sizes
+                              <Badge variant="secondary" className="text-[8px] px-1 py-0 gap-0.5 scale-90 origin-left">
+                                <Layers className="h-2 w-2" /> {product.variants?.length ?? 0} sizes
                               </Badge>
                             )}
                           </div>
@@ -883,22 +781,14 @@ export default function OrderDetailsPage({ params }) {
 
                         <div className="flex flex-col items-center gap-1">
                           {cartQty > 0 && (
-                            <span className="text-[9px] font-semibold text-primary">
-                              ×{cartQty}
-                            </span>
+                            <span className="text-[9px] font-semibold text-primary">×{cartQty}</span>
                           )}
                           <button
                             disabled={isOutOfStock}
-                            onClick={() =>
-                              !isOutOfStock && setDialogProduct(product)
-                            }
+                            onClick={() => !isOutOfStock && setDialogProduct(product)}
                             className={`
                               h-7 w-7 rounded-lg flex items-center justify-center transition-all
-                              ${
-                                isOutOfStock
-                                  ? "bg-muted cursor-not-allowed text-muted-foreground"
-                                  : "bg-primary text-primary-foreground hover:bg-primary/80 active:scale-95 shadow-sm"
-                              }
+                              ${isOutOfStock ? "bg-muted cursor-not-allowed text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/80 active:scale-95 shadow-sm"}
                             `}
                           >
                             <Plus className="h-3.5 w-3.5" />
@@ -914,54 +804,37 @@ export default function OrderDetailsPage({ params }) {
 
           <div className="lg:col-span-2 space-y-4 animate-in fade-in duration-300">
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
-              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">
-                Customer Details
-              </h3>
+              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">Customer Details</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="col-span-2">
                   <label className="text-xs text-muted-foreground mb-0.5 block">Customer Name</label>
-                  <Input
-                    placeholder="Customer Name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
+                  <Input placeholder="Customer Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-0.5 block">Phone Number</label>
                   <div className="flex items-center h-9 w-full rounded-lg border border-input bg-transparent overflow-hidden">
-                    <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">
-                      +880
-                    </span>
+                    <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
                     <input
                       type="text"
                       className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
                       placeholder="1XXXXXXXXX"
-                      maxLength={10}
+                      maxLength={11}
                       value={customerPhone}
                       onChange={(e) => {
-                        const val = e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 10);
-                        setCustomerPhone(val);
+                        let val = e.target.value.replace(/\D/g, "");
+                        if (val.startsWith("0")) val = val.slice(1);
+                        setCustomerPhone(val.slice(0, 10));
                       }}
                     />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-0.5 block">Email</label>
-                  <Input
-                    placeholder="email@example.com"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                  />
+                  <Input placeholder="email@example.com" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs text-muted-foreground mb-0.5 block">Address</label>
-                  <Input
-                    placeholder="Street address details"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                  />
+                  <Input placeholder="Street address details" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -985,15 +858,10 @@ export default function OrderDetailsPage({ params }) {
               ) : (
                 <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 border-b pb-4">
                   {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-2 py-2 border-b border-border/50 last:border-0"
-                    >
+                    <div key={item.id} className="flex items-center gap-2 py-2 border-b border-border/50 last:border-0">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1 flex-wrap">
-                          <p className="text-[11px] font-semibold text-foreground truncate max-w-[160px]">
-                            {item.name}
-                          </p>
+                          <p className="text-[11px] font-semibold text-foreground truncate max-w-[160px]">{item.name}</p>
                           {item.size ? (
                             <Badge variant="outline" className="text-[8px] border-primary/20 text-primary py-0 px-1 h-3.5 flex items-center font-medium">
                               {item.size}
@@ -1001,32 +869,18 @@ export default function OrderDetailsPage({ params }) {
                           ) : null}
                         </div>
                         <p className="text-[9px] text-muted-foreground mt-0.5">
-                          {formatBDT(item.price)} × {item.quantity} ={" "}
-                          <span className="font-semibold text-foreground">
-                            {formatBDT(item.price * item.quantity)}
-                          </span>
+                          {formatBDT(item.price)} × {item.quantity} = <span className="font-semibold text-foreground">{formatBDT(item.price * item.quantity)}</span>
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => updateQty(item.id, -1)}
-                          className="h-5 w-5 rounded border flex items-center justify-center hover:bg-muted transition-colors"
-                        >
+                        <button onClick={() => updateQty(item.id, -1)} className="h-5 w-5 rounded border flex items-center justify-center hover:bg-muted transition-colors">
                           <Minus className="h-2 w-2" />
                         </button>
-                        <span className="w-4 text-center text-[10px] font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQty(item.id, 1)}
-                          className="h-5 w-5 rounded border flex items-center justify-center hover:bg-muted transition-colors"
-                        >
+                        <span className="w-4 text-center text-[10px] font-semibold">{item.quantity}</span>
+                        <button onClick={() => updateQty(item.id, 1)} className="h-5 w-5 rounded border flex items-center justify-center hover:bg-muted transition-colors">
                           <Plus className="h-2 w-2" />
                         </button>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="h-5 w-5 rounded flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors ml-0.5"
-                        >
+                        <button onClick={() => removeFromCart(item.id)} className="h-5 w-5 rounded flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors ml-0.5">
                           <Trash2 className="h-2.5 w-2.5" />
                         </button>
                       </div>
@@ -1044,25 +898,13 @@ export default function OrderDetailsPage({ params }) {
                   <div className="grid grid-cols-2 items-center gap-2">
                     <span className="text-muted-foreground">Shipping Fee</span>
                     <div className="flex justify-end">
-                      <Input
-                        type="number"
-                        className="w-24 text-right h-7 px-2 text-xs"
-                        value={shippingFee}
-                        min={0}
-                        onChange={(e) => setShippingFee(Number(e.target.value || 0))}
-                      />
+                      <Input type="number" className="w-24 text-right h-7 px-2 text-xs" value={shippingFee} min={0} onChange={(e) => setShippingFee(Number(e.target.value || 0))} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 items-center gap-2">
                     <span className="text-muted-foreground">Discount</span>
                     <div className="flex justify-end">
-                      <Input
-                        type="number"
-                        className="w-24 text-right h-7 px-2 text-xs"
-                        value={discountAmount}
-                        min={0}
-                        onChange={(e) => setDiscountAmount(Number(e.target.value || 0))}
-                      />
+                      <Input type="number" className="w-24 text-right h-7 px-2 text-xs" value={discountAmount} min={0} onChange={(e) => setDiscountAmount(Number(e.target.value || 0))} />
                     </div>
                   </div>
                   <div className="flex justify-between text-sm md:text-base font-bold mt-2 pt-2 border-t border-border">
@@ -1073,38 +915,89 @@ export default function OrderDetailsPage({ params }) {
               )}
             </div>
 
-            <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
-              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">
-                Order Status Update
-              </h3>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">Order & Payment Update</h3>
+              <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <label className="text-muted-foreground mb-1 block">Fulfillment Status</label>
-                  <Select value={orderStatus} onValueChange={(val) => setorderStatus(val ?? "Pending")}>
+                  <Select value={orderStatus} onValueChange={(val) => setOrderStatus(val ?? "Processing")}>
                     <SelectTrigger className="w-full h-8">
-                      <SelectValue placeholder="Select Fulfillment" />
+                      <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Processing">Processing</SelectItem>
                       <SelectItem value="Shipped">Shipped</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
                       <SelectItem value="Cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <label className="text-muted-foreground mb-1 block">Payment Method</label>
-                  <Select value={paymentMethod} onValueChange={(val) => setPaymentMethod(val ?? "cash")}>
+                  <Select value={paymentMethod} onValueChange={(val) => setPaymentMethod(val ?? (isInStoreOrder ? "cash" : "cod"))}>
                     <SelectTrigger className="w-full h-8">
                       <SelectValue placeholder="Select Payment Method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="bkash">bKash</SelectItem>
-                      <SelectItem value="nagad">Nagad</SelectItem>
+                      {paymentOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {isDigitalPayment && (
+                  <div className="col-span-2">
+                    <label className="text-muted-foreground mb-1 block">Payment Phone / Account No.</label>
+                    <div className="flex items-center h-8 w-full rounded-lg border border-input bg-transparent overflow-hidden">
+                      <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
+                      <input
+                        type="text"
+                        className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
+                        placeholder="1XXXXXXXXX"
+                        maxLength={11}
+                        value={paymentPhone}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, "");
+                          if (val.startsWith("0")) val = val.slice(1);
+                          setPaymentPhone(val.slice(0, 10));
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="col-span-2 space-y-2 pt-2 border-t border-border">
+                  <div className="grid grid-cols-2 items-center gap-2">
+                    <label className="text-xs font-semibold text-foreground">Paid Amount (৳)</label>
+                    <Input
+                      type="number"
+                      className="h-8 text-right font-medium text-xs"
+                      min={0}
+                      max={total}
+                      value={paidAmount}
+                      onChange={(e) => setPaidAmount(Number(e.target.value || 0))}
+                    />
+                  </div>
+
+                  <div className="bg-muted/40 rounded-lg p-2.5 space-y-1.5 border border-border/60">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Paid Amount:</span>
+                      <span className="font-semibold text-emerald-600">{formatBDT(paidAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Remaining Pending:</span>
+                      <span className={`font-bold ${calculatedPendingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                        {formatBDT(calculatedPendingAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
+                      <span className="text-muted-foreground">Payment Status:</span>
+                      {getPaymentBadge(calculatedPaymentStatus)}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1112,11 +1005,9 @@ export default function OrderDetailsPage({ params }) {
         </div>
       )}
 
-      <ProductAddDialog
-        product={dialogProduct}
-        onClose={() => setDialogProduct(null)}
-        onAddToCart={addToCart}
-      />
+      <ProductAddDialog product={dialogProduct} onClose={() => setDialogProduct(null)} onAddToCart={addToCart} />
     </div>
   );
-}
+};
+
+export default OrderDetailsPage;
