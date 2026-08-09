@@ -51,8 +51,29 @@ export async function createApp() {
 
   app.use((req, res, next) => {
     const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
-    const now = new Date().toISOString();
-    console.log(`🌐 [${now}] [IP: ${clientIp}] ${req.method} ${req.originalUrl}`);
+    const now = new Date().toLocaleTimeString("en-US", { hour12: false });
+    
+    // ANSI color definitions for terminal formatting
+    const colors = {
+      reset: "\x1b[0m",
+      gray: "\x1b[90m",
+      cyan: "\x1b[36m",
+      boldWhite: "\x1b[1m\x1b[37m",
+      GET: "\x1b[32mGET\x1b[0m",
+      POST: "\x1b[33mPOST\x1b[0m",
+      PUT: "\x1b[34mPUT\x1b[0m",
+      PATCH: "\x1b[35mPATCH\x1b[0m",
+      DELETE: "\x1b[31mDELETE\x1b[0m",
+    };
+
+    const methodColor = colors[req.method] || req.method;
+    
+    console.log(
+      `${colors.gray}[${now}]${colors.reset} ` +
+      `${colors.cyan}[IP: ${clientIp}]${colors.reset} ` +
+      `🌐 ${methodColor} ` +
+      `${colors.boldWhite}${req.originalUrl}${colors.reset}`
+    );
     next();
   });
 
