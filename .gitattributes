@@ -1,0 +1,6 @@
+# Keep branch-specific docker compose and server configs intact during git merges
+docker-compose.dev.yml merge=ours
+docker-compose.prod.yml merge=ours
+nginx.conf merge=ours
+nginx-prod.conf merge=ours
+nginx-prod-secure.conf merge=ours
