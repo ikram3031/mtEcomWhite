@@ -70,7 +70,7 @@ export const buildOrderInvoiceEmailHtml = ({
         ×${item.quantity}
       </td>
       <td style="padding: 12px 15px; font-size: 13px; color: #C5A059; font-weight: 600; text-align: right; vertical-align: middle; font-family: 'Geist Mono';">
-        ৳ ${item.subtotal ? item.subtotal.toFixed(2) : (item.price * item.quantity).toFixed(2)}
+        ৳ ${(item.subtotal || (item.price * item.quantity) || 0).toFixed(2)}
       </td>
     </tr>
   `).join('');

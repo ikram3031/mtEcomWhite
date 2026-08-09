@@ -54,18 +54,20 @@ export function sendOrderEmailsAsynchronously(order) {
         const quantity = Number(item.quantity || 1);
         const price = Number(item.price ?? item.unitPrice ?? 0);
         const subtotal = Number(item.subtotal ?? item.total ?? (price * quantity) ?? 0);
+        const finalPrice = price || (subtotal / quantity) || 0;
+        const finalSubtotal = subtotal || (finalPrice * quantity) || 0;
         return {
           productName: item.name || item.productName || "Product",
           variantName: item.variant || item.variantName || item.size || "",
           quantity,
-          price,
-          subtotal
+          price: finalPrice,
+          subtotal: finalSubtotal
         };
       }) : [];
 
-      const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
-      const shippingFee = Number(order.totals?.shipping || order.shippingFee || 0);
-      const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee) || 0);
+      const subtotal = Number(order.totals?.subtotal ?? order.subtotal ?? 0);
+      const shippingFee = Number(order.totals?.shippingFee ?? order.shippingFee ?? order.totals?.shipping ?? 0);
+      const totalAmount = Number(order.totals?.total ?? order.totalAmount ?? (subtotal + shippingFee) ?? 0);
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
       const formattedOrderData = {

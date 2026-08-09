@@ -79,10 +79,10 @@ export const buildOrderDocument = async (payload) => {
     couponCode: payload.couponCode ? String(payload.couponCode).trim().toUpperCase() : null,
     items: normalizeOrderItems(payload.items),
     totals: {
-      subtotal: Number(payload.subtotal || 0),
-      shippingFee: Number(payload.shippingFee || 0),
+      subtotal: Number(payload.subtotal ?? payload.subTotal ?? 0),
+      shippingFee: Number(payload.shippingFee ?? payload.shippingTotalAmount ?? payload.shipping ?? 0),
       tax: Number(payload.tax || 0),
-      total: Number(payload.total || 0),
+      total: Number(payload.total ?? payload.totalAmount ?? (Number(payload.subtotal || 0) + Number(payload.shippingFee || 0) - Number(payload.discountTotalAmount || 0)) || 0),
     },
   };
 };
