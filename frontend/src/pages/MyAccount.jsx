@@ -23,7 +23,9 @@ export const MyAccount = () => {
   const [isEditing, setIsEditing] = useState(false); // AGY: Toggles read-only details vs edit inputs
 
   const getAddressValue = (section, field) => {
-    const sec = user?.[section] || user?.raw?.[section] || {};
+    // Check model field names first (billingAddress/shippingAddress), fall back to legacy (billingInfo/shippingInfo)
+    const modelKey = section === 'billingInfo' ? 'billingAddress' : section === 'shippingInfo' ? 'shippingAddress' : section;
+    const sec = user?.[modelKey] || user?.[section] || user?.raw?.[modelKey] || user?.raw?.[section] || {};
     return sec[field] || '';
   };
 
@@ -144,11 +146,13 @@ export const MyAccount = () => {
         shippingInfo
       });
 
-      // Update state and storage
+      // Update state and storage — API returns billingAddress/shippingAddress (model field names)
       setUser({
         ...user,
         name: updatedUser.name || user.name,
         phone: updatedUser.phone || user.phone,
+        billingInfo: updatedUser.billingAddress || updatedUser.billingInfo || user.billingInfo,
+        shippingInfo: updatedUser.shippingAddress || updatedUser.shippingInfo || user.shippingInfo,
         raw: { ...user.raw, ...updatedUser }
       });
       addToast('Your personal profile and address books have been updated.', 'success');

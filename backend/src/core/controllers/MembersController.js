@@ -188,7 +188,8 @@ export const updateMember = async (req, res, next) => {
 
     const payload = req.body ?? {};
     const updates = {};
-    updates.updatedBy = payload.updatedBy || req.user?.userId || re.user?._id || req.user?.did || null;
+    // Fixed typo: was `re.user?._id` — should be `req.user?._id`
+    updates.updatedBy = payload.updatedBy || req.user?.userId || req.user?._id || req.user?.did || null;
 
     if (payload.name) {
       updates.name = payload.name.trim();
@@ -228,11 +229,11 @@ export const updateMember = async (req, res, next) => {
       }
       updates.passwordHash = await hashPassword(payload.password);
     }
-    if (payload.billingInfo !== undefined) {
-      const billingErrors = validateAddressPayload(
-        payload.billingInfo,
-        "billingInfo",
-      );
+
+    // Accept both billingInfo (legacy frontend key) and billingAddress (model key)
+    const billingPayload = payload.billingAddress ?? payload.billingInfo;
+    if (billingPayload !== undefined) {
+      const billingErrors = validateAddressPayload(billingPayload, "billingAddress");
       if (billingErrors.length > 0) {
         return res.status(400).json({
           status: "error",
@@ -240,13 +241,13 @@ export const updateMember = async (req, res, next) => {
           errors: billingErrors,
         });
       }
-      updates.billingInfo = sanitizeInfo(payload.billingInfo);
+      updates.billingAddress = sanitizeInfo(billingPayload);
     }
-    if (payload.shippingInfo !== undefined) {
-      const shippingErrors = validateAddressPayload(
-        payload.shippingInfo,
-        "shippingInfo",
-      );
+
+    // Accept both shippingInfo (legacy frontend key) and shippingAddress (model key)
+    const shippingPayload = payload.shippingAddress ?? payload.shippingInfo;
+    if (shippingPayload !== undefined) {
+      const shippingErrors = validateAddressPayload(shippingPayload, "shippingAddress");
       if (shippingErrors.length > 0) {
         return res.status(400).json({
           status: "error",
@@ -254,7 +255,7 @@ export const updateMember = async (req, res, next) => {
           errors: shippingErrors,
         });
       }
-      updates.shippingInfo = sanitizeInfo(payload.shippingInfo);
+      updates.shippingAddress = sanitizeInfo(shippingPayload);
     }
 
     const member = await MemberModel.findByIdAndUpdate(memberId, updates, {
@@ -272,6 +273,7 @@ export const updateMember = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Start member registration by validating the payload and sending a verification OTP.
 export const registerMember = async (req, res, next) => {
