@@ -32,6 +32,10 @@ import BillingOverview from './pages/dashboard/billing/billingOverview';
 import Payments from './pages/dashboard/billing/payments';
 import Billings from './pages/dashboard/billing/billings';
 
+// Developer Options
+import ApiDocs from './pages/dashboard/developer/apiDocs';
+import SystemLogs from './pages/dashboard/developer/systemLogs';
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -49,6 +53,13 @@ export const router = createBrowserRouter([
       { path: 'users', element: <Users /> },
       { path: 'reports', element: <Reports /> },
       { path: 'members', element: <Members /> },
+      {
+        path: 'developer',
+        children: [
+          { path: 'v1/doc.html', element: <ApiDocs /> },
+          { path: 'logs', element: <SystemLogs /> },
+        ],
+      },
       {
         path: 'products',
         children: [
