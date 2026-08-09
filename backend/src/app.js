@@ -12,6 +12,7 @@ export async function createApp() {
   const app = express();
 
   app.set("wpTablePrefix", process.env.WP_TABLE_PREFIX || "wp_");
+  app.set("trust proxy", true);
   const corsOptions = {
     origin: [
       "http://decantrebd.com",
@@ -49,7 +50,9 @@ export async function createApp() {
   );
 
   app.use((req, res, next) => {
-    logger.info({ method: req.method, path: req.originalUrl }, "route hit");
+    const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
+    const now = new Date().toISOString();
+    console.log(`🌐 [${now}] [IP: ${clientIp}] ${req.method} ${req.originalUrl}`);
     next();
   });
 

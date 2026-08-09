@@ -1,7 +1,12 @@
 import { logger } from "../../config/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
-  logger.error({ err, path: req.originalUrl, method: req.method }, "Unhandled API Error");
+  const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
+  const now = new Date().toISOString();
+  console.error(`❌ [${now}] [IP: ${clientIp}] ERROR on ${req.method} ${req.originalUrl} - Message: ${err.message}`);
+  if (err.stack) {
+    console.error(err.stack);
+  }
 
   let status = err.status ?? err.statusCode;
   let message = err.message ?? "Internal Server Error";
