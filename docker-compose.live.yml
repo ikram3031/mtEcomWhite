@@ -53,7 +53,7 @@ services:
       context: ./dashboard
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: https://service.decantrebd.com
+        VITE_API_BASE_URL: https://service.decantrebd.com
     container_name: decantre-dashboard-live
     restart: always
     env_file:
