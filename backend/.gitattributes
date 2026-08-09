@@ -4,3 +4,6 @@ Dockerfile* merge=ours
 docker-compose*.yml merge=ours
 nginx*.conf merge=ours
 .env* merge=ours
+
+# Keep Live-branch email templates intact — never overwrite with Decantre/master versions
+src/templates/*.js merge=ours

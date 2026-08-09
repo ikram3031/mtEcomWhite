@@ -57,7 +57,7 @@ export const buildAdminOrderEmailHtml = ({
   const shippingStr = formatAddr(finalShipping);
 
   // Exact 1250x200 Aspect Ratio (6.25:1) => width: 187.5px, height: 30px
-  const logoMarkup = `<img class="logo" src="${logoUrl}" alt="Decantre" width="187.5" height="30" style="width: 187.5px; height: 30px; max-width: 187.5px; max-height: 30px; display: block; margin: 0 auto; border: 0; outline: none;" />`;
+  const logoMarkup = `<img class="logo" src="${logoUrl}" alt="Decantre Dev" width="187.5" height="30" style="width: 187.5px; height: 30px; max-width: 187.5px; max-height: 30px; display: block; margin: 0 auto; border: 0; outline: none;" />`;
 
   const itemRows = items.map((item, idx) => `
     <tr style="border-bottom: 1px solid #27272A; ${idx % 2 === 1 ? 'background-color: #18181B;' : 'background-color: #121215;'}">
@@ -80,7 +80,7 @@ export const buildAdminOrderEmailHtml = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Order #${orderId}</title>
+  <title>Decantre Dev - New Order #${orderId}</title>
   <!-- Google Fonts Import -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -358,7 +358,7 @@ export const buildAdminOrderEmailHtml = ({
 
       <!-- Dark Footer -->
       <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} <a href="https://decantrebd.com">Decantre</a>. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} <a href="https://decantrebd.com">Decantre Dev</a>. All rights reserved. <span style="color: #C5A059; font-size: 10px;">[TEST]</span></p>
       </div>
 
     </div>
