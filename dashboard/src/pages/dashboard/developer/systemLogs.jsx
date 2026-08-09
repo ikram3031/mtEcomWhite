@@ -67,13 +67,17 @@ const SystemLogs = () => {
     );
   }
 
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+
   const filteredLogs = logs.filter((log) => {
+    if (sourceFilter !== "ALL" && log.source !== sourceFilter) return false;
     if (!filter) return true;
     const search = filter.toLowerCase();
     return (
       log.url?.toLowerCase().includes(search) ||
       log.method?.toLowerCase().includes(search) ||
       log.ip?.toLowerCase().includes(search) ||
+      log.source?.toLowerCase().includes(search) ||
       String(log.status).includes(search)
     );
   });
@@ -89,34 +93,48 @@ const SystemLogs = () => {
             Developer Live System Logs
           </h1>
           <p className="text-sm text-muted-foreground">
-            Realtime HTTP API request telemetry & console logs.
+            Realtime HTTP API request telemetry & source origin breakdown.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative w-64">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Source Selector */}
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            className="h-9 px-3 text-xs rounded-md border border-input bg-background text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-medium"
+          >
+            <option value="ALL">All Origins</option>
+            <option value="DASHBOARD">🖥️ Dashboard Only</option>
+            <option value="FRONTEND">🛍️ Frontend Only</option>
+            <option value="EXTERNAL">⚡ External API</option>
+          </select>
+
+          <div className="relative w-56">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Filter by IP, Method, Status..."
+              placeholder="Filter by IP, Method..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 text-xs"
             />
           </div>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsPaused(!isPaused)}
-            className="h-9 gap-1.5"
+            className="h-9 gap-1.5 text-xs"
           >
             {isPaused ? <Play className="h-4 w-4 text-emerald-500" /> : <Pause className="h-4 w-4 text-amber-500" />}
             {isPaused ? "Resume" : "Pause"}
           </Button>
+
           <Button
             variant="outline"
             size="sm"
             onClick={clearLogs}
-            className="h-9 gap-1.5 text-destructive hover:bg-destructive/10"
+            className="h-9 gap-1.5 text-xs text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4" />
             Clear
@@ -129,11 +147,10 @@ const SystemLogs = () => {
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
             <Terminal className="h-8 w-8 opacity-40" />
-            <p>No log streams recorded yet. Make API requests to see live activity.</p>
+            <p>No log streams recorded matching criteria.</p>
           </div>
         ) : (
           filteredLogs.map((log, index) => {
-            const isError = log.status >= 400;
             const statusBg =
               log.status >= 500
                 ? "bg-red-500/20 text-red-400 border-red-500/30"
@@ -143,20 +160,37 @@ const SystemLogs = () => {
                 ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
                 : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
 
+            const sourceBadge =
+              log.source === "DASHBOARD"
+                ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                : log.source === "FRONTEND"
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                : "bg-amber-500/20 text-amber-300 border-amber-500/40";
+
+            const sourceLabel =
+              log.source === "DASHBOARD"
+                ? "🖥️ DASHBOARD"
+                : log.source === "FRONTEND"
+                ? "🛍️ FRONTEND"
+                : "⚡ EXTERNAL";
+
             return (
               <div
                 key={index}
-                className="flex items-center gap-3 py-1 px-2.5 rounded hover:bg-slate-900/80 transition-colors border border-transparent hover:border-slate-800"
+                className="flex items-center gap-2.5 py-1 px-2.5 rounded hover:bg-slate-900/80 transition-colors border border-transparent hover:border-slate-800"
               >
                 <span className="text-slate-500 shrink-0">[{log.timestamp}]</span>
-                <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${statusBg}`}>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${statusBg}`}>
                   {log.status}
                 </span>
-                <span className="text-amber-300 w-16 text-right shrink-0">{log.duration}ms</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${sourceBadge}`}>
+                  {sourceLabel}
+                </span>
+                <span className="text-amber-300 w-14 text-right shrink-0">{log.duration}ms</span>
                 <span className="text-cyan-400 w-16 text-right shrink-0">{log.size}</span>
-                <span className="text-purple-400 font-semibold shrink-0">[{log.ip}]</span>
+                <span className="text-slate-400 font-semibold shrink-0">[{log.ip}]</span>
                 <span className="font-bold text-slate-200 uppercase w-12 shrink-0">{log.method}</span>
-                <span className="text-slate-300 truncate">{log.url}</span>
+                <span className="text-slate-200 truncate">{log.url}</span>
               </div>
             );
           })

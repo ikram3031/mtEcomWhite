@@ -59,7 +59,24 @@ export async function createApp() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   }
 
+  // Helper to detect request origin source
+  function getRequestSource(req) {
+    const origin = (req.headers["origin"] || req.headers["referer"] || "").toLowerCase();
+    if (origin.includes("dashboard") || origin.includes("v2.decantrebd.com") || origin.includes(":8005") || (req.originalUrl && req.originalUrl.includes("/dashboard/"))) {
+      return "DASHBOARD";
+    }
+    if (origin.includes("decantrebd.com") || origin.includes("dev.decantrebd.com") || origin.includes(":8001") || origin.includes(":3000")) {
+      return "FRONTEND";
+    }
+    return "EXTERNAL";
+  }
+
   app.use((req, res, next) => {
+    // Ignore internal developer log telemetry endpoints from being logged to prevent feedback loops
+    if (req.originalUrl && req.originalUrl.startsWith("/api/v1/developer/logs")) {
+      return next();
+    }
+
     const startTime = process.hrtime();
     
     // Robust IP extraction logic
@@ -69,6 +86,7 @@ export async function createApp() {
     
     // Clean IPv6 prefix if present (e.g. ::ffff:103.145.xx.xx)
     const clientIp = rawIp.replace(/^::ffff:/, "");
+    const source = getRequestSource(req);
 
     const now = new Date().toLocaleTimeString("en-US", { hour12: false });
 
@@ -97,6 +115,9 @@ export async function createApp() {
         reset: "\x1b[0m",
         gray: "\x1b[90m",
         cyan: "\x1b[36m",
+        purple: "\x1b[35m",
+        magenta: "\x1b[35m",
+        green: "\x1b[32m",
         yellow: "\x1b[33m",
         boldWhite: "\x1b[1m\x1b[37m",
         GET: "\x1b[32mGET   \x1b[0m",
@@ -106,6 +127,13 @@ export async function createApp() {
         DELETE: "\x1b[31mDELETE\x1b[0m",
       };
 
+      const sourceTag =
+        source === "DASHBOARD"
+          ? `${colors.purple}[DASHBOARD]${colors.reset}`
+          : source === "FRONTEND"
+          ? `${colors.green}[FRONTEND ]${colors.reset}`
+          : `${colors.yellow}[EXTERNAL ]${colors.reset}`;
+
       const methodStr = colors[req.method] || (req.method + "      ").slice(0, 6);
       const timePadded = `${timeMs}ms`.padStart(6, " ");
       const sizePadded = sizeStr.padStart(8, " ");
@@ -113,8 +141,8 @@ export async function createApp() {
 
       // Prevent URL from breaking onto new lines by limiting/truncating ultra-long query strings
       let displayUrl = req.originalUrl;
-      if (displayUrl.length > 65) {
-        displayUrl = displayUrl.slice(0, 62) + "...";
+      if (displayUrl.length > 60) {
+        displayUrl = displayUrl.slice(0, 57) + "...";
       }
 
       // Broadcast clean log object to developer UI clients
@@ -124,6 +152,7 @@ export async function createApp() {
         duration: timeMs,
         size: sizeStr,
         ip: clientIp,
+        source,
         method: req.method,
         url: req.originalUrl
       });
@@ -131,6 +160,7 @@ export async function createApp() {
       console.log(
         `${colors.gray}[${now}]${colors.reset} ` +
         `${statusIcon} ${statusPadded} | ` +
+        `${sourceTag} | ` +
         `${colors.yellow}${timePadded}${colors.reset} | ` +
         `${colors.cyan}${sizePadded}${colors.reset} | ` +
         `${colors.gray}[IP: ${clientIp}]${colors.reset} | ` +
