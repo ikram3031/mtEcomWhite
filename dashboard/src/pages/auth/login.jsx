@@ -8,6 +8,7 @@ import { Input } from '@/components/core/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/core/ui/card';
 import { handleGlobalError } from '@/lib/core/error-handler';
 import { toast } from 'sonner';
+import { DecantreLogo } from '@/components/core/DecantreLogo';
 
 const GoogleIcon = () => (
   <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -108,6 +109,7 @@ const LoginPage = () => {
       >
         <Card className="shadow-2xl border-border bg-card/90 text-card-foreground backdrop-blur-xl overflow-hidden rounded-2xl">
           <CardHeader className="px-5 pt-5 pb-3 text-center border-b border-border/80 bg-card/40">
+            <DecantreLogo className="h-10 w-auto mx-auto mb-1.5" />
             <CardTitle className="text-xl font-bold tracking-tight flex items-center justify-center gap-1.5 text-foreground">
               DASHBOARD LOGIN
             </CardTitle>

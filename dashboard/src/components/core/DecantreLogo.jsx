@@ -1,11 +1,11 @@
-import logoImage from '@/assets/logo.webp';
+import logoImage from '@/assets/decantre_logo.png';
 
 export const DecantreLogo = ({
-  className = 'h-16 w-16',
+  className = 'h-10 w-auto',
   alt = 'Decantre logo',
 }) => {
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative overflow-hidden flex items-center ${className}`}>
       <img
         src={logoImage}
         alt={alt}

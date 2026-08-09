@@ -44,10 +44,10 @@ export const resolveUserIdFromReference = async (reference) => {
 // Normalize checkout items into the order schema shape expected by the database.
 export const normalizeOrderItems = (items = []) =>
   (items || []).map((item) => ({
-    name: item.name ?? 'Unknown product',
+    name: item.name ?? item.productName ?? 'Unknown product',
     quantity: Number(item.quantity || 1),
-    unitPrice: Number(item.unitPrice || 0),
-    size: item.size ?? '',
+    unitPrice: Number(item.unitPrice ?? item.price ?? 0),
+    size: item.size ?? item.variant ?? '',
     concentration: item.concentration ?? '',
     productDid: item.productDid ?? '',
   }));
@@ -79,10 +79,10 @@ export const buildOrderDocument = async (payload) => {
     couponCode: payload.couponCode ? String(payload.couponCode).trim().toUpperCase() : null,
     items: normalizeOrderItems(payload.items),
     totals: {
-      subtotal: Number(payload.subtotal || 0),
-      shippingFee: Number(payload.shippingFee || 0),
+      subtotal: Number(payload.subtotal || payload.subTotal || 0),
+      shippingFee: Number(payload.shippingFee || payload.shippingTotalAmount || payload.shipping || 0),
       tax: Number(payload.tax || 0),
-      total: Number(payload.total || 0),
+      total: Number(payload.total || payload.totalAmount || (Number(payload.subtotal || 0) + Number(payload.shippingFee || 0) - Number(payload.discountTotalAmount || 0))),
     },
   };
 };

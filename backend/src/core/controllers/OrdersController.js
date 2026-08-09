@@ -4,14 +4,14 @@ import { OrderModel } from '../models/order.model.js';
 import { MemberModel } from '../models/member.model.js';
 import { CouponModel } from '../models/coupon.model.js';
 import { PaymentModel } from '../models/payment.model.js';
-import {
-  buildAllowedOrderUpdates,
+import { buildAllowedOrderUpdates,
   buildOrderDocument,
   syncMemberOrderSnapshot,
   syncPaymentDocument,
   updateMemberOrderReference,
   updateMemberTotals,
 } from '../helper/orderControllerHelper.js';
+import { buildOrderInvoiceEmailHtml } from '../../templates/orderInvoiceEmailTemplate.js';
 
 const { Types } = mongoose;
 
@@ -430,6 +430,51 @@ export const bulkUpdateOrders = async (req, res, next) => {
     }
 
     return res.json({ status: 'success', message: 'Orders updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Render printable HTML / PDF invoice view for a specific order.
+export const getOrderInvoiceView = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    let query = {};
+    if (Types.ObjectId.isValid(orderId)) {
+      query = { _id: orderId };
+    } else {
+      query = { $or: [{ did: orderId }, { orderNumber: orderId }] };
+    }
+
+    const order = await OrderModel.findOne(query).lean();
+    if (!order) {
+      return res.status(404).send("<h1 style='font-family:sans-serif;text-align:center;padding:50px;'>Order Invoice Not Found</h1>");
+    }
+
+    const formattedOrderData = {
+      orderId: order.orderNumber || order.did || order._id?.toString()?.slice(-6),
+      createdAt: order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      customerName: order.customer?.fullName || order.customer?.name || "Customer",
+      customerEmail: order.customer?.email || "",
+      customerPhone: order.customer?.phone || "",
+      billingAddress: order.customer?.address || order.billingAddress || {},
+      shippingAddress: order.shippingAddress || order.customer?.address || {},
+      items: Array.isArray(order.items) ? order.items.map(item => ({
+        productName: item.name || "Product",
+        variantName: item.size || item.variant || "",
+        quantity: item.quantity || 1,
+        price: item.unitPrice || item.price || 0,
+        subtotal: (item.unitPrice || item.price || 0) * (item.quantity || 1)
+      })) : [],
+      subtotal: order.totals?.subtotal || order.subtotal || 0,
+      shippingFee: order.totals?.shippingFee || order.shippingFee || 0,
+      totalAmount: order.totals?.total || order.totalAmount || 0,
+      paymentMethod: order.paymentMethod || "Cash on Delivery"
+    };
+
+    const invoiceHtml = buildOrderInvoiceEmailHtml({ order: formattedOrderData, isPrintView: true });
+    res.setHeader("Content-Type", "text/html");
+    return res.send(invoiceHtml);
   } catch (error) {
     next(error);
   }

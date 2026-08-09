@@ -50,17 +50,24 @@ export function sendOrderEmailsAsynchronously(order) {
 
       const billingAddress = order.billingAddress || order.shippingAddress || {};
       const shippingAddress = order.shippingAddress || billingAddress;
-      const items = Array.isArray(order.items) ? order.items.map(item => ({
-        productName: item.name || item.productName || "Product",
-        variantName: item.variant || item.variantName || "",
-        quantity: Number(item.quantity || 1),
-        price: Number(item.price || 0),
-        subtotal: Number(item.subtotal || item.total || (item.price * item.quantity) || 0)
-      })) : [];
+      const items = Array.isArray(order.items) ? order.items.map(item => {
+        const quantity = Number(item.quantity || 1);
+        const price = Number(item.price ?? item.unitPrice ?? 0);
+        const subtotal = Number(item.subtotal ?? item.total ?? (price * quantity) ?? 0);
+        const finalPrice = price || (subtotal / quantity) || 0;
+        const finalSubtotal = subtotal || (finalPrice * quantity) || 0;
+        return {
+          productName: item.name || item.productName || "Product",
+          variantName: item.variant || item.variantName || item.size || "",
+          quantity,
+          price: finalPrice,
+          subtotal: finalSubtotal
+        };
+      }) : [];
 
       const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
-      const shippingFee = Number(order.totals?.shipping || order.shippingFee || 0);
-      const totalAmount = Number(order.totals?.total || order.totalAmount || 0);
+      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shipping || 0);
+      const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
       const formattedOrderData = {
@@ -94,23 +101,26 @@ export function sendOrderEmailsAsynchronously(order) {
         }
       }
 
-      // 2. Resolve Admin Recipients: decantre.store@gmail.com AND database Super Admin / Owner excluding ikramul.web@gmail.com
+      // 2. Resolve Admin Recipients: decantre.store@gmail.com AND database Super Admin / Owner / Admin EXCLUDING ikramul.web@gmail.com
       const adminRecipientsSet = new Set(["decantre.store@gmail.com"]);
 
       try {
         const superAdmins = await UserModel.find({
-          role: { $in: ["Owner", "Admin", "Super Admin"] },
-          isActive: true
+          role: { $in: ["Owner", "Admin", "Super Admin", "Manager"] },
+          $or: [{ isActive: true }, { active: true }, { isActive: { $exists: false } }]
         }).select("email").lean();
 
         for (const adminUser of superAdmins) {
-          if (adminUser.email && adminUser.email.toLowerCase().trim() !== "ikramul.web@gmail.com") {
+          if (adminUser.email) {
             adminRecipientsSet.add(adminUser.email.toLowerCase().trim());
           }
         }
       } catch (dbErr) {
         console.error("[Email Notification] Database query for super admin emails failed, falling back to default admins:", dbErr.message);
       }
+
+      // Explicitly EXCLUDE ikramul.web@gmail.com as requested
+      adminRecipientsSet.delete("ikramul.web@gmail.com");
 
       const adminRecipients = Array.from(adminRecipientsSet);
       console.log(`[Email Notification] Admin notification targets: ${adminRecipients.join(", ")}`);
