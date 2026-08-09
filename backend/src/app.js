@@ -49,31 +49,69 @@ export async function createApp() {
     express.static(path.join(process.cwd(), "src", "uploads")),
   );
 
+  // Helper to format transfer byte size
+  function formatBytes(bytes) {
+    if (!bytes || isNaN(bytes) || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+
   app.use((req, res, next) => {
+    const startTime = process.hrtime();
     const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
     const now = new Date().toLocaleTimeString("en-US", { hour12: false });
-    
-    // ANSI color definitions for terminal formatting
-    const colors = {
-      reset: "\x1b[0m",
-      gray: "\x1b[90m",
-      cyan: "\x1b[36m",
-      boldWhite: "\x1b[1m\x1b[37m",
-      GET: "\x1b[32mGET\x1b[0m",
-      POST: "\x1b[33mPOST\x1b[0m",
-      PUT: "\x1b[34mPUT\x1b[0m",
-      PATCH: "\x1b[35mPATCH\x1b[0m",
-      DELETE: "\x1b[31mDELETE\x1b[0m",
-    };
 
-    const methodColor = colors[req.method] || req.method;
-    
-    console.log(
-      `${colors.gray}[${now}]${colors.reset} ` +
-      `${colors.cyan}[IP: ${clientIp}]${colors.reset} ` +
-      `🌐 ${methodColor} ` +
-      `${colors.boldWhite}${req.originalUrl}${colors.reset}`
-    );
+    res.on("finish", () => {
+      const diff = process.hrtime(startTime);
+      const timeMs = Math.round(diff[0] * 1000 + diff[1] / 1e6);
+      
+      const contentLength = res.get("content-length") || 0;
+      const sizeStr = formatBytes(Number(contentLength));
+
+      const status = res.statusCode;
+      let statusColor = "\x1b[32m"; // Green 2xx
+      let statusIcon = "🟢";
+      if (status >= 500) {
+        statusColor = "\x1b[31m"; // Red 5xx
+        statusIcon = "🔴";
+      } else if (status >= 400) {
+        statusColor = "\x1b[33m"; // Yellow 4xx
+        statusIcon = "⚠️ ";
+      } else if (status >= 300) {
+        statusColor = "\x1b[36m"; // Cyan 3xx
+        statusIcon = "🔵";
+      }
+
+      const colors = {
+        reset: "\x1b[0m",
+        gray: "\x1b[90m",
+        cyan: "\x1b[36m",
+        yellow: "\x1b[33m",
+        boldWhite: "\x1b[1m\x1b[37m",
+        GET: "\x1b[32mGET   \x1b[0m",
+        POST: "\x1b[33mPOST  \x1b[0m",
+        PUT: "\x1b[34mPUT   \x1b[0m",
+        PATCH: "\x1b[35mPATCH \x1b[0m",
+        DELETE: "\x1b[31mDELETE\x1b[0m",
+      };
+
+      const methodStr = colors[req.method] || (req.method + "      ").slice(0, 6);
+      const timePadded = `${timeMs}ms`.padStart(7, " ");
+      const sizePadded = sizeStr.padStart(8, " ");
+      const statusPadded = `${statusColor}${status}${colors.reset}`;
+
+      console.log(
+        `${colors.gray}[${now}]${colors.reset} ` +
+        `${statusIcon} ${statusPadded} | ` +
+        `${colors.yellow}${timePadded}${colors.reset} | ` +
+        `${colors.cyan}${sizePadded}${colors.reset} | ` +
+        `${colors.gray}[IP: ${clientIp}]${colors.reset} | ` +
+        `${methodStr} ${colors.boldWhite}${req.originalUrl}${colors.reset}`
+      );
+    });
+
     next();
   });
 
