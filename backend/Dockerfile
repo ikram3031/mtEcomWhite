@@ -3,6 +3,9 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Upgrade npm to latest version
+RUN npm install -g npm@latest
+
 # Copy package files
 COPY package.json package-lock.json ./
 
@@ -19,6 +22,9 @@ WORKDIR /app
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
+
+# Upgrade npm to latest version
+RUN npm install -g npm@latest
 
 # Copy only necessary files from builder
 COPY --from=builder /app/package.json /app/package-lock.json ./
