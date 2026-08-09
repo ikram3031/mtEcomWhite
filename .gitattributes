@@ -1,15 +1,32 @@
-# Keep branch-specific Dockerfile, Docker Compose, and Nginx configs intact during git merges across all subfolders
+# Keep branch-specific Dockerfile, Docker Compose, Nginx, Env, and Deployment configs intact during git merges across all branches
 
-# Root level configs
-docker-compose.dev.yml merge=ours
-docker-compose.prod.yml merge=ours
-nginx.conf merge=ours
-nginx-prod.conf merge=ours
-nginx-prod-secure.conf merge=ours
-
-# Subfolder specific configs (backend, frontend, dashboard)
-**/Dockerfile merge=ours
+# Docker & Container configs
+docker-compose*.yml merge=ours
+Dockerfile* merge=ours
+.dockerignore merge=ours
+**/Dockerfile* merge=ours
 **/.dockerignore merge=ours
-**/docker-compose.dev.yml merge=ours
-**/docker-compose.prod.yml merge=ours
-**/nginx.conf merge=ours
+**/docker-compose*.yml merge=ours
+
+# Nginx & Domain configs
+nginx*.conf merge=ours
+*.conf merge=ours
+**/nginx*.conf merge=ours
+**/*.conf merge=ours
+
+# Environment & Secret files
+.env* merge=ours
+**/.env* merge=ours
+
+# Deployment Scripts & Makefiles
+Makefile merge=ours
+makefile merge=ours
+*.sh merge=ours
+**/*.sh merge=ours
+
+# Deployment documentation & Architecture specs
+z_deployments.md merge=ours
+z_architecture.md merge=ours
+z_domainConnect.md merge=ours
+z_git_architecture_guide.md merge=ours
+z_gdrive_backup.md merge=ours
