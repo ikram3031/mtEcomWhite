@@ -15,6 +15,8 @@ import {
 
 const { Types } = mongoose;
 
+import { sendOrderEmailsAsynchronously } from '../utils/orderDelivery.js';
+
 // Create a new order from checkout payload and sync related payment/member data.
 export const createOrder = async (req, res, next) => {
   try {
@@ -62,6 +64,9 @@ export const createOrder = async (req, res, next) => {
 
     await syncPaymentDocument(createdOrder);
     await syncMemberOrderSnapshot(orderData.member, createdOrder, payload);
+
+    // Safely trigger non-blocking email notifications for Customer and Admin
+    sendOrderEmailsAsynchronously(createdOrder);
 
     return res.status(201).json({
       status: 'success',
@@ -166,12 +171,16 @@ export const getOrderById = async (req, res, next) => {
 export const updateOrder = async (req, res, next) => {
   try {
     const { orderId } = req.params;
-    if (!Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ status: 'error', message: 'Invalid order ID' });
+    
+    let query = {};
+    if (Types.ObjectId.isValid(orderId)) {
+      query = { _id: orderId };
+    } else {
+      query = { $or: [{ did: orderId }, { orderNumber: orderId }] };
     }
 
     const payload = req.body ?? {};
-    const existingOrder = await OrderModel.findById(orderId).lean();
+    const existingOrder = await OrderModel.findOne(query).lean();
     if (!existingOrder) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
     }
@@ -182,11 +191,17 @@ export const updateOrder = async (req, res, next) => {
     }
 
     const allowedUpdates = await buildAllowedOrderUpdates(payload, existingOrder);
+
+    // Fallback updatedBy to authenticated user ID if not explicitly resolved from payload
+    if (!allowedUpdates.updatedBy && req.user?.userId) {
+      allowedUpdates.updatedBy = req.user.userId;
+    }
+
     if (payload.memberId !== undefined && payload.memberId && Types.ObjectId.isValid(payload.memberId)) {
       affectedMemberIds.add(payload.memberId);
     }
 
-    const order = await OrderModel.findByIdAndUpdate(orderId, allowedUpdates, {
+    const order = await OrderModel.findOneAndUpdate(query, allowedUpdates, {
       new: true,
       runValidators: true,
     }).lean();
@@ -211,7 +226,7 @@ export const updateOrder = async (req, res, next) => {
       await updateMemberOrderReference(newMemberId, orderDid, orderValue);
     }
 
-    await syncPaymentDocument(order);
+    await syncPaymentDocument(order, payload);
 
     if (oldMemberId) affectedMemberIds.add(oldMemberId);
     if (newMemberId) affectedMemberIds.add(newMemberId);

@@ -1,9 +1,5 @@
 import nodemailer from "nodemailer";
-import path from "path";
-import { fileURLToPath } from "url";
 import { buildOtpEmailHtml } from "../../templates/otpEmailTemplate.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Cached SMTP transport connection instance
 let defaultTransport;
@@ -48,6 +44,7 @@ export async function sendOtpEmail({
   const text = isForgotPassword
     ? `Hello ${name || "there"},\n\nUse this OTP to reset your Decantre password: ${otp}\nThis code will expire in 3 minutes.\n\nIf you did not request this, please ignore this email.`
     : `Hello ${name || "there"},\n\nYour OTP verification code is ${otp}.\nThis code will expire in 3 minutes.\n\nThank you.`;
+  
   const html = buildOtpEmailHtml({ name, otp, type });
 
   // Format sender address to display the business name
@@ -61,14 +58,7 @@ export async function sendOtpEmail({
       to: toEmail,
       subject,
       text,
-      html,
-      attachments: [
-        {
-          filename: 'logo.webp',
-          path: path.join(__dirname, '../assets/logo.webp'),
-          cid: 'logo' // maps to src="cid:logo" in email HTML
-        }
-      ]
+      html
     });
 
     return { delivered: true };

@@ -20,21 +20,10 @@ export async function createApp() {
       "https://www.decantrebd.com",
       "http://dashboard.decantrebd.com",
       "https://dashboard.decantrebd.com",
-      "http://dev.decantrebd.com",
-      "https://dev.decantrebd.com",
-      "http://v2.decantrebd.com",
-      "https://v2.decantrebd.com",
-      "http://server.decantrebd.com",
-      "https://server.decantrebd.com",
-      "http://service.decantrebd.com",
-      "https://service.decantrebd.com",
       "http://localhost:8001",
       "http://localhost:8005",
       "https://localhost:8005",
-      "http://localhost:8011",
-      "http://localhost:8015",
       "http://localhost:3000",
-      "https://localhost:3000",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
@@ -54,7 +43,10 @@ export async function createApp() {
   app.use(express.urlencoded({ extended: false }));
 
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-  app.use("/src/uploads", express.static(path.join(process.cwd(), "uploads")));
+  app.use(
+    "/src/uploads",
+    express.static(path.join(process.cwd(), "src", "uploads")),
+  );
 
   app.use((req, res, next) => {
     logger.info({ method: req.method, path: req.originalUrl }, "route hit");

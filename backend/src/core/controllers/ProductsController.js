@@ -80,8 +80,15 @@ export const createProduct = async (req, res, next) => {
       }
     }
 
-    // Handle image URLs
-    const imageUrl = body.imageUrl || body.image_url || PLACEHOLDER_IMAGE_URL;
+    // Validate image URL — must be a non-empty string
+    const rawImageUrl = body.imageUrl || body.image_url;
+    if (!rawImageUrl || !rawImageUrl.trim()) {
+      return res.status(400).json({
+        status: "error",
+        message: "Product image is required. Please upload an image before saving.",
+      });
+    }
+    const imageUrl = rawImageUrl.trim();
 
     const productData = {
       name: body.name,
@@ -259,17 +266,25 @@ export const updateProduct = async (req, res, next) => {
       if (fallbackUser) userId = fallbackUser._id;
     }
 
+    // Validate image URL on update — must be a non-empty string if provided
+    const incomingImageUrl = body.imageUrl || body.image_url;
+    if (incomingImageUrl !== undefined && incomingImageUrl !== null && !incomingImageUrl.trim()) {
+      return res.status(400).json({
+        status: "error",
+        message: "Product image is required. Please upload an image before saving.",
+      });
+    }
+
     // Update primitive properties
     if (body.name !== undefined) product.name = body.name;
     if (body.slug !== undefined) product.slug = body.slug;
     if (body.description !== undefined) product.description = body.description;
     if (body.type !== undefined) product.type = body.type;
-    if (body.imageUrl !== undefined) product.imageUrl = body.imageUrl;
-    if (body.image_url !== undefined) product.imageUrl = body.image_url;
-    if (body.thumbnailUrl !== undefined)
-      product.thumbnailUrl = body.thumbnailUrl;
-    if (body.thumbnail_url !== undefined)
-      product.thumbnailUrl = body.thumbnail_url;
+    if (incomingImageUrl && incomingImageUrl.trim()) product.imageUrl = incomingImageUrl.trim();
+    if (body.thumbnailUrl && body.thumbnailUrl.trim())
+      product.thumbnailUrl = body.thumbnailUrl.trim();
+    if (body.thumbnail_url && body.thumbnail_url.trim())
+      product.thumbnailUrl = body.thumbnail_url.trim();
     if (body.season !== undefined) product.season = body.season;
     if (body.tags !== undefined) product.tags = body.tags;
     if (body.notes !== undefined) product.notes = body.notes;

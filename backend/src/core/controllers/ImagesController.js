@@ -7,7 +7,7 @@ const storage = multer.memoryStorage();
 export const uploadMiddleware = multer({
   storage,
   limits: {
-    fileSize: 1 * 1024 * 1024, // 1MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 }).single("image");
 
@@ -25,7 +25,7 @@ export const uploadProductImage = async (req, res, next) => {
     const dd = String(now.getDate()).padStart(2, "0");
     const dateFolder = `${yy}${mm}${dd}`; // Format folder as YYMMDD
 
-    const destinationDir = path.join(process.cwd(), "uploads", dateFolder);
+    const destinationDir = path.join(process.cwd(), "src", "uploads", dateFolder);
 
     // Ensure the directory exists
     await fs.promises.mkdir(destinationDir, { recursive: true });
@@ -96,8 +96,8 @@ export const uploadProductImage = async (req, res, next) => {
         .toFile(thumbFilePath);
 
       // Construct public URLs
-      const mainUrl = `/uploads/${dateFolder}/${mainFilename}`;
-      const thumbUrl = `/uploads/${dateFolder}/${thumbFilename}`;
+      const mainUrl = `/src/uploads/${dateFolder}/${mainFilename}`;
+      const thumbUrl = `/src/uploads/${dateFolder}/${thumbFilename}`;
 
       return res.status(200).json({
         status: "success",
@@ -117,7 +117,7 @@ export const uploadProductImage = async (req, res, next) => {
         .webp({ quality: 90 })
         .toFile(filePath);
 
-      const imageUrl = `/uploads/${dateFolder}/${filename}`;
+      const imageUrl = `/src/uploads/${dateFolder}/${filename}`;
 
       return res.status(200).json({
         status: "success",
