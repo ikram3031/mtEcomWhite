@@ -44,10 +44,10 @@ export const resolveUserIdFromReference = async (reference) => {
 // Normalize checkout items into the order schema shape expected by the database.
 export const normalizeOrderItems = (items = []) =>
   (items || []).map((item) => ({
-    name: item.name ?? 'Unknown product',
+    name: item.name ?? item.productName ?? 'Unknown product',
     quantity: Number(item.quantity || 1),
-    unitPrice: Number(item.unitPrice || 0),
-    size: item.size ?? '',
+    unitPrice: Number(item.unitPrice ?? item.price ?? 0),
+    size: item.size ?? item.variant ?? '',
     concentration: item.concentration ?? '',
     productDid: item.productDid ?? '',
   }));
