@@ -1,3 +1,4 @@
-# Protect client and core backend config files from merge overrides
-src/config/config.client.json merge=ours
-src/config/config.core.json merge=ours
+# Keep branch-specific backend Dockerfile and docker-compose configs intact during merges
+Dockerfile merge=ours
+.dockerignore merge=ours
+docker-compose.dev.yml merge=ours

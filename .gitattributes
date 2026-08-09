@@ -1,6 +1,15 @@
-# Keep branch-specific docker compose and server configs intact during git merges
+# Keep branch-specific Dockerfile, Docker Compose, and Nginx configs intact during git merges across all subfolders
+
+# Root level configs
 docker-compose.dev.yml merge=ours
 docker-compose.prod.yml merge=ours
 nginx.conf merge=ours
 nginx-prod.conf merge=ours
 nginx-prod-secure.conf merge=ours
+
+# Subfolder specific configs (backend, frontend, dashboard)
+**/Dockerfile merge=ours
+**/.dockerignore merge=ours
+**/docker-compose.dev.yml merge=ours
+**/docker-compose.prod.yml merge=ours
+**/nginx.conf merge=ours
