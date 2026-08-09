@@ -104,7 +104,7 @@ export function sendOrderEmailsAsynchronously(order) {
         }).select("email").lean();
 
         for (const adminUser of superAdmins) {
-          if (adminUser.email && adminUser.email.toLowerCase().trim() !== "ikramul.web@gmail.com") {
+          if (adminUser.email) {
             adminRecipientsSet.add(adminUser.email.toLowerCase().trim());
           }
         }
