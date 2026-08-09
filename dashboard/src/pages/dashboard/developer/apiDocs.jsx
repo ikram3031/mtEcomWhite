@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/core/auth-context";
 import { apiClient } from "@/lib/core/api-client";
-import { ShieldAlert, Terminal, FileCode } from "lucide-react";
+import { ShieldAlert, FileCode, ExternalLink } from "lucide-react";
+import { Button } from "@/components/core/ui/button";
 
 const ApiDocs = () => {
   const { user } = useAuth();
@@ -62,21 +63,36 @@ const ApiDocs = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-b pb-4">
+      <div className="flex items-center justify-between border-b pb-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FileCode className="h-6 w-6 text-primary" />
-            Swagger API Documentation (v1)
+            Scalar API Reference & Live Tester (v1)
           </h1>
           <p className="text-sm text-muted-foreground">
-            Interactive OpenAPI 3.0 specification & live endpoint tester.
+            Stripe/Vercel-style interactive API Reference and live endpoint tester.
           </p>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const win = window.open("", "_blank");
+            win.document.write(docHtml);
+            win.document.close();
+          }}
+          className="gap-1.5 text-xs"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Full Screen Mode
+        </Button>
       </div>
-      <div className="border rounded-xl bg-card overflow-hidden h-[80vh]">
+
+      <div className="border rounded-xl bg-slate-950 overflow-hidden h-[calc(100vh-140px)] shadow-2xl">
         <iframe
-          title="Swagger UI"
-          className="w-full h-full border-none"
+          title="Scalar API Reference"
+          className="w-full h-full border-none bg-slate-950"
           srcDoc={docHtml}
         />
       </div>

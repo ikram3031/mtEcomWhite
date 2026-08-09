@@ -267,7 +267,6 @@ export function AppSidebar({ ...props }) {
               <span>System Users</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-
           {/* Developer Options (Hardcoded for ikramul.web@gmail.com) */}
           {user?.email?.toLowerCase().trim() === "ikramul.web@gmail.com" && (
             <SidebarMenuItem>
@@ -276,7 +275,7 @@ export function AppSidebar({ ...props }) {
                 tooltip="Developer Tools"
                 render={<Link to="/dashboard/developer/v1/doc.html" />}
               >
-                <Sliders className="h-4 w-4 text-purple-400" />
+                <Code2 className="h-4 w-4 text-purple-400" />
                 <span className="font-semibold text-purple-400">Developer Options</span>
               </SidebarMenuButton>
               <SidebarMenuSub>
@@ -285,8 +284,8 @@ export function AppSidebar({ ...props }) {
                     isActive={pathname === "/dashboard/developer/v1/doc.html"}
                     render={<Link to="/dashboard/developer/v1/doc.html" />}
                   >
-                    <Receipt className="h-3.5 w-3.5" />
-                    <span>Swagger API Docs</span>
+                    <FileCode className="h-3.5 w-3.5" />
+                    <span>Scalar API Docs</span>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
                 <SidebarMenuSubItem>
@@ -294,13 +293,15 @@ export function AppSidebar({ ...props }) {
                     isActive={pathname === "/dashboard/developer/logs"}
                     render={<Link to="/dashboard/developer/logs" />}
                   >
-                    <ShieldAlert className="h-3.5 w-3.5" />
+                    <Terminal className="h-3.5 w-3.5" />
                     <span>Realtime System Logs</span>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
               </SidebarMenuSub>
             </SidebarMenuItem>
           )}
+
+
         </SidebarMenu>
       </SidebarContent>
 

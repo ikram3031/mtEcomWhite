@@ -64,112 +64,129 @@ developerRouter.get(
   }
 );
 
-// GET /api/v1/developer/docs (OpenAPI / Swagger HTML View)
+// GET /api/v1/developer/docs (Scalar API Reference View - Stripe/Vercel Style)
 developerRouter.get(
   "/docs",
-  authenticateToken,
-  verifyDeveloperAccess,
   (req, res) => {
-    const swaggerHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Decantre API Documentation (Swagger UI)</title>
-  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.css" />
-  <style>
-    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
-    *, *:before, *:after { box-sizing: inherit; }
-    body { margin:0; background: #fafafa; }
-    .swagger-ui .topbar { display: none; }
-  </style>
-</head>
-<body>
-  <div id="swagger-ui"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-bundle.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-standalone-preset.js"></script>
-  <script>
-    window.onload = function() {
-      const spec = {
-        "openapi": "3.0.0",
-        "info": {
-          "title": "Decantre Fullstack API Specification",
-          "description": "Interactive API Documentation & Endpoint Tester for Decantre BD Backend.",
-          "version": "2.0.1"
-        },
-        "servers": [
-          { "url": "/api/v1", "description": "Current Backend Environment" }
-        ],
-        "paths": {
-          "/orders/new-order": {
-            "post": {
-              "summary": "Create new order from checkout",
-              "requestBody": {
-                "required": true,
-                "content": {
-                  "application/json": {
-                    "example": {
-                      "fullName": "Metalhead User",
-                      "email": "metalhead.developer@gmail.com",
-                      "phone": "01712345678",
-                      "address": "House 45, Road 11",
-                      "district": "Dhaka",
-                      "shippingFee": 100,
-                      "subtotal": 1850,
-                      "totalAmount": 1950,
-                      "paymentMethod": "Cash on Delivery (COD)",
-                      "items": [{ "productId": "66b579f18a24d5b9423c56a1", "quantity": 1, "price": 1850 }]
+    const openApiSpec = {
+      openapi: "3.0.0",
+      info: {
+        title: "Decantre BD Fullstack API Specification",
+        description: "Modern, high-performance API Reference & Live Endpoint Tester for Decantre BD Backend.",
+        version: "2.0.1"
+      },
+      servers: [
+        { url: "https://server.decantrebd.com/api/v1", description: "Live Server" },
+        { url: "http://localhost:5092/api/v1", description: "Local Development" }
+      ],
+      paths: {
+        "/orders/new-order": {
+          post: {
+            tags: ["Orders"],
+            summary: "Create New Customer Checkout Order",
+            description: "Submits a new order payload and dispatches email notifications to store administrators and customer.",
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["fullName", "email", "phone", "address", "district", "subtotal", "totalAmount", "paymentMethod", "items"],
+                    properties: {
+                      fullName: { type: "string", example: "Saad Azad" },
+                      email: { type: "string", example: "saadazad97@gmail.com" },
+                      phone: { type: "string", example: "01712345678" },
+                      address: { type: "string", example: "House 45, Road 11, Sector 4" },
+                      district: { type: "string", example: "Dhaka" },
+                      shippingFee: { type: "number", example: 100 },
+                      subtotal: { type: "number", example: 1850 },
+                      totalAmount: { type: "number", example: 1950 },
+                      paymentMethod: { type: "string", example: "Cash on Delivery (COD)" },
+                      items: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            productId: { type: "string", example: "66b579f18a24d5b9423c56a1" },
+                            name: { type: "string", example: "Sauvage Elixir Eau De Parfum" },
+                            variant: { type: "string", example: "10ml Decant" },
+                            quantity: { type: "integer", example: 1 },
+                            price: { type: "number", example: 1850 }
+                          }
+                        }
+                      }
                     }
                   }
                 }
-              },
-              "responses": { "201": { "description": "Order created successfully" } }
+              }
+            },
+            responses: {
+              "201": { description: "Order created successfully" },
+              "400": { description: "Invalid order payload validation error" }
             }
-          },
-          "/dashboard/products": {
-            "get": {
-              "summary": "List all products with pagination",
-              "responses": { "200": { "description": "List of products" } }
+          }
+        },
+        "/products": {
+          get: {
+            tags: ["Products"],
+            summary: "List Products with Filtering & Pagination",
+            parameters: [
+              { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+              { name: "limit", in: "query", schema: { type: "integer", default: 15 } },
+              { name: "category", in: "query", schema: { type: "string" } },
+              { name: "brand", in: "query", schema: { type: "string" } },
+              { name: "q", in: "query", schema: { type: "string" } }
+            ],
+            responses: {
+              "200": { description: "Paginated list of products" }
             }
-          },
-          "/auth/login": {
-            "post": {
-              "summary": "User authentication login",
-              "requestBody": {
-                "required": true,
-                "content": {
-                  "application/json": {
-                    "example": { "email": "ikramul.web@gmail.com", "password": "your_password" }
+          }
+        },
+        "/auth/login": {
+          post: {
+            tags: ["Authentication"],
+            summary: "Authenticate Admin/User",
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string", example: "ikramul.web@gmail.com" },
+                      password: { type: "string", example: "your_password" }
+                    }
                   }
                 }
-              },
-              "responses": { "200": { "description": "Login successful" } }
+              }
+            },
+            responses: {
+              "200": { description: "JWT Access Token & User details" }
             }
           }
         }
-      };
-
-      const ui = SwaggerUIBundle({
-        spec: spec,
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      });
-      window.ui = ui;
+      }
     };
+
+    const scalarHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decantre API Documentation (Scalar)</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f172a; height: 100vh; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <script id="api-reference" type="application/json">
+    ${JSON.stringify(openApiSpec)}
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
-</html>
-    `;
+</html>`;
     res.setHeader("Content-Type", "text/html");
-    res.send(swaggerHtml);
+    res.send(scalarHtml);
   }
 );
 

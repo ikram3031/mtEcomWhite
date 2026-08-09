@@ -7,7 +7,7 @@ import fs from "fs";
 import { logger } from "./config/logger.js";
 import coreRouter from "./core/routesIndex.js";
 import attributeRouter from "./dashboard/routes/attribute.route.js";
-import developerRouter, { broadcastLogToClients } from "./core/routes/DeveloperRoute.js";
+import developerRouter from "./core/routes/DeveloperRoute.js";
 
 export async function createApp() {
   const app = express();
@@ -144,18 +144,6 @@ export async function createApp() {
       if (displayUrl.length > 60) {
         displayUrl = displayUrl.slice(0, 57) + "...";
       }
-
-      // Broadcast clean log object to developer UI clients
-      broadcastLogToClients({
-        timestamp: now,
-        status,
-        duration: timeMs,
-        size: sizeStr,
-        ip: clientIp,
-        source,
-        method: req.method,
-        url: req.originalUrl
-      });
 
       console.log(
         `${colors.gray}[${now}]${colors.reset} ` +
