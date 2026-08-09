@@ -1,7 +1,12 @@
 import { logger } from "../../config/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
-  const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
+  const clientIp =
+    req.headers["x-real-ip"] ||
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    "Unknown IP";
   const now = new Date().toLocaleTimeString("en-US", { hour12: false });
 
   const redBg = "\x1b[41m\x1b[37m\x1b[1m";

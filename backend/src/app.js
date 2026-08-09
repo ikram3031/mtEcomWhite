@@ -60,7 +60,12 @@ export async function createApp() {
 
   app.use((req, res, next) => {
     const startTime = process.hrtime();
-    const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || req.socket?.remoteAddress || "Unknown IP";
+    const clientIp =
+      req.headers["x-real-ip"] ||
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      req.ip ||
+      req.socket?.remoteAddress ||
+      "Unknown IP";
     const now = new Date().toLocaleTimeString("en-US", { hour12: false });
 
     res.on("finish", () => {
