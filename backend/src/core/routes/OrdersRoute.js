@@ -3,6 +3,7 @@ import {
   createOrder,
   deleteOrder,
   getOrderById,
+  getOrderInvoiceView,
   listOrders,
   updateOrder,
   bulkDeleteOrders,
@@ -17,6 +18,9 @@ const ordersRouter = Router();
 
 // Create order from checkout payload (Public endpoint for guest and logged-in customers)
 ordersRouter.post("/new-order", createOrder);
+
+// Public printable / download invoice PDF view endpoint for order emails
+ordersRouter.get("/:orderId/invoice", getOrderInvoiceView);
 
 // Get a paginated list of all orders (Dashboard/Admin only)
 ordersRouter.get(

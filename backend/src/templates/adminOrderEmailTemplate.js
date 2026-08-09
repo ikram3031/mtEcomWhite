@@ -347,6 +347,13 @@ export const buildAdminOrderEmailHtml = ({
           </p>
         </div>
 
+        <!-- Download / Print Invoice PDF CTA -->
+        <div style="text-align: center; margin: 30px 0 10px 0;" class="no-print">
+          <a href="https://server.decantrebd.com/api/v1/orders/${orderId}/invoice" target="_blank" style="display: inline-block; padding: 12px 28px; background-color: #C5A059; color: #000000; text-decoration: none; border-radius: 6px; font-weight: 700; font-family: 'Geist Mono', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.25);">
+            📄 Download / Print Invoice PDF
+          </a>
+        </div>
+
       </div>
 
       <!-- Dark Footer -->
