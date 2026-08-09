@@ -60,12 +60,15 @@ export async function createApp() {
 
   app.use((req, res, next) => {
     const startTime = process.hrtime();
-    const clientIp =
-      req.headers["x-real-ip"] ||
-      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-      req.ip ||
-      req.socket?.remoteAddress ||
-      "Unknown IP";
+    
+    // Robust IP extraction logic
+    const xRealIp = req.headers["x-real-ip"];
+    const xForwardedFor = req.headers["x-forwarded-for"];
+    const rawIp = xRealIp || (xForwardedFor ? xForwardedFor.split(",")[0].trim() : null) || req.ip || req.socket?.remoteAddress || "Unknown IP";
+    
+    // Clean IPv6 prefix if present (e.g. ::ffff:103.145.xx.xx)
+    const clientIp = rawIp.replace(/^::ffff:/, "");
+
     const now = new Date().toLocaleTimeString("en-US", { hour12: false });
 
     res.on("finish", () => {
@@ -103,9 +106,15 @@ export async function createApp() {
       };
 
       const methodStr = colors[req.method] || (req.method + "      ").slice(0, 6);
-      const timePadded = `${timeMs}ms`.padStart(7, " ");
+      const timePadded = `${timeMs}ms`.padStart(6, " ");
       const sizePadded = sizeStr.padStart(8, " ");
       const statusPadded = `${statusColor}${status}${colors.reset}`;
+
+      // Prevent URL from breaking onto new lines by limiting/truncating ultra-long query strings
+      let displayUrl = req.originalUrl;
+      if (displayUrl.length > 65) {
+        displayUrl = displayUrl.slice(0, 62) + "...";
+      }
 
       console.log(
         `${colors.gray}[${now}]${colors.reset} ` +
@@ -113,7 +122,7 @@ export async function createApp() {
         `${colors.yellow}${timePadded}${colors.reset} | ` +
         `${colors.cyan}${sizePadded}${colors.reset} | ` +
         `${colors.gray}[IP: ${clientIp}]${colors.reset} | ` +
-        `${methodStr} ${colors.boldWhite}${req.originalUrl}${colors.reset}`
+        `${methodStr} ${colors.boldWhite}${displayUrl}${colors.reset}`
       );
     });
 
