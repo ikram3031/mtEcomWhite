@@ -65,9 +65,9 @@ export function sendOrderEmailsAsynchronously(order) {
         };
       }) : [];
 
-      const subtotal = Number(order.totals?.subtotal ?? order.subtotal ?? 0);
-      const shippingFee = Number(order.totals?.shippingFee ?? order.shippingFee ?? order.totals?.shipping ?? 0);
-      const totalAmount = Number(order.totals?.total ?? order.totalAmount ?? (subtotal + shippingFee) ?? 0);
+      const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
+      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shipping || 0);
+      const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
       const formattedOrderData = {
