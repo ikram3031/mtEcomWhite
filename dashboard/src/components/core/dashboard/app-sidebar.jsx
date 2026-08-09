@@ -15,6 +15,9 @@ import {
   X,
   Menu,
   Sliders,
+  Code2,
+  FileCode,
+  Terminal,
 } from "lucide-react"
 
 import {

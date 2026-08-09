@@ -36,6 +36,8 @@ import Billings from './pages/dashboard/billing/billings';
 import ApiDocs from './pages/dashboard/developer/apiDocs';
 import SystemLogs from './pages/dashboard/developer/systemLogs';
 
+import { RouteErrorElement } from './components/core/ErrorBoundary';
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -44,10 +46,12 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+    errorElement: <RouteErrorElement />,
   },
   {
     path: '/dashboard',
     element: <DashboardLayout />,
+    errorElement: <RouteErrorElement />,
     children: [
       { path: '', element: <Overview /> },
       { path: 'users', element: <Users /> },
