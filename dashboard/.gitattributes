@@ -1,0 +1,4 @@
+# Keep branch-specific dashboard Dockerfile & nginx configs intact during merges
+Dockerfile merge=ours
+.dockerignore merge=ours
+nginx.conf merge=ours
