@@ -8,7 +8,7 @@
  */
 export const buildAdminOrderEmailHtml = ({
   order = {},
-  logoUrl = "https://server.decantrebd.com/uploads/logo_horizontal.png"
+  logoUrl = "https://server.decantrebd.com/uploads/decantre_logo.png"
 }) => {
   const {
     orderId = "3870",
