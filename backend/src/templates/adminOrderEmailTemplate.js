@@ -11,38 +11,18 @@ export const buildAdminOrderEmailHtml = ({
   logoUrl = "https://server.decantrebd.com/uploads/decantre_logo.png"
 }) => {
   const {
-    orderId = "3870",
+    orderId = "N/A",
     createdAt = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-    customerName = "Ikramul Hoque",
-    customerEmail = "metalhead.developer@gmail.com",
-    customerPhone = "+880 1712-345678",
-    billingAddress = {
-      street: "House 45, Road 11, Sector 4",
-      city: "Uttara",
-      state: "Dhaka",
-      zipCode: "1230"
-    },
+    customerName = "Customer",
+    customerEmail = "",
+    customerPhone = "N/A",
+    billingAddress = {},
     shippingAddress = null,
-    items = [
-      {
-        productName: "Sauvage Elixir Eau De Parfum",
-        variantName: "10ml Decant",
-        quantity: 2,
-        price: 1850,
-        subtotal: 3700
-      },
-      {
-        productName: "Baccarat Rouge 540 Extrait",
-        variantName: "5ml Decant",
-        quantity: 1,
-        price: 2400,
-        subtotal: 2400
-      }
-    ],
-    subtotal = 6100,
-    shippingFee = 100,
-    totalAmount = 6200,
-    paymentMethod = "Cash on delivery",
+    items = [],
+    subtotal = 0,
+    shippingFee = 0,
+    totalAmount = 0,
+    paymentMethod = "N/A",
   } = order;
 
   const finalShipping = shippingAddress || billingAddress;
