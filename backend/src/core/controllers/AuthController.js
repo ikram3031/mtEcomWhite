@@ -5,7 +5,7 @@ import { env } from "../../config/env.js";
 import { logger } from "../../config/logger.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
 
-const createAccessToken = (user) => {
+export const createAccessToken = (user) => {
   return jwt.sign(
     { userId: user.id },
     env.ACCESS_TOKEN_SECRET,
@@ -13,11 +13,11 @@ const createAccessToken = (user) => {
   );
 };
 
-const createRefreshToken = () => {
+export const createRefreshToken = () => {
   return crypto.randomBytes(48).toString("hex");
 };
 
-// POST /auth/login - ইউজারের লগইন এবং access/refresh token তৈরি করে
+// POST /auth/login - Validates credentials and prompts for 2FA OTP verification
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body ?? {};
@@ -37,37 +37,11 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ status: "error", message: "Invalid credentials" });
     }
 
-    const refreshToken = createRefreshToken();
-    const refreshTokenExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_EXPIRES_MS);
-    user.lastLogin = new Date();
-    user.refreshToken = refreshToken;
-    user.refreshTokenExpiresAt = refreshTokenExpiresAt;
-    await user.save();
-
-    if (!refreshToken) {
-      logger.error({ userId: user.id }, "Failed to generate refresh token for login");
-      return res.status(500).json({ status: "error", message: "Failed to issue refresh token" });
-    }
-
-    const accessToken = createAccessToken(user);
-    logger.debug({ userId: user.id }, "Issued new access and refresh tokens");
-
+    // Respond indicating 2FA verification is required
     res.json({
       status: "success",
-      data: {
-        user: {
-          id: user.id,
-          did: user.did,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          lastLogin: user.lastLogin,
-        },
-        accessToken,
-        accessTokenExpiresIn: env.ACCESS_TOKEN_EXPIRES_IN,
-        refreshToken,
-        refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
-      },
+      requires2fa: true,
+      email: user.email,
     });
   } catch (error) {
     next(error);

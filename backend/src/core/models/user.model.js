@@ -23,6 +23,8 @@ const userSchema = new Schema(
     refreshTokenExpiresAt: { type: Date, select: false },
     emailOtp: { type: String, trim: true, select: false },
     emailOtpExpiresAt: { type: Date, select: false },
+    twoFactorSecret: { type: String, select: false },
+    twoFactorEnabled: { type: Boolean, default: false },
     role: { type: String, required: true, enum: USER_ROLES, default: "Employee" },
     assets: {
       type: [String],
@@ -54,6 +56,7 @@ const userSchema = new Schema(
         delete ret.passwordHash;
         delete ret.emailOtp;
         delete ret.emailOtpExpiresAt;
+        delete ret.twoFactorSecret;
         delete ret.refreshToken;
         delete ret.refreshTokenExpiresAt;
         return ret;

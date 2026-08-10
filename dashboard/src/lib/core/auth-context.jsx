@@ -29,6 +29,12 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await apiClient.post('/api/v1/auth/login', { email, password });
+      
+      // If 2FA is required, return this to the component to handle the second step
+      if (response.data?.requires2fa) {
+        return response.data;
+      }
+
       const { user: apiUser, accessToken, refreshToken } = response.data.data;
 
       const loggedUser = {
@@ -46,6 +52,32 @@ export const AuthProvider = ({ children }) => {
       setUser(loggedUser);
     } catch (err) {
       throw new Error(getGenericErrorMessage(err, 'Sign in failed. Please check your credentials.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verify2fa = async (email, password, code) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.post('/api/v1/auth/2fa/verify', { email, password, code });
+      const { user: apiUser, accessToken, refreshToken } = response.data.data;
+
+      const loggedUser = {
+        id: apiUser.id || apiUser._id,
+        did: apiUser.did,
+        email: apiUser.email || email,
+        name: apiUser.name || email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        role: apiUser.role || "Employee",
+        avatar: apiUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+      };
+
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(loggedUser));
+      setUser(loggedUser);
+    } catch (err) {
+      throw new Error(getGenericErrorMessage(err, '2FA verification failed. Please check the code.'));
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +128,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, loginWithGoogle }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, loginWithGoogle, verify2fa }}>
       {children}
     </AuthContext.Provider>
   );
