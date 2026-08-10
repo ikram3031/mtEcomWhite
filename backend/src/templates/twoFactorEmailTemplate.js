@@ -189,7 +189,7 @@ export const buildTwoFactorQrEmailHtml = ({
         <h1 class="title">Set Up Two-Factor Authentication</h1>
         <p class="greeting">Hello ${finalName},</p>
         <p class="subtitle">
-          You have requested to set up Google Authenticator for your Decantre Dashboard account.
+          You have requested to set up Google Authenticator for your Decantre Dashboard (https://dashboard.decantrebd.com).
           Follow the steps below to secure your login.
         </p>
 
@@ -221,7 +221,7 @@ export const buildTwoFactorQrEmailHtml = ({
       <!-- Footer -->
       <div class="footer">
         <p>&copy; ${new Date().getFullYear()} <a href="https://decantrebd.com">Decantre</a>. All rights reserved.</p>
-        <p>Decantre Bangladesh &mdash; Dashboard Security Notification</p>
+        <p>decantrebd.com &mdash; Dashboard Security Notification</p>
       </div>
 
     </div>
