@@ -42,23 +42,47 @@ export function sendOrderEmailsAsynchronously(order) {
       const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
       const fromAddress = `"${fromName}" <${fromEmail}>`;
 
-      // Extract order details with fallback
+      // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
-      const customerEmail = order.customer?.email;
-      const customerName = order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || "Customer";
+      const customerEmail = order.customer?.email || "";
+      const customerName = order.customer?.fullName || order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || "Customer";
+      const customerPhone = order.customer?.phone || "N/A";
       const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-      const billingAddress = order.billingAddress || order.shippingAddress || {};
-      const shippingAddress = order.shippingAddress || billingAddress;
+      // Build customer address object from OrderModel customer schema
+      const customerAddrStr = [
+        order.customer?.address,
+        order.customer?.thana,
+        order.customer?.city,
+        order.customer?.district,
+        order.customer?.zip
+      ].filter(Boolean).join(', ');
+
+      const formattedAddress = {
+        street: order.customer?.address || (typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.street) || "",
+        city: order.customer?.city || order.customer?.district || order.shippingAddress?.city || "",
+        state: order.customer?.thana || order.shippingAddress?.state || "",
+        zipCode: order.customer?.zip || order.shippingAddress?.zipCode || "",
+        fullAddress: customerAddrStr
+      };
+
+      const billingAddress = (order.billingAddress && Object.keys(order.billingAddress).length > 0) ? order.billingAddress : formattedAddress;
+      const shippingAddress = (order.shippingAddress && Object.keys(order.shippingAddress).length > 0) ? order.shippingAddress : formattedAddress;
+
       const items = Array.isArray(order.items) ? order.items.map(item => {
         const quantity = Number(item.quantity || 1);
-        const price = Number(item.price ?? item.unitPrice ?? 0);
+        const price = Number(item.unitPrice ?? item.price ?? 0);
         const subtotal = Number(item.subtotal ?? item.total ?? (price * quantity) ?? 0);
         const finalPrice = price || (subtotal / quantity) || 0;
         const finalSubtotal = subtotal || (finalPrice * quantity) || 0;
+
+        // Combine size and concentration for complete variant display
+        const variantParts = [item.size, item.concentration, item.variant, item.variantName].filter(Boolean);
+        const variantName = [...new Set(variantParts)].join(' • ');
+
         return {
           productName: item.name || item.productName || "Product",
-          variantName: item.variant || item.variantName || item.size || "",
+          variantName,
           quantity,
           price: finalPrice,
           subtotal: finalSubtotal
@@ -66,7 +90,7 @@ export function sendOrderEmailsAsynchronously(order) {
       }) : [];
 
       const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
-      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shipping || 0);
+      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
       const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
@@ -75,7 +99,7 @@ export function sendOrderEmailsAsynchronously(order) {
         createdAt,
         customerName,
         customerEmail,
-        customerPhone: order.customer?.phone || "N/A",
+        customerPhone,
         billingAddress,
         shippingAddress,
         items,
