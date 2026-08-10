@@ -275,7 +275,7 @@ export const buildOrderInvoiceEmailHtml = ({
         <div class="notice-box">
           <strong style="color: #C5A059;">Here's a reminder of what you've ordered:</strong><br>
           <span style="color: #E4E4E7; margin-top: 4px; display: inline-block;">
-            ${paymentMethod.toLowerCase().includes('cash') ? 'Pay with cash upon delivery.' : `Payment via ${paymentMethod}.`}
+            ${paymentMethod.toLowerCase().includes('cod') ? 'Pay with cash upon delivery.' : `Payment via ${paymentMethod}.`}
           </span>
         </div>
 
