@@ -233,3 +233,8 @@
   margin: 0.8em 0;
   color: var(--muted-foreground);
 }
+
+button, [role="button"], [type="button"], [type="submit"], [type="reset"] {
+  cursor: pointer;
+}
+

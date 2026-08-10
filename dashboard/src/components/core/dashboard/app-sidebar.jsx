@@ -43,30 +43,44 @@ export function AppSidebar({ ...props }) {
   const { user } = useAuth()
   const { state, setOpen } = useSidebar()
 
+  const handleParentMenuClick = (e) => {
+    e.preventDefault();
+    if (state !== "expanded") {
+      setOpen(true);
+    }
+  };
+
+  const handleSubMenuClick = () => {
+    if (state !== "expanded") {
+      setOpen(true);
+    }
+  };
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border px-6 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="border-b border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
-              <div className="flex items-center gap-3">
-                <DecantreLogo className="h-8 w-auto text-primary shrink-0" />
+              {/* Logo constrained so it never overflows into the close button */}
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden mr-2">
+                <DecantreLogo className="h-6 w-auto text-primary shrink-0 max-w-[140px]" />
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+                className="p-1.5 rounded-full bg-primary hover:bg-primary/90 text-black border-0 transition-all flex items-center justify-center shrink-0 cursor-pointer"
                 title="Close Sidebar"
               >
-                <X className="h-[18px] w-[18px]" />
+                <X className="h-4 w-4 text-black" />
               </button>
             </>
           ) : (
             <button
               onClick={() => setOpen(true)}
-              className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+              className="p-1.5 rounded-full bg-primary hover:bg-primary/90 text-black border-0 transition-all flex items-center justify-center shrink-0 cursor-pointer"
               title="Open Sidebar"
             >
-              <Menu className="h-[18px] w-[18px]" />
+              <Menu className="h-4 w-4 text-black" />
             </button>
           )}
         </div>
@@ -79,6 +93,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard"}
               tooltip="Overview"
+              onClick={handleSubMenuClick}
               render={<Link to="/dashboard" />}
             >
               <LayoutDashboard className="h-4 w-4" />
@@ -86,12 +101,13 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* Orders */}
+          {/* Orders (Parent with Submenus) */}
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={pathname.startsWith("/dashboard/orders")}
               tooltip="Orders"
-              render={<Link to="/dashboard/orders" />}
+              onClick={handleParentMenuClick}
+              className="cursor-pointer"
             >
               <ShoppingBag className="h-4 w-4" />
               <span>Orders</span>
@@ -100,6 +116,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/orders/new"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/orders/new" />}
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
@@ -109,6 +126,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/orders"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/orders" />}
                 >
                   <ListOrdered className="h-3.5 w-3.5" />
@@ -118,12 +136,13 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuSub>
           </SidebarMenuItem>
 
-          {/* Products Management */}
+          {/* Products Management (Parent with Submenus) */}
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={pathname.startsWith("/dashboard/products")}
+              isActive={pathname.startsWith("/dashboard/products") && pathname !== "/dashboard/products/stock"}
               tooltip="Products"
-              render={<Link to="/dashboard/products" />}
+              onClick={handleParentMenuClick}
+              className="cursor-pointer"
             >
               <Package className="h-4 w-4" />
               <span>Products</span>
@@ -132,6 +151,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/new"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products/new" />}
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
@@ -141,6 +161,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products" />}
                 >
                   <ListOrdered className="h-3.5 w-3.5" />
@@ -150,6 +171,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/categories"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products/categories" />}
                 >
                   <Receipt className="h-3.5 w-3.5" />
@@ -159,6 +181,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/brands"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products/brands" />}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
@@ -168,6 +191,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/attributes"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products/attributes" />}
                 >
                   <Sliders className="h-3.5 w-3.5" />
@@ -177,6 +201,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/products/coupons"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/products/coupons" />}
                 >
                   <Ticket className="h-3.5 w-3.5" />
@@ -191,6 +216,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/products/stock"}
               tooltip="Stock Management"
+              onClick={handleSubMenuClick}
               render={<Link to="/dashboard/products/stock" />}
             >
               <ListOrdered className="h-4 w-4" />
@@ -203,6 +229,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/members"}
               tooltip="Members"
+              onClick={handleSubMenuClick}
               render={<Link to="/dashboard/members" />}
             >
               <Users className="h-4 w-4" />
@@ -210,12 +237,13 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* Billing & Payment */}
+          {/* Billing & Payment (Parent with Submenus) */}
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={pathname.startsWith("/dashboard/billing")}
               tooltip="Billing & Payment"
-              render={<Link to="/dashboard/billing" />}
+              onClick={handleParentMenuClick}
+              className="cursor-pointer"
             >
               <CreditCard className="h-4 w-4" />
               <span>Billing & Payment</span>
@@ -224,6 +252,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/billing/billings"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/billing/billings" />}
                 >
                   <Receipt className="h-3.5 w-3.5" />
@@ -233,6 +262,7 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton
                   isActive={pathname === "/dashboard/billing/payments"}
+                  onClick={handleSubMenuClick}
                   render={<Link to="/dashboard/billing/payments" />}
                 >
                   <CreditCard className="h-3.5 w-3.5" />
@@ -247,6 +277,7 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/reports"}
               tooltip="Reports"
+              onClick={handleSubMenuClick}
               render={<Link to="/dashboard/reports" />}
             >
               <BarChart3 className="h-4 w-4" />
@@ -259,19 +290,22 @@ export function AppSidebar({ ...props }) {
             <SidebarMenuButton
               isActive={pathname === "/dashboard/users"}
               tooltip="System Users"
+              onClick={handleSubMenuClick}
               render={<Link to="/dashboard/users" />}
             >
               <ShieldAlert className="h-4 w-4" />
               <span>System Users</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* Developer Options (Hardcoded for ikramul.web@gmail.com) */}
+
+          {/* Developer Options (Parent with Submenus) */}
           {user?.email?.toLowerCase().trim() === "ikramul.web@gmail.com" && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/developer")}
                 tooltip="Developer Tools"
-                render={<Link to="/dashboard/developer/v1/doc.html" />}
+                onClick={handleParentMenuClick}
+                className="cursor-pointer"
               >
                 <Code2 className="h-4 w-4 text-purple-400" />
                 <span className="font-semibold text-purple-400">Developer Options</span>
@@ -280,6 +314,7 @@ export function AppSidebar({ ...props }) {
                 <SidebarMenuSubItem>
                   <SidebarMenuSubButton
                     isActive={pathname === "/dashboard/developer/v1/doc.html"}
+                    onClick={handleSubMenuClick}
                     render={<Link to="/dashboard/developer/v1/doc.html" />}
                   >
                     <FileCode className="h-3.5 w-3.5" />
@@ -289,6 +324,7 @@ export function AppSidebar({ ...props }) {
                 <SidebarMenuSubItem>
                   <SidebarMenuSubButton
                     isActive={pathname === "/dashboard/developer/logs"}
+                    onClick={handleSubMenuClick}
                     render={<Link to="/dashboard/developer/logs" />}
                   >
                     <Terminal className="h-3.5 w-3.5" />

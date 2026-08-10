@@ -181,7 +181,7 @@ export const AuthModal = () => {
 
     setIsLoading(true);
     try {
-      const response = await verifyMemberOtp({ email, otp: code });
+      const response = await verifyMemberOtp({ email, otp: code, context: otpContext });
       const isVerified = response.isEmailVerified ?? response.data?.isEmailVerified ?? true;
 
       if (otpContext === 'forgot') {
@@ -216,7 +216,10 @@ export const AuthModal = () => {
         raw: userData,
       };
 
-      setUser(verifiedUser, null);
+      const accessToken = response.accessToken || response.token || response.data?.token || response.data?.accessToken;
+      const refreshToken = response.refreshToken || response.data?.refreshToken;
+
+      setUser(verifiedUser, accessToken || refreshToken ? { accessToken, refreshToken } : null);
       addToast(`OTP verified successfully! Welcome, ${displayName}.`, 'success');
       handleClose();
     } catch (err) {
@@ -262,7 +265,7 @@ export const AuthModal = () => {
 
         // Trigger OTP verification flow if user email is unverified
         if (response.requiresOtp || response.isEmailVerified === false) {
-          setOtpContext('register');
+          setOtpContext('login');
           setMode('otp');
           setResendTimer(180);
           addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');
@@ -292,7 +295,7 @@ export const AuthModal = () => {
         const response = await loginMember({ email, password });
 
         if (response.requiresOtp || response.isEmailVerified === false || response.data?.requiresOtp || response.data?.isEmailVerified === false) {
-          setOtpContext('register');
+          setOtpContext('login');
           setMode('otp');
           setResendTimer(180);
           addToast('Verification required. Enter the 6-digit code sent to your email.', 'info');

@@ -426,6 +426,33 @@ export const verifyMemberOtp = async (req, res, next) => {
     }
 
     if (!member.isEmailVerified) {
+      if (req.body.context === "register") {
+        member.emailOtp = undefined;
+        member.emailOtpExpiresAt = undefined;
+        member.isEmailVerified = true;
+        member.emailVerifiedAt = new Date();
+        await member.save();
+
+        const tokenBundle = await issueMemberTokens(member);
+
+        return res.json({
+          status: "success",
+          message: "Verified successfully",
+          isEmailVerified: true,
+          data: {
+            user: {
+              id: member.id,
+              did: member.did,
+              name: member.name,
+              email: member.email,
+              phone: member.phone,
+              role: member.role,
+            },
+            ...tokenBundle,
+          },
+        });
+      }
+
       return res.json({
         status: "success",
         requiresPasswordReset: true,
