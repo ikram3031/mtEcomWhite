@@ -6,6 +6,7 @@ import { comparePassword } from "../utils/password.js";
 import { createAccessToken, createRefreshToken } from "./AuthController.js";
 import { env } from "../../config/env.js";
 import { logger } from "../../config/logger.js";
+import { buildTwoFactorQrEmailHtml } from "../../templates/twoFactorEmailTemplate.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;
@@ -54,48 +55,32 @@ export const sendQrCodeEmail = async (req, res, next) => {
       await user.save();
     }
 
-    // Generate OTPAuth URI
-    const label = `Decantre Dashboard (${user.email})`;
+    // Generate OTPAuth URI for the TOTP app
     const otpauth = authenticator.keyuri(user.email, "Decantre BD", secret);
 
-    // Generate QR Code PNG Buffer
-    const qrCodeBuffer = await QRCode.toBuffer(otpauth);
+    // Render QR Code as PNG buffer for inline email attachment
+    const qrCodeBuffer = await QRCode.toBuffer(otpauth, { width: 220, margin: 2 });
 
-    // SMTP setup
+    // Build SMTP transport and sender address
     const transport = getTransport();
     const fromName = process.env.SMTP_FROM_NAME || "Decantre BD";
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
     const fromAddress = `"${fromName}" <${fromEmail}>`;
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="color: #c5a880; text-align: center;">Set Up Google Authenticator</h2>
-        <p>Hello ${user.name},</p>
-        <p>To secure your account, scan the QR code below using the Google Authenticator app (or any compatible TOTP app):</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <img src="cid:qrcode" alt="Authenticator QR Code" style="border: 2px solid #ddd; padding: 10px; border-radius: 4px; width: 200px; height: 200px;" />
-        </div>
-        <p>Alternatively, you can manually type this key into your app:</p>
-        <p style="background: #f4f4f4; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 16px; text-align: center; font-weight: bold; letter-spacing: 2px;">
-          ${secret}
-        </p>
-        <p>After scanning, enter the 6-digit code displayed in the app to complete verification.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 12px; color: #888; text-align: center;">This is a security notification from Decantre. If you did not trigger this request, please change your password immediately.</p>
-      </div>
-    `;
+    // Build branded HTML email from template
+    const htmlContent = buildTwoFactorQrEmailHtml({ name: user.name, secret });
 
     await transport.sendMail({
       from: fromAddress,
       to: user.email,
-      subject: "Set up Two-Factor Authentication (2FA) - Decantre Dashboard",
-      text: `Hello ${user.name},\n\nScan the QR code in your Authenticator app to setup 2FA.\nSecret Key: ${secret}\n\nThank you.`,
+      subject: "Set Up Two-Factor Authentication — Decantre Dashboard",
+      text: `Hello ${user.name},\n\nScan the QR code in your Google Authenticator app to set up 2FA.\nCan't scan? Enter this key manually: ${secret}\n\nIf you did not request this, change your password immediately.`,
       html: htmlContent,
       attachments: [
         {
           filename: "qrcode.png",
           content: qrCodeBuffer,
-          cid: "qrcode",
+          cid: "qrcode", // Referenced as src="cid:qrcode" in the HTML template
         },
       ],
     });
