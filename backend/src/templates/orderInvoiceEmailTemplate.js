@@ -24,6 +24,7 @@ export const buildOrderInvoiceEmailHtml = ({
     shippingFee = 0,
     totalAmount = 0,
     paymentMethod = "N/A",
+    giftWrap = false,
   } = order;
 
   const finalShipping = shippingAddress || billingAddress;
@@ -31,7 +32,14 @@ export const buildOrderInvoiceEmailHtml = ({
   const formatAddr = (addr) => {
     if (!addr) return "N/A";
     if (typeof addr === "string") return addr;
-    return `${addr.street || ''}${addr.city ? ', ' + addr.city : ''}${addr.state ? ', ' + addr.state : ''}${addr.zipCode ? ' - ' + addr.zipCode : ''}`.replace(/^,\s*/, '');
+    if (addr.fullAddress && addr.fullAddress.trim()) return addr.fullAddress;
+    const parts = [
+      addr.street,
+      addr.thana || addr.state,
+      addr.district || addr.city,
+      (addr.zipCode || addr.zip) ? `Zip: ${addr.zipCode || addr.zip}` : ''
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : 'N/A';
   };
 
   const billingStr = formatAddr(billingAddress);
@@ -61,7 +69,7 @@ export const buildOrderInvoiceEmailHtml = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thank you for your order</title>
+  <title>Invoice-${orderId}</title>
   <!-- Google Fonts Import -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -252,6 +260,58 @@ export const buildOrderInvoiceEmailHtml = ({
         margin-bottom: 20px !important;
       }
     }
+    @page {
+      size: A4 portrait;
+      margin: 6mm;
+    }
+    @media print {
+      body, .wrapper {
+        background-color: #121215 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .container {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .content {
+        padding: 20px 24px !important;
+      }
+      .header {
+        padding: 16px 15px !important;
+      }
+      .footer {
+        padding: 14px !important;
+      }
+      .notice-box {
+        margin-bottom: 16px !important;
+        padding: 10px 14px !important;
+      }
+      .divider {
+        margin: 16px 0 !important;
+      }
+      .title {
+        font-size: 20px !important;
+        margin-bottom: 10px !important;
+      }
+      .greeting, .message-text {
+        margin-bottom: 10px !important;
+      }
+      .items-table, .summary-table {
+        margin-bottom: 16px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -335,19 +395,27 @@ export const buildOrderInvoiceEmailHtml = ({
             <td width="48%" class="responsive-col" style="vertical-align: top;">
               <h3 class="address-title">Shipping address</h3>
               <p class="address-text">
-                <strong style="color: #FFFFFF;">${customerName}</strong><br>
-                ${shippingStr}
+                ${paymentMethod.toLowerCase().includes('instore') || paymentMethod.toLowerCase().includes('office') ? `
+                  <strong style="color: #C5A059;">🏢 Office Pickup (In-Store)</strong><br>
+                  <span style="color: #A1A1AA; font-size: 11px;">Customer will pick up order from Decantre Office.</span>
+                ` : `
+                  <strong style="color: #FFFFFF;">${(shippingAddress && shippingAddress.name) || customerName}</strong><br>
+                  ${shippingStr}<br>
+                  ${((shippingAddress && shippingAddress.phone) || customerPhone) && ((shippingAddress && shippingAddress.phone) || customerPhone) !== 'N/A' ? `<span style="color: #D4D4D8;">Phone: ${(shippingAddress && shippingAddress.phone) || customerPhone}</span>` : ''}
+                `}
               </p>
             </td>
           </tr>
         </table>
 
+        ${!isPrintView ? `
         <!-- Download / Print Invoice PDF CTA -->
         <div style="text-align: center; margin: 30px 0 10px 0;" class="no-print">
           <a href="https://server.decantrebd.com/api/v1/orders/${orderId}/invoice" target="_blank" style="display: inline-block; padding: 12px 28px; background-color: #C5A059; color: #000000; text-decoration: none; border-radius: 6px; font-weight: 700; font-family: 'Geist Mono', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.25);">
             📄 Download / Print Invoice PDF
           </a>
         </div>
+        ` : ''}
 
       </div>
 

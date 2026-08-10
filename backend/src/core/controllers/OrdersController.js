@@ -474,6 +474,7 @@ export const getOrderInvoiceView = async (req, res, next) => {
 
     const invoiceHtml = buildOrderInvoiceEmailHtml({ order: formattedOrderData, isPrintView: true });
     res.setHeader("Content-Type", "text/html");
+    res.setHeader("Content-Disposition", `inline; filename="Invoice-${formattedOrderData.orderId}.pdf"`);
     return res.send(invoiceHtml);
   } catch (error) {
     next(error);

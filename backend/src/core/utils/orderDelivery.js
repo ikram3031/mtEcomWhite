@@ -49,25 +49,48 @@ export function sendOrderEmailsAsynchronously(order) {
       const customerPhone = order.customer?.phone || "N/A";
       const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-      // Build customer address object from OrderModel customer schema
-      const customerAddrStr = [
+      // Build primary customer address (Billing Address) from OrderModel customer schema
+      const primaryAddrParts = [
         order.customer?.address,
         order.customer?.thana,
-        order.customer?.city,
-        order.customer?.district,
-        order.customer?.zip
-      ].filter(Boolean).join(', ');
+        order.customer?.district || order.customer?.city,
+        order.customer?.zip ? `Zip: ${order.customer?.zip}` : ''
+      ].filter(Boolean);
 
-      const formattedAddress = {
-        street: order.customer?.address || (typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.street) || "",
-        city: order.customer?.city || order.customer?.district || order.shippingAddress?.city || "",
-        state: order.customer?.thana || order.shippingAddress?.state || "",
-        zipCode: order.customer?.zip || order.shippingAddress?.zipCode || "",
-        fullAddress: customerAddrStr
+      const billingAddress = {
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        street: order.customer?.address || "",
+        thana: order.customer?.thana || "",
+        district: order.customer?.district || order.customer?.city || "",
+        zipCode: order.customer?.zip || "",
+        fullAddress: primaryAddrParts.join(', ')
       };
 
-      const billingAddress = (order.billingAddress && Object.keys(order.billingAddress).length > 0) ? order.billingAddress : formattedAddress;
-      const shippingAddress = (order.shippingAddress && Object.keys(order.shippingAddress).length > 0) ? order.shippingAddress : formattedAddress;
+      // Resolve Shipping Address (Use custom shippingAddress if provided; otherwise fallback to billingAddress)
+      let shippingAddress = billingAddress;
+      if (order.shippingAddress && typeof order.shippingAddress === 'object' && Object.keys(order.shippingAddress).length > 0) {
+        const customStreet = order.shippingAddress.street || order.shippingAddress.address;
+        if (customStreet && customStreet.trim()) {
+          const customAddrParts = [
+            customStreet,
+            order.shippingAddress.thana || order.shippingAddress.state,
+            order.shippingAddress.district || order.shippingAddress.city,
+            (order.shippingAddress.zipCode || order.shippingAddress.zip) ? `Zip: ${order.shippingAddress.zipCode || order.shippingAddress.zip}` : ''
+          ].filter(Boolean);
+
+          shippingAddress = {
+            name: order.shippingAddress.fullName || order.shippingAddress.name || customerName,
+            phone: order.shippingAddress.phone || customerPhone,
+            street: customStreet,
+            thana: order.shippingAddress.thana || order.shippingAddress.state || "",
+            district: order.shippingAddress.district || order.shippingAddress.city || "",
+            zipCode: order.shippingAddress.zipCode || order.shippingAddress.zip || "",
+            fullAddress: customAddrParts.join(', ')
+          };
+        }
+      }
 
       const items = Array.isArray(order.items) ? order.items.map(item => {
         const quantity = Number(item.quantity || 1);
@@ -93,6 +116,7 @@ export function sendOrderEmailsAsynchronously(order) {
       const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
       const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
+      const giftWrap = Boolean(order.customer?.giftWrap || order.giftWrap);
 
       const formattedOrderData = {
         orderId,
@@ -106,7 +130,8 @@ export function sendOrderEmailsAsynchronously(order) {
         subtotal,
         shippingFee,
         totalAmount,
-        paymentMethod
+        paymentMethod,
+        giftWrap
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)
