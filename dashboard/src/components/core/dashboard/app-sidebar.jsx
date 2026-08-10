@@ -45,28 +45,29 @@ export function AppSidebar({ ...props }) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border px-6 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="border-b border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
-              <div className="flex items-center gap-3">
-                <DecantreLogo className="h-8 w-auto text-primary shrink-0" />
+              {/* Logo constrained so it never overflows into the close button */}
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden mr-2">
+                <DecantreLogo className="h-6 w-auto text-primary shrink-0 max-w-[140px]" />
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+                className="p-1.5 rounded-full bg-primary hover:bg-primary/90 text-black border-0 transition-all flex items-center justify-center shrink-0 cursor-pointer"
                 title="Close Sidebar"
               >
-                <X className="h-[18px] w-[18px]" />
+                <X className="h-4 w-4 text-black" />
               </button>
             </>
           ) : (
             <button
               onClick={() => setOpen(true)}
-              className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+              className="p-1.5 rounded-full bg-primary hover:bg-primary/90 text-black border-0 transition-all flex items-center justify-center shrink-0 cursor-pointer"
               title="Open Sidebar"
             >
-              <Menu className="h-[18px] w-[18px]" />
+              <Menu className="h-4 w-4 text-black" />
             </button>
           )}
         </div>
