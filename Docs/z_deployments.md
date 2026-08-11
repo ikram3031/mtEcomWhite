@@ -44,6 +44,7 @@ This document serves as the master record of all white-label clients deployed on
 | **`engulfic-frontend`** | Engulfic Legacy Frontend | `8001` | `8001` | `https://engulfic.com` | Allowed publicly |
 | **`toyoland-backend-dev`** | Toyoland Dev API | `5092` | `5092` | Direct Access / Local IP | Allowed publicly |
 | **`toyoland-dashboard-dev`** | Toyoland Dev Dashboard | `8005` | `8005` | Direct Access / Local IP | Allowed publicly |
+| **`toyoland-frontend`** | Toyoland Dev Frontend | `8006` | `8006` | Direct Access (Port `8006`) | Allowed publicly |
 | **`toyoland-mongodb-dev`** | Toyoland MongoDB | `27018` | `27017` | Direct Access | Whitelisted IP only |
 
 ---
