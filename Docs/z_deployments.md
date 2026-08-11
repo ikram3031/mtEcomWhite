@@ -1,124 +1,75 @@
-# Decantre Fullstack - VPS Deployment & Architecture Documentation (`z_deployments.md`)
+# Multi-Client VPS Deployments & Port Mapping Directory
 
-This document provides a comprehensive reference for the server environments, domain/subdomain mappings, Git branches, Docker container allocations, and database configurations on the VPS (`144.79.218.126`).
-
----
-
-## 1. Environment Architecture & Git Branch Matrix
-
-| Environment                      | Purpose                          | VPS Directory Path | Git Branch |
-| :------------------------------- | :------------------------------- | :----------------- | :--------- |
-| **Primary / Dev (current live)** | Active Development & Legacy Live | `/opt/dev`         | `Decantre` |
-| **Production / Live**            | Dedicated Production Deployment  | `/decantre/live`   | `Live`     |
+This document serves as the master record of all white-label clients deployed on the VPS hosts.
 
 ---
 
-## 2. Domain & Subdomain Nginx Routing Matrix
+## 1. Decantre VPS Host (`144.79.218.126`)
 
-All web traffic is routed through Nginx reverse proxy on the VPS with active Let's Encrypt HTTPS (SSL) certificates.
+### A. Environment Paths & Volumes
+- **Primary Codebase (Live):** `/opt/live` (Branch: `Live`)
+- **Legacy Codebase (Dev):** `/opt/dev` (Branch: `Decantre`)
+- **Client Configuration Root:** `/opt/decantre/configs/`
+- **Uploads/Assets Directory:** `/var/www/uploads/` & `/opt/decantre/uploads/`
 
-| Domain / Subdomain                 | Connected Application   | Target Proxy Port       | Host Directory   | Docker Container Name     |
-| :--------------------------------- | :---------------------- | :---------------------- | :--------------- | :------------------------ |
-| `https://decantrebd.com`           | Primary Frontend Client | `http://localhost:8001` | `/opt/dev`       | `decantre-frontend-dev`   |
-| `https://dashboard.decantrebd.com` | Primary Admin Dashboard | `http://localhost:8005` | `/opt/dev`       | `decantre-dashboard-dev`  |
-| `https://server.decantrebd.com`    | Primary Express API     | `http://localhost:5092` | `/opt/dev`       | `decantre-backend-dev`    |
-| `https://service.decantrebd.com`   | Live Express API        | `http://localhost:5093` | `/decantre/live` | `decantre-backend-live`   |
-| `https://dev.decantrebd.com`       | Live Frontend Client    | `http://localhost:8011` | `/decantre/live` | `decantre-frontend-live`  |
-| `https://v2.decantrebd.com`        | Live Admin Dashboard    | `http://localhost:8015` | `/decantre/live` | `decantre-dashboard-live` |
-
----
-
-## 3. Docker Containers & Port Allocation Matrix
-
-### A. Primary Environment (`/opt/dev` - Branch: `Decantre`)
-
-- **Docker Compose File**: `/opt/dev/docker-compose.dev.yml`
-- **Container Suffix**: `-dev`
-
-| Container Name           | Service                 | Internal Port | Mapped Host Port | Status & Health   |
-| :----------------------- | :---------------------- | :------------ | :--------------- | :---------------- |
-| `decantre-frontend-dev`  | React / Vite Frontend   | `8001`        | `8001`           | Running (Healthy) |
-| `decantre-dashboard-dev` | Next.js Dashboard       | `8005`        | `8005`           | Running (Healthy) |
-| `decantre-backend-dev`   | Express Node.js API     | `5092`        | `5092`           | Running (Healthy) |
-| `decantre-mongodb-dev`   | MongoDB Database Engine | `27017`       | `27017`          | Running           |
-
-### B. Production Environment (`/decantre/live` - Branch: `Live`)
-
-- **Docker Compose File**: `/decantre/live/docker-compose.live.yml`
-- **Container Suffix**: `-live`
-
-| Container Name            | Service                 | Internal Port | Mapped Host Port | Status & Health   |
-| :------------------------ | :---------------------- | :------------ | :--------------- | :---------------- |
-| `decantre-frontend-live`  | React / Vite Frontend   | `8001`        | `8011`           | Running (Healthy) |
-| `decantre-dashboard-live` | Next.js Dashboard       | `8005`        | `8015`           | Running (Healthy) |
-| `decantre-backend-live`   | Express Node.js API     | `5093`        | `5093`           | Running (Healthy) |
-| `decantre-mongodb-live`   | MongoDB Database Engine | `27017`       | `27019`          | Running           |
+### B. Active Containers & Port Routing
+| Container Name | Service / Role | Host Port | Internal Port | Domain / Routing | Firewall Rule |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`decantre-backend-live`** | Express Node.js API | `5093` | `5093` | `https://service.decantrebd.com` | Allowed publicly |
+| **`decantre-dashboard-live`** | Next.js Dashboard | `8015` | `8005` | `https://v2.decantrebd.com` | Allowed publicly |
+| **`decantre-mongodb-live`** | MongoDB Engine | `27019` | `27017` | Direct Access / Local IP | Whitelisted IP only |
+| **`decantre-backend-dev`** | Legacy Dev API | `5092` | `5092` | `https://server.decantrebd.com` | Allowed publicly |
+| **`decantre-dashboard-dev`** | Legacy Dev Dashboard | `8005` | `8005` | `https://dashboard.decantrebd.com` | Allowed publicly |
+| **`decantre-mongodb-dev`** | Dev MongoDB Engine | `27017` | `27017` | Direct Access | Whitelisted IP only |
+| **`decantre-frontend-dev`** | Legacy Dev Frontend | `8001` | `8001` | `https://decantrebd.com` | Allowed publicly |
 
 ---
 
-## 4. Database & Storage Architecture
+## 2. Engulfic & Toyoland VPS Host (`144.79.218.8`)
 
-### A. MongoDB Databases
+### A. Environment Paths & Volumes
+- **Engulfic Codebase (Live):** `/opt/live` (Branch: `Live`)
+- **Toyoland Dev Codebase (Dev):** `/ikram/Toyoland` (Branch: `Live`)
+- **Engulfic Configurations:** `/opt/engulfic/configs/`
+- **Toyoland Configurations:** `/opt/toyoland-dev/configs/`
+- **Engulfic Uploads:** `/var/www/uploads/` & `/opt/engulfic/uploads/`
+- **Toyoland Uploads:** `/ikram/caution/uploads/`
 
-- **Primary Database (`/opt/dev`)**:
-  - DB Name: `perfume-store`
-  - MongoDB Volume: `dev_mongodb-data-dev`
-  - Record Counts: 402 Products, 829 Orders, 833 Payments, 224 Members, 131 Brands, 4 Categories, 4 System Users.
-- **Production Database (`/decantre/live`)**:
-  - DB Name: `perfume-store-live`
-  - MongoDB Volume: `live_mongodb-data-live`
-  - Record Counts: 402 Products, 829 Orders, 833 Payments, 224 Members, 131 Brands, 4 Categories, 4 System Users (restored from dump archive).
-
-### B. Uploads & Asset Synchronization
-
-- **Primary Uploads**: `/opt/dev/uploads` (mounted inside `decantre-backend-dev` at `/app/uploads`)
-- **Live Uploads**: `/decantre/live/uploads` (mounted inside `decantre-backend-live` at `/app/uploads`)
-
-### C. SMTP Email & OTP Configuration
-- **SMTP Host**: `smtp.hostinger.com`
-- **SMTP Port**: `587` (TLS)
-- **SMTP User**: `info@decantrebd.com`
-- **Status**: Configured in `/decantre/live/backend/.env` for member OTP emails & order notifications.
+### B. Active Containers & Port Routing
+| Container Name | Client / Service | Host Port | Internal Port | Domain / Routing | Firewall Rule |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`engulfic-backend-live`** | Engulfic Live API | `5094` | `5092` | `https://server.engulfic.com` | Allowed publicly |
+| **`engulfic-dashboard-live`** | Engulfic Live Dashboard | `8015` | `8005` | `https://dashboard.engulfic.com` | Allowed publicly |
+| **`engulfic-mongodb-live`** | Engulfic MongoDB | `27017` | `27017` | Direct Access | Whitelisted IP only |
+| **`engulfic-frontend`** | Engulfic Legacy Frontend | `8001` | `8001` | `https://engulfic.com` | Allowed publicly |
+| **`toyoland-backend-dev`** | Toyoland Dev API | `5092` | `5092` | Direct Access / Local IP | Allowed publicly |
+| **`toyoland-dashboard-dev`** | Toyoland Dev Dashboard | `8005` | `8005` | Direct Access / Local IP | Allowed publicly |
+| **`toyoland-mongodb-dev`** | Toyoland MongoDB | `27018` | `27017` | Direct Access | Whitelisted IP only |
 
 ---
 
-## 5. Key Operations & Management Commands
+## 3. General Maintenance Workflows
 
-### A. Deploy / Update Production Environment (`/decantre/live`)
-
+### A. Sourcing Custom Configs on VPS
+Since we use dynamic compose settings, always run deployments with the environment file flag:
 ```bash
-ssh root@144.79.218.126
-cd /decantre/live
-git fetch origin
-git pull origin Live
-docker compose -p live -f docker-compose.live.yml up -d --build
+# Example for Toyoland Dev:
+docker compose --env-file /opt/toyoland-dev/configs/backend.env -f docker-compose.prod.yml up -d --build
+
+# Example for Engulfic Live:
+docker compose --env-file /opt/engulfic/configs/backend.env -f docker-compose.prod.yml up -d --build
 ```
 
-### B. Deploy / Update Primary Environment (`/opt/dev`)
-
+### B. Updating Database Access IPs (Firewall)
+If your public IP changes and you can no longer connect via Mongo Compass:
 ```bash
-ssh root@144.79.218.126
-cd /opt/dev
-git fetch origin
-git pull origin Decantre
-docker compose -f docker-compose.dev.yml up -d --build
+# 1. Inspect dropped packets log to find your new IP:
+dmesg | grep MONGO_DROP | tail -n 5
+
+# 2. Add your new IP to iptables:
+iptables -I DOCKER-USER -i ens3 -p tcp -s <NEW_IP> --dport <PORT> -j ACCEPT
+
+# 3. Save the rules persistently:
+netfilter-persistent save
 ```
-
-### C. Check Running Containers & Logs
-
-```bash
-# Check all running containers
-docker ps
-
-# Check logs for Live Backend
-docker logs decantre-backend-live --tail=50 -f
-
-# Check logs for Live Dashboard
-docker logs decantre-dashboard-live --tail=50 -f
-```
-
-### D. Take Full Database Backup
-
-```bash
-docker exec decantre-mongodb-live mongodump -u admin -p 11223345 --authenticationDatabase admin --db perfume-store-live --archive=/tmp/perfume-store-backup.archive --gzip
-```
+*(On Decantre VPS, ports are `27017` and `27019`. On Engulfic VPS, ports are `27017` and `27018`).*
