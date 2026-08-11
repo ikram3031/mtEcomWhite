@@ -21,12 +21,11 @@ services:
       dockerfile: Dockerfile
     container_name: ${BACKEND_CONTAINER_NAME}
     restart: always
-    # .env ফাইল VPS এর fixed path থেকে mount করা হচ্ছে
-    # ব্রাঞ্চ সুইচ বা git pull করলে এই ফাইল কখনো overwrite হবে না
+    # .env ফাইল VPS এর dynamically specified path বা default path থেকে mount করা হচ্ছে
     volumes:
-      - /opt/${CLIENT_NAME}/configs/backend.env:/app/.env:ro
-      - /opt/${CLIENT_NAME}/uploads:/app/uploads
-      - /var/www/uploads:/app/src/uploads
+      - ${CLIENT_CONFIG_PATH:-/opt/${CLIENT_NAME}/configs}/backend.env:/app/.env:ro
+      - ${CLIENT_UPLOADS_PATH:-/opt/${CLIENT_NAME}/uploads}:/app/uploads
+      - ${PUBLIC_UPLOADS_PATH:-/var/www/uploads}:/app/src/uploads
     environment:
       PORT: ${BACKEND_PORT:-5092}
     ports:
@@ -42,9 +41,9 @@ services:
       dockerfile: Dockerfile
     container_name: ${DASHBOARD_CONTAINER_NAME}
     restart: always
-    # dashboard এর .env ও আলাদা fixed path থেকে mount
+    # dashboard এর .env ও dynamically specified path বা default path থেকে mount
     volumes:
-      - /opt/${CLIENT_NAME}/configs/dashboard.env:/app/.env:ro
+      - ${CLIENT_CONFIG_PATH:-/opt/${CLIENT_NAME}/configs}/dashboard.env:/app/.env:ro
     ports:
       - "${DASHBOARD_PORT:-8005}:8005"
     networks:
