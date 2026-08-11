@@ -83,7 +83,7 @@ export const listOrders = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const filter = {};
+    const filter = { active: true };
 
     if (req.query.status) {
       filter.status = req.query.status;
@@ -241,7 +241,7 @@ export const updateOrder = async (req, res, next) => {
   }
 };
 
-// Delete an order and clean up its linked member and payment records.
+// Soft delete an order by setting active = false and clean up its linked member and payment records.
 export const deleteOrder = async (req, res, next) => {
   try {
     const { orderId } = req.params;
@@ -254,7 +254,7 @@ export const deleteOrder = async (req, res, next) => {
       query = { $or: [{ did: orderId }, { orderNumber: orderId }] };
     }
 
-    const deletedOrder = await OrderModel.findOneAndDelete(query).lean();
+    const deletedOrder = await OrderModel.findOneAndUpdate(query, { $set: { active: false } }, { new: true }).lean();
     if (!deletedOrder) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
     }
@@ -287,8 +287,7 @@ export const deleteOrder = async (req, res, next) => {
   }
 };
 
-// Bulk delete orders and clean up linked member references and payment records.
-// This allows deleting multiple orders and atomically cascades deletion side-effects.
+// Soft delete multiple orders by setting active = false in bulk.
 export const bulkDeleteOrders = async (req, res, next) => {
   try {
     const { ids } = req.body;
@@ -314,8 +313,8 @@ export const bulkDeleteOrders = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'No orders found to delete' });
     }
 
-    // Perform bulk delete of order documents
-    await OrderModel.deleteMany(deleteQuery);
+    // Perform soft delete of order documents (active = false)
+    await OrderModel.updateMany(deleteQuery, { $set: { active: false } });
 
     // Collect distinct member IDs, dids, and database ObjectIds
     const memberIds = [...new Set(orders.map(o => o.member).filter(Boolean))];
