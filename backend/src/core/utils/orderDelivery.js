@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
 import { buildOrderInvoiceEmailHtml } from "../../templates/orderInvoiceEmailTemplate.js";
 import { buildAdminOrderEmailHtml } from "../../templates/adminOrderEmailTemplate.js";
+import { env } from "../../config/env.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;
@@ -10,12 +11,12 @@ let defaultTransport;
 function getTransport() {
   if (!defaultTransport) {
     defaultTransport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.hostinger.com",
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: (process.env.SMTP_ENCRYPTION || "TLS").toLowerCase() === "ssl",
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
       },
     });
   }
@@ -32,14 +33,14 @@ export function sendOrderEmailsAsynchronously(order) {
   // Execute in setImmediate to ensure completely non-blocking execution flow
   setImmediate(async () => {
     try {
-      if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+      if (!env.SMTP_USER || !env.SMTP_PASSWORD) {
         console.warn("[Email Notification] SMTP credentials not configured. Skipping email dispatch.");
         return;
       }
 
       const activeTransport = getTransport();
-      const fromName = process.env.SMTP_FROM_NAME || "Decantre BD";
-      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+      const fromName = env.SMTP_FROM_NAME || "Decantre BD";
+      const fromEmail = env.SMTP_FROM || env.SMTP_USER;
       const fromAddress = `"${fromName}" <${fromEmail}>`;
 
       // Extract order details with complete alignment to OrderModel schema

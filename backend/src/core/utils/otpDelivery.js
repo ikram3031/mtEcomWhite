@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { buildOtpEmailHtml } from "../../templates/otpEmailTemplate.js";
+import { env } from "../../config/env.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;
@@ -8,12 +9,12 @@ let defaultTransport;
 function getTransport() {
   if (!defaultTransport) {
     defaultTransport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.hostinger.com",
-      port: Number(process.env.SMTP_PORT || 465),
-      secure: (process.env.SMTP_ENCRYPTION || "SSL").toLowerCase() === "ssl",
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
       },
     });
   }
@@ -30,7 +31,7 @@ export async function sendOtpEmail({
 }) {
   const activeTransport = transport || getTransport();
 
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+  if (!env.SMTP_USER || !env.SMTP_PASSWORD) {
     return {
       delivered: false,
       reason: "SMTP credentials are not configured",
@@ -48,8 +49,8 @@ export async function sendOtpEmail({
   const html = buildOtpEmailHtml({ name, otp, type });
 
   // Format sender address to display the business name
-  const fromName = process.env.SMTP_FROM_NAME || "Decantre BD";
-  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const fromName = env.SMTP_FROM_NAME || "Decantre BD";
+  const fromEmail = env.SMTP_FROM || env.SMTP_USER;
   const fromAddress = `"${fromName}" <${fromEmail}>`;
 
   try {

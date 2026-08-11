@@ -1,22 +1,34 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import { buildInvoiceEmailHtml } from "../utils/invoiceEmailTemplate.js";
+import { env } from "../../config/env.js";
 
 const emailRouter = Router();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.hostinger.com",
-  port: Number(process.env.SMTP_PORT || 465),
-  secure: (process.env.SMTP_ENCRYPTION || "SSL").toLowerCase() === "ssl",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+// Lazy-initialized transport logic to match dynamic env configurations
+let transporter;
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      auth: {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      },
+    });
+  }
+  return transporter;
+}
 
 const sendEmail = async ({ toEmail, subject, text, html }) => {
-  await transporter.sendMail({
-    from: process.env.SMTP_USER,
+  const activeTransporter = getTransporter();
+  const fromName = env.SMTP_FROM_NAME || "Decantre BD";
+  const fromEmail = env.SMTP_FROM || env.SMTP_USER;
+  
+  await activeTransporter.sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
     to: toEmail,
     subject,
     text,
@@ -34,7 +46,7 @@ const handleEmailRequest = async (req, res) => {
     });
   }
 
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+  if (!env.SMTP_USER || !env.SMTP_PASSWORD) {
     return res.status(500).json({
       status: "error",
       message: "SMTP credentials are not configured",
@@ -73,7 +85,7 @@ const handleInvoiceRequest = async (req, res) => {
     });
   }
 
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+  if (!env.SMTP_USER || !env.SMTP_PASSWORD) {
     return res.status(500).json({
       status: "error",
       message: "SMTP credentials are not configured",

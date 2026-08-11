@@ -15,12 +15,12 @@ let defaultTransport;
 const getTransport = () => {
   if (!defaultTransport) {
     defaultTransport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.hostinger.com",
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: String(process.env.SMTP_ENCRYPTION || "TLS").toUpperCase() === "SSL",
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: String(env.SMTP_ENCRYPTION).toUpperCase() === "SSL",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
       },
     });
   }
@@ -63,8 +63,8 @@ export const sendQrCodeEmail = async (req, res, next) => {
 
     // Build SMTP transport and sender address
     const transport = getTransport();
-    const fromName = process.env.SMTP_FROM_NAME || "Decantre BD";
-    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+    const fromName = env.SMTP_FROM_NAME || "Decantre BD";
+    const fromEmail = env.SMTP_FROM || env.SMTP_USER;
     const fromAddress = `"${fromName}" <${fromEmail}>`;
 
     // Build branded HTML email from template
