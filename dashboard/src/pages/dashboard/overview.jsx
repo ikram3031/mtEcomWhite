@@ -1,38 +1,23 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { KpiCard } from '@/components/core/dashboard/kpiCard';
 import { RevenueChart } from '@/components/core/dashboard/revenue-chart';
-import { RecentTransactionsTable } from '@/components/core/dashboard/recent-transactions-table';
+import { OrderStatusPie } from '@/components/core/dashboard/OrderStatusPie';
 import { DollarSign, Users, CreditCard, Activity } from 'lucide-react';
 import { useDashboardKpi } from '@/hooks/core/use-dashboard-kpi';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/core/ui/select';
 import { Skeleton } from '@/components/core/ui/skeleton';
 
 const DashboardPage = () => {
-  const [range, setRange] = useState('30days');
-  const { data: stats, isLoading } = useDashboardKpi(range);
+  const { data: stats, isLoading } = useDashboardKpi('30days');
 
-  // Helper to determine subtext based on range
-  const getSubtext = (range) => {
-    switch (range) {
-      case 'today':
-        return 'from yesterday';
-      case '7days':
-        return 'from previous 7 days';
-      case '3months':
-        return 'from previous 3 months';
-      case '30days':
-      default:
-        return 'from last month';
-    }
-  };
+  // Calculate the 30-day date range label (e.g. "Jul 13 – Aug 11")
+  const dateRangeLabel = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(from.getDate() - 29);
 
-  const trendText = getSubtext(range);
+    const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${fmt(from)} – ${fmt(now)}`;
+  }, []);
 
   // Format trend direction
   const getTrendDirection = (val) => {
@@ -41,21 +26,15 @@ const DashboardPage = () => {
     return num > 0 ? 'up' : 'down';
   };
 
+  const trendText = 'from previous 30 days';
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <Select value={range} onValueChange={(val) => setRange(val ?? '30days')}>
-          <SelectTrigger className="w-[180px] h-9 cursor-pointer text-xs">
-            <SelectValue placeholder="Select period" />
-          </SelectTrigger>
-          <SelectContent className="bg-popover border shadow-md" side="bottom">
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="7days">Last 7 days</SelectItem>
-            <SelectItem value="30days">Last 30 days</SelectItem>
-            <SelectItem value="3months">Last 3 months</SelectItem>
-          </SelectContent>
-        </Select>
+        <span className="text-sm text-muted-foreground">
+          Last 30 Days ({dateRangeLabel})
+        </span>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -95,7 +74,7 @@ const DashboardPage = () => {
       
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <RevenueChart />
-        <RecentTransactionsTable />
+        <OrderStatusPie range="30days" />
       </div>
     </div>
   );

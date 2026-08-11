@@ -58,7 +58,7 @@ export function AppSidebar({ ...props }) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="h-16 flex flex-col justify-center border-b border-zinc-800 bg-zinc-950 px-4 py-0 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
