@@ -13,7 +13,7 @@ services:
     volumes:
       - mongodb-data:/data/db
     networks:
-      - decantre-network
+      - client-network
 
   backend:
     build:
@@ -24,8 +24,8 @@ services:
     # .env ফাইল VPS এর fixed path থেকে mount করা হচ্ছে
     # ব্রাঞ্চ সুইচ বা git pull করলে এই ফাইল কখনো overwrite হবে না
     volumes:
-      - /opt/decantre/configs/backend.env:/app/.env:ro
-      - /opt/decantre/uploads:/app/uploads
+      - /opt/${CLIENT_NAME}/configs/backend.env:/app/.env:ro
+      - /opt/${CLIENT_NAME}/uploads:/app/uploads
     environment:
       PORT: ${BACKEND_PORT:-5092}
     ports:
@@ -33,7 +33,7 @@ services:
     depends_on:
       - mongodb
     networks:
-      - decantre-network
+      - client-network
 
   dashboard:
     build:
@@ -43,14 +43,14 @@ services:
     restart: always
     # dashboard এর .env ও আলাদা fixed path থেকে mount
     volumes:
-      - /opt/decantre/configs/dashboard.env:/app/.env:ro
+      - /opt/${CLIENT_NAME}/configs/dashboard.env:/app/.env:ro
     ports:
       - "${DASHBOARD_PORT:-8005}:8005"
     networks:
-      - decantre-network
+      - client-network
 
 networks:
-  decantre-network:
+  client-network:
     driver: bridge
 
 volumes:

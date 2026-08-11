@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # ============================================================
-# Decantre White-Label Client Setup Script
+# White-Label Client Setup Script
 # VPS এ নতুন ক্লায়েন্ট সেটআপ করার জন্য এই স্ক্রিপ্টটি চালান
-# Run: bash client-setup.sh
+# Run: bash client-setup.sh <client_name>
 # ============================================================
 
 set -e
@@ -14,22 +14,32 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-CONFIG_DIR="/opt/decantre/configs"
-UPLOAD_DIR="/opt/decantre/uploads"
+# Check if client name is provided
+if [ -z "$1" ]; then
+    echo -e "${RED}Error: Client name is required.${NC}"
+    echo -e "Usage: bash client-setup.sh <client_name>"
+    echo -e "Example: bash client-setup.sh toyoland"
+    exit 1
+fi
+
+CLIENT_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+
+CONFIG_DIR="/opt/$CLIENT_NAME/configs"
+UPLOAD_DIR="/opt/$CLIENT_NAME/uploads"
 
 echo -e "${CYAN}"
 echo "╔══════════════════════════════════════════╗"
-echo "║   Decantre White-Label Client Setup      ║"
+echo "║      White-Label Client Setup Tool       ║"
 echo "╚══════════════════════════════════════════╝"
 echo -e "${NC}"
 
 # ── Step 1: Create required directories ──────────────────────
-echo -e "${YELLOW}[1/4] Creating config and upload directories...${NC}"
+echo -e "${YELLOW}[1/4] Creating config and upload directories for $CLIENT_NAME...${NC}"
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$UPLOAD_DIR"
 chmod 700 "$CONFIG_DIR"    # শুধু root পড়তে পারবে
 chmod 755 "$UPLOAD_DIR"
-echo -e "${GREEN}✓ Directories ready${NC}"
+echo -e "${GREEN}✓ Directories ready at /opt/$CLIENT_NAME${NC}"
 
 # ── Step 2: Generate backend.env ─────────────────────────────
 BACKEND_ENV="$CONFIG_DIR/backend.env"
