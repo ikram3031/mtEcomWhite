@@ -14,6 +14,9 @@ const envSchema = z.object({
   ALLOW_SUPER_ADMIN_CREATION: z.coerce.boolean().default(false),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  ALLOWED_ORIGINS: z.string().default("http://localhost:8001,http://localhost:8005,http://localhost:3000"),
+  FRONTEND_DOMAIN_KEYWORDS: z.string().default("localhost,decantrebd.com"),
+  DASHBOARD_DOMAIN_KEYWORDS: z.string().default("dashboard,localhost:8005"),
 });
 
 const parsed = envSchema.safeParse(process.env);

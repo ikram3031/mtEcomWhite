@@ -8,25 +8,28 @@ import { logger } from "./config/logger.js";
 import coreRouter from "./core/routesIndex.js";
 import attributeRouter from "./dashboard/routes/attribute.route.js";
 import developerRouter, { broadcastLogToClients } from "./core/routes/DeveloperRoute.js";
+import { env } from "./config/env.js";
 
 export async function createApp() {
   const app = express();
 
   app.set("wpTablePrefix", process.env.WP_TABLE_PREFIX || "wp_");
   app.set("trust proxy", true);
+
+  const allowedOrigins = env.ALLOWED_ORIGINS
+    ? env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
+    : [];
+
   const corsOptions = {
-    origin: [
-      "http://decantrebd.com",
-      "https://decantrebd.com",
-      "http://www.decantrebd.com",
-      "https://www.decantrebd.com",
-      "http://dashboard.decantrebd.com",
-      "https://dashboard.decantrebd.com",
-      "http://localhost:8001",
-      "http://localhost:8005",
-      "https://localhost:8005",
-      "http://localhost:3000",
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
@@ -34,7 +37,7 @@ export async function createApp() {
       "X-Requested-With",
       "Accept",
     ],
-    credentials: false,
+    credentials: true,
     optionsSuccessStatus: 204,
   };
 
@@ -62,12 +65,25 @@ export async function createApp() {
   // Helper to detect request origin source
   function getRequestSource(req) {
     const origin = (req.headers["origin"] || req.headers["referer"] || "").toLowerCase();
-    if (origin.includes("dashboard") || origin.includes("v2.decantrebd.com") || origin.includes(":8005") || (req.originalUrl && req.originalUrl.includes("/dashboard/"))) {
+    
+    const dashboardKeywords = env.DASHBOARD_DOMAIN_KEYWORDS
+      ? env.DASHBOARD_DOMAIN_KEYWORDS.split(",").map((kw) => kw.trim().toLowerCase())
+      : ["dashboard"];
+    const frontendKeywords = env.FRONTEND_DOMAIN_KEYWORDS
+      ? env.FRONTEND_DOMAIN_KEYWORDS.split(",").map((kw) => kw.trim().toLowerCase())
+      : ["localhost", "decantrebd.com"];
+
+    const isDashboard = dashboardKeywords.some((kw) => origin.includes(kw)) || 
+      (req.originalUrl && req.originalUrl.includes("/dashboard/"));
+    if (isDashboard) {
       return "DASHBOARD";
     }
-    if (origin.includes("decantrebd.com") || origin.includes("dev.decantrebd.com") || origin.includes(":8001") || origin.includes(":3000")) {
+
+    const isFrontend = frontendKeywords.some((kw) => origin.includes(kw));
+    if (isFrontend) {
       return "FRONTEND";
     }
+
     return "EXTERNAL";
   }
 
