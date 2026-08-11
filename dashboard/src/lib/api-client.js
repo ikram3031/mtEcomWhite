@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { handleGlobalError } from './error-handler';
 
-const baseURL = import.meta.env?.VITE_API_BASE_URL || (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE_URL : undefined) || 'https://server.decantrebd.com';
+const baseURL = import.meta.env?.VITE_API_BASE_URL || (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE_URL : undefined) || '';
 
 export const apiClient = axios.create({
   baseURL,
