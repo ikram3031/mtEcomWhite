@@ -7,7 +7,7 @@ import fs from "fs";
 import { logger } from "./config/logger.js";
 import coreRouter from "./core/routesIndex.js";
 import attributeRouter from "./dashboard/routes/attribute.route.js";
-import developerRouter from "./core/routes/DeveloperRoute.js";
+import developerRouter, { broadcastLogToClients } from "./core/routes/DeveloperRoute.js";
 
 export async function createApp() {
   const app = express();
@@ -154,6 +154,22 @@ export async function createApp() {
         `${colors.gray}[IP: ${clientIp}]${colors.reset} | ` +
         `${methodStr} ${colors.boldWhite}${displayUrl}${colors.reset}`
       );
+
+      // Stream / broadcast to the live logs dashboard client
+      try {
+        broadcastLogToClients({
+          timestamp: now,
+          status,
+          source,
+          duration: timeMs,
+          size: sizeStr,
+          ip: clientIp,
+          method: req.method,
+          url: req.originalUrl,
+        });
+      } catch (err) {
+        // Fallback for ESM imports / dev cycles
+      }
     });
 
     next();
