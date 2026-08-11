@@ -62,6 +62,7 @@ const orderSchema = new Schema(
     couponCode: { type: String, default: null, trim: true, uppercase: true },
     items: { type: [orderItemSchema], required: true, validate: [(items) => items.length > 0, "items must contain at least one item"] },
     totals: { type: orderTotalsSchema, required: true },
+    active: { type: Boolean, default: true, index: true },
   },
   {
     collection: "orders",

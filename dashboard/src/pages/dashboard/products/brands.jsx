@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useBrands, getBrandName } from '@/lib/core/category-cache';
 import { Button } from '@/components/core/ui/button';
 import { Input } from '@/components/core/ui/input';
@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/core/ui/table';
-import { Plus, Search, Edit2, Trash2, Tag } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiClient } from '@/lib/core/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -40,6 +40,8 @@ const BrandsPage = () => {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 15;
   const [isOpen, setIsOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
 
@@ -133,6 +135,15 @@ const BrandsPage = () => {
     b.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Reset to page 1 whenever search changes
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredBrands.length / PAGE_SIZE);
+  const paginatedBrands = filteredBrands.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between border-b pb-4">
@@ -174,7 +185,7 @@ const BrandsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBrands.map((brand) => (
+              {paginatedBrands.map((brand) => (
                 <TableRow key={brand.did}>
                   <TableCell className="font-medium flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
@@ -204,6 +215,36 @@ const BrandsPage = () => {
               ))}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card">
+              <span className="text-sm text-muted-foreground">
+                {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, filteredBrands.length)} of {filteredBrands.length} brands
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium px-2">{currentPage} / {totalPages}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -42,23 +42,70 @@ export function sendOrderEmailsAsynchronously(order) {
       const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
       const fromAddress = `"${fromName}" <${fromEmail}>`;
 
-      // Extract order details with fallback
+      // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
-      const customerEmail = order.customer?.email;
-      const customerName = order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || "Customer";
+      const customerEmail = order.customer?.email || "";
+      const customerName = order.customer?.fullName || order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || "Customer";
+      const customerPhone = order.customer?.phone || "N/A";
       const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-      const billingAddress = order.billingAddress || order.shippingAddress || {};
-      const shippingAddress = order.shippingAddress || billingAddress;
+      // Build primary customer address (Billing Address) from OrderModel customer schema
+      const primaryAddrParts = [
+        order.customer?.address,
+        order.customer?.thana,
+        order.customer?.district || order.customer?.city,
+        order.customer?.zip ? `Zip: ${order.customer?.zip}` : ''
+      ].filter(Boolean);
+
+      const billingAddress = {
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        street: order.customer?.address || "",
+        thana: order.customer?.thana || "",
+        district: order.customer?.district || order.customer?.city || "",
+        zipCode: order.customer?.zip || "",
+        fullAddress: primaryAddrParts.join(', ')
+      };
+
+      // Resolve Shipping Address (Use custom shippingAddress if provided; otherwise fallback to billingAddress)
+      let shippingAddress = billingAddress;
+      if (order.shippingAddress && typeof order.shippingAddress === 'object' && Object.keys(order.shippingAddress).length > 0) {
+        const customStreet = order.shippingAddress.street || order.shippingAddress.address;
+        if (customStreet && customStreet.trim()) {
+          const customAddrParts = [
+            customStreet,
+            order.shippingAddress.thana || order.shippingAddress.state,
+            order.shippingAddress.district || order.shippingAddress.city,
+            (order.shippingAddress.zipCode || order.shippingAddress.zip) ? `Zip: ${order.shippingAddress.zipCode || order.shippingAddress.zip}` : ''
+          ].filter(Boolean);
+
+          shippingAddress = {
+            name: order.shippingAddress.fullName || order.shippingAddress.name || customerName,
+            phone: order.shippingAddress.phone || customerPhone,
+            street: customStreet,
+            thana: order.shippingAddress.thana || order.shippingAddress.state || "",
+            district: order.shippingAddress.district || order.shippingAddress.city || "",
+            zipCode: order.shippingAddress.zipCode || order.shippingAddress.zip || "",
+            fullAddress: customAddrParts.join(', ')
+          };
+        }
+      }
+
       const items = Array.isArray(order.items) ? order.items.map(item => {
         const quantity = Number(item.quantity || 1);
-        const price = Number(item.price ?? item.unitPrice ?? 0);
+        const price = Number(item.unitPrice ?? item.price ?? 0);
         const subtotal = Number(item.subtotal ?? item.total ?? (price * quantity) ?? 0);
         const finalPrice = price || (subtotal / quantity) || 0;
         const finalSubtotal = subtotal || (finalPrice * quantity) || 0;
+
+        // Combine size and concentration for complete variant display
+        const variantParts = [item.size, item.concentration, item.variant, item.variantName].filter(Boolean);
+        const variantName = [...new Set(variantParts)].join(' • ');
+
         return {
           productName: item.name || item.productName || "Product",
-          variantName: item.variant || item.variantName || item.size || "",
+          variantName,
           quantity,
           price: finalPrice,
           subtotal: finalSubtotal
@@ -66,23 +113,25 @@ export function sendOrderEmailsAsynchronously(order) {
       }) : [];
 
       const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
-      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shipping || 0);
+      const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
       const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
+      const giftWrap = Boolean(order.customer?.giftWrap || order.giftWrap);
 
       const formattedOrderData = {
         orderId,
         createdAt,
         customerName,
         customerEmail,
-        customerPhone: order.customer?.phone || "N/A",
+        customerPhone,
         billingAddress,
         shippingAddress,
         items,
         subtotal,
         shippingFee,
         totalAmount,
-        paymentMethod
+        paymentMethod,
+        giftWrap
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)

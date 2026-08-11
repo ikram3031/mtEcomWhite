@@ -95,4 +95,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: '*',
+    element: <RouteErrorElement error={{ status: 404, statusText: 'Not Found', message: 'The page you are looking for does not exist.' }} />,
+  },
 ]);

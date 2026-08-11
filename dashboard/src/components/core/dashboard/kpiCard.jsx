@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/core/ui/card';
 import { cn } from '@/lib/core/utils';
 
-export function KpiCard({ title, value, icon: Icon, trend, trendDirection }) {
+export function KpiCard({ title, value, icon: Icon, trend, trendDirection, subtext }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -19,7 +19,7 @@ export function KpiCard({ title, value, icon: Icon, trend, trendDirection }) {
           )}
         >
           {trendDirection === 'up' ? '+' : trendDirection === 'down' ? '-' : ''}
-          {trend} from last month
+          {trend}% {subtext || 'from last month'}
         </p>
       </CardContent>
     </Card>
