@@ -42,7 +42,7 @@ NODE_ENV=production
 PORT=5092
 
 # MongoDB Credentials
-MONGODB_URI=mongodb://admin:11223345@127.0.0.1:27017/perfume-store?authSource=admin
+MONGODB_URI=mongodb://admin:<your_db_password>@127.0.0.1:27017/perfume-store?authSource=admin
 MONGODB_DB_NAME=perfume-store
 
 # Container Names & Initialization
@@ -51,7 +51,7 @@ BACKEND_CONTAINER_NAME=decantre-backend-live
 DASHBOARD_CONTAINER_NAME=decantre-dashboard-live
 
 MONGO_INITDB_ROOT_USERNAME=admin
-MONGO_INITDB_ROOT_PASSWORD=11223345
+MONGO_INITDB_ROOT_PASSWORD=<your_db_password>
 MONGO_INITDB_DATABASE=perfume-store
 
 # Port Mappings
@@ -68,7 +68,7 @@ SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 SMTP_ENCRYPTION=TLS
 SMTP_USER=contact@decantrebd.com
-SMTP_PASSWORD=dec@Ntr3
+SMTP_PASSWORD=<your_smtp_password>
 SMTP_FROM_NAME=Decantre BD
 SMTP_FROM=contact@decantrebd.com
 
