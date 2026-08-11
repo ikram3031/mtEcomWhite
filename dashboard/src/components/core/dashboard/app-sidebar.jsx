@@ -339,23 +339,7 @@ export function AppSidebar({ ...props }) {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
-        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            {user?.email ? user.email.charAt(0).toUpperCase() : "A"}
-          </div>
-          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-medium truncate text-sidebar-foreground">
-              {user?.name || user?.email || "Admin User"}
-            </span>
-            <span className="text-xs text-sidebar-foreground/60 truncate">
-              {user?.role 
-                ? user.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) 
-                : "Store Manager"}
-            </span>
-          </div>
-        </div>
-      </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )

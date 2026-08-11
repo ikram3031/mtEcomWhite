@@ -24,7 +24,7 @@ export const Header = () => {
     : 'AD';
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-white dark:bg-zinc-950 px-4 md:px-6">
       <div className="flex flex-1 items-center gap-4 md:gap-6">
         <form className="ml-auto flex-1 sm:flex-initial" onSubmit={(e) => e.preventDefault()}>
           <div className="relative">
