@@ -128,7 +128,9 @@ export function OrdersTable({
   };
 
   const handleDownloadInvoice = (order) => {
-    const invoiceUrl = `/api/v1/orders/${order.id}/invoice`;
+    // Construct full backend URL using apiClient's baseURL to avoid hitting the dashboard dev server
+    const baseURL = import.meta.env?.VITE_API_BASE_URL || 'https://server.decantrebd.com';
+    const invoiceUrl = `${baseURL}/api/v1/orders/${order.id}/invoice`;
     window.open(invoiceUrl, '_blank');
   };
 
