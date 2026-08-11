@@ -346,10 +346,12 @@ export function AppSidebar({ ...props }) {
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
             <span className="text-sm font-medium truncate text-sidebar-foreground">
-              {user?.email || "Admin User"}
+              {user?.name || user?.email || "Admin User"}
             </span>
             <span className="text-xs text-sidebar-foreground/60 truncate">
-              Store Manager
+              {user?.role 
+                ? user.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) 
+                : "Store Manager"}
             </span>
           </div>
         </div>
