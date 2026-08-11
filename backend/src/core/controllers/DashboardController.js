@@ -134,4 +134,57 @@ export const getKpiStats = async (req, res, next) => {
   }
 };
 
-export default { dailyOrders, getKpiStats };
+export const getOrderStatusDistribution = async (req, res, next) => {
+  try {
+    const range = req.query.range || '30days';
+    const OFFSET_MS = 6 * 60 * 60 * 1000; // BD Timezone (+06:00)
+
+    const nowUtc = new Date();
+    const nowLocal = new Date(nowUtc.getTime() + OFFSET_MS);
+
+    const todayLocalMidnight = new Date(nowLocal);
+    todayLocalMidnight.setUTCHours(0, 0, 0, 0);
+
+    let days = 30;
+    if (range === 'today') {
+      days = 1;
+    } else if (range === '7days') {
+      days = 7;
+    } else if (range === '30days') {
+      days = 30;
+    } else if (range === '3months') {
+      days = 90;
+    }
+
+    const currentStart = new Date(todayLocalMidnight.getTime() - (days - 1) * 24 * 60 * 60 * 1000 - OFFSET_MS);
+
+    const agg = await OrderModel.aggregate([
+      { $match: { createdAt: { $gte: currentStart } } },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const counts = {
+      processing: 0,
+      shipped: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+
+    agg.forEach((item) => {
+      if (item._id && typeof counts[item._id] !== 'undefined') {
+        counts[item._id] = item.count;
+      }
+    });
+
+    return res.json({
+      status: 'success',
+      data: {
+        statusCounts: counts,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default { dailyOrders, getKpiStats, getOrderStatusDistribution };
