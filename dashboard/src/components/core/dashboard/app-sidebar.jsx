@@ -115,7 +115,7 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
 
       <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-6 group-data-[collapsible=icon]:[&_svg]:text-foreground">
-        <SidebarMenu className="group-data-[collapsible=icon]:gap-4">
+        <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:gap-4">
           {/* Overview */}
           <SidebarMenuItem>
             <SidebarMenuButton

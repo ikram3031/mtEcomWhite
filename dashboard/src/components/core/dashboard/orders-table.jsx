@@ -19,9 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/core/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, AlertCircle, Download, Eye, Edit, RefreshCw, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/core/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/core/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -126,6 +125,11 @@ export function OrdersTable({
 
   const handleViewDetails = (order) => {
     window.location.href = `/dashboard/orders/${order.id}`;
+  };
+
+  const handleDownloadInvoice = (order) => {
+    const invoiceUrl = `/api/v1/orders/${order.id}/invoice`;
+    window.open(invoiceUrl, '_blank');
   };
 
   const getPaymentBadge = (status) => {
@@ -245,21 +249,29 @@ export function OrdersTable({
                     } />
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleViewDetails(order)}>
-                        View Details
+                      <DropdownMenuItem onClick={() => handleViewDetails(order)} className="cursor-pointer">
+                        <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span>View Details</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditOrderClick(order)}>
-                        Edit Order
+                      <DropdownMenuItem onClick={() => handleEditOrderClick(order)} className="cursor-pointer">
+                        <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span>Edit Order</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleOpenStatusModal(order)}>
-                        Change Status
+                      <DropdownMenuItem onClick={() => handleOpenStatusModal(order)} className="cursor-pointer">
+                        <RefreshCw className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span>Status</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownloadInvoice(order)} className="cursor-pointer">
+                        <Download className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span>Invoice</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive cursor-pointer"
                         onClick={() => setDeleteTarget({ id: order.id, orderNumber: order.orderNumber })}
                       >
-                        Delete Order
+                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                        <span>Delete</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
