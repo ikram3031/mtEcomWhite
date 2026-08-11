@@ -7,7 +7,9 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
-    # MongoDB শুধু internal Docker network এ accessible — host এ port expose হবে না
+    # MongoDB exposed publicly on dynamic MONGODB_PORT
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
     volumes:
       - mongodb-data:/data/db
     networks:
