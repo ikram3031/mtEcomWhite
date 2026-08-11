@@ -1,16 +1,17 @@
 services:
   mongodb:
     image: mongo:7.0
-    container_name: ${MONGODB_CONTAINER_NAME:-decantre-mongodb-live}
+    container_name: ${MONGODB_CONTAINER_NAME}
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-11223345}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-perfume-store}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    # MongoDB শুধু internal network এ থাকবে, বাইরে expose হবে না (security)
     ports:
-      - "0.0.0.0:27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
-      - mongodb-data-live:/data/db
+      - mongodb-data:/data/db
     networks:
       - decantre-network
 
@@ -18,31 +19,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ${BACKEND_CONTAINER_NAME:-decantre-backend-live}
+    container_name: ${BACKEND_CONTAINER_NAME}
     restart: always
-    env_file:
-      - .env
+    # .env ফাইল VPS এর fixed path থেকে mount করা হচ্ছে
+    # ব্রাঞ্চ সুইচ বা git pull করলে এই ফাইল কখনো overwrite হবে না
+    volumes:
+      - /opt/decantre/configs/backend.env:/app/.env:ro
+      - /opt/decantre/uploads:/app/uploads
     environment:
       PORT: ${BACKEND_PORT:-5092}
     ports:
       - "${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
-    volumes:
-      - /opt/dev/uploads:/app/uploads
     depends_on:
       - mongodb
-    networks:
-      - decantre-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: ${FRONTEND_CONTAINER_NAME:-decantre-frontend-live}
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - "${FRONTEND_PORT:-8001}:8001"
     networks:
       - decantre-network
 
@@ -50,10 +39,11 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
-    container_name: ${DASHBOARD_CONTAINER_NAME:-decantre-dashboard-live}
+    container_name: ${DASHBOARD_CONTAINER_NAME}
     restart: always
-    env_file:
-      - .env
+    # dashboard এর .env ও আলাদা fixed path থেকে mount
+    volumes:
+      - /opt/decantre/configs/dashboard.env:/app/.env:ro
     ports:
       - "${DASHBOARD_PORT:-8005}:8005"
     networks:
@@ -64,5 +54,5 @@ networks:
     driver: bridge
 
 volumes:
-  mongodb-data-live:
+  mongodb-data:
     driver: local
