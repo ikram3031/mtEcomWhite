@@ -10,26 +10,26 @@ const productSchema = new Schema(
     description: { type: String, required: true, trim: true },
 
     // Product Type (Simple or Variant)
-    type: { 
-      type: String, 
-      enum: ["simple", "variant"], 
+    type: {
+      type: String,
+      enum: ["simple", "variant"],
       default: "simple",
       required: true,
-      index: true 
+      index: true
     },
 
     // Simple Product Fields (Type = "simple" hole eiti babohar hobe)
-    price: { 
-      type: Number, 
+    price: {
+      type: Number,
       min: 0,
       required: function () {
         return this.type === "simple"; // Simple product hole price mandatory
       },
     },
-    offerPrice: { 
-      type: Number, 
-      min: 0, 
-      default: null 
+    offerPrice: {
+      type: Number,
+      min: 0,
+      default: null
     },
     sku: { type: String, trim: true },
 
@@ -47,11 +47,11 @@ const productSchema = new Schema(
     ],
 
     // Filtering, Season & Notes
-    season: { 
-      type: String, 
-      enum: ["Summer", "Winter", "Spring", "Autumn", "All-Season"], 
+    season: {
+      type: String,
+      enum: ["Summer", "Winter", "Spring", "Autumn", "All-Season"],
       default: "All-Season",
-      index: true 
+      index: true
     },
     tags: [{ type: String, trim: true, lowercase: true }],
     notes: [{ type: String, trim: true }],
@@ -69,9 +69,9 @@ const productSchema = new Schema(
     // brand: array of `did` strings — [sub-brand-did, parent-brand-did]
     brand: [{ type: String, trim: true }],
     categories: [
-      { 
-        type: Schema.Types.ObjectId, 
-        ref: "Category" 
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Category"
       }
     ],
 
@@ -87,23 +87,30 @@ const productSchema = new Schema(
       }
     ],
 
-    stockStatus: { 
-      type: String, 
-      enum: ["instock", "outofstock", "preorder"], 
+    stockStatus: {
+      type: String,
+      enum: ["instock", "outofstock", "preorder"],
       default: "instock",
-      index: true 
+      index: true
+    },
+
+    stockAmount: {
+      type: Number,
+      min: 0,
+      default: 0,
+      index: true
     },
 
     // Audit Fields
-    createdBy: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true 
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
-    updatedBy: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      default: null 
+    updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null
     },
   },
   {
