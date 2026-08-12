@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
-import { AppSidebar } from '@/components/core/dashboard/app-sidebar';
+import { AppSidebar } from '@/components/core/dashboard/appSidebar';
 import { Header } from '@/components/core/dashboard/header';
-import { ClientSidebarProvider } from '@/components/core/dashboard/client-sidebar-provider';
+import { ClientSidebarProvider } from '@/components/core/dashboard/clientSidebarProvider';
 import { AuthGuard } from '@/components/core/auth-guard';
 import { ClientThemeProvider } from '@/components/core/clientThemeProvider';
 import { ClientRouteGuard } from '@/components/core/clientRouteGuard';
