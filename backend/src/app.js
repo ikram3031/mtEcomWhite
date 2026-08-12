@@ -59,10 +59,7 @@ export async function createApp() {
   app.use(express.urlencoded({ extended: false }));
 
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-  app.use(
-    "/src/uploads",
-    express.static(path.join(process.cwd(), "src", "uploads")),
-  );
+  app.use("/src/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   // Helper to format transfer byte size
   function formatBytes(bytes) {
