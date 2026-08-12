@@ -95,6 +95,10 @@ The [`clientThemeProvider.jsx`](file:///c:/Users/mdikr/Documents/CODE/Decantre_F
 
 This dynamically adjusts the entire color scheme without requiring separate compiled CSS stylesheets for each client.
 
+> [!TIP]
+> **Overriding Additional CSS variables:**
+> The `clientThemeProvider` dynamically loops over all keys defined in the client's `theme.light` and `theme.dark` configurations. You can override *any* custom properties defined inside `index.css` (such as `--background`, `--foreground`, `--card`, `--muted`, `--accent`, etc.) by simply adding them to the client's `config.json`.
+
 ---
 
 ## 5. Menu Permissions & Route Guarding

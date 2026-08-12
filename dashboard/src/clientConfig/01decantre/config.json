@@ -25,12 +25,18 @@
   "theme": {
     "light": {
       "--primary": "#d87943",
+      "--secondary": "#c5a059",
       "--ring": "#d87943",
+      "--chart-1": "#c5a059",
+      "--chart-2": "#e78a53",
       "--sidebar-primary": "#d87943"
     },
     "dark": {
       "--primary": "#e78a53",
+      "--secondary": "#c5a059",
       "--ring": "#e78a53",
+      "--chart-1": "#c5a059",
+      "--chart-2": "#e78a53",
       "--sidebar-primary": "#e78a53"
     }
   }
