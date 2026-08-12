@@ -919,7 +919,7 @@ const OrderDetailsPage = () => {
               <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">Order & Payment Update</h3>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="text-muted-foreground mb-1 block">Fulfillment Status</label>
+                  <label className="text-muted-foreground mb-1 block">Status</label>
                   <Select value={orderStatus} onValueChange={(val) => setOrderStatus(val ?? "Processing")}>
                     <SelectTrigger className="w-full h-8">
                       <SelectValue placeholder="Select Status" />

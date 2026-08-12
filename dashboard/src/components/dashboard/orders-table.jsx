@@ -129,12 +129,12 @@ export function OrdersTable({
   };
 
   const getPaymentBadge = (status) => {
-    switch (status) {
-      case 'Paid':
+    switch (String(status).toLowerCase()) {
+      case 'paid':
         return <Badge className="bg-emerald-500 hover:bg-emerald-600">Paid</Badge>;
-      case 'Pending':
+      case 'pending':
         return <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 dark:text-amber-400">Pending</Badge>;
-      case 'Failed':
+      case 'failed':
         return <Badge variant="destructive">Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -142,7 +142,22 @@ export function OrdersTable({
   };
 
   const getFulfillmentBadge = (status) => {
-    return <Badge variant="outline">{status}</Badge>;
+    switch (String(status).toLowerCase()) {
+      case 'delivered':
+      case 'completed':
+        return <Badge className="bg-emerald-500 hover:bg-emerald-600">Delivered</Badge>;
+      case 'shipped':
+        return <Badge variant="secondary" className="bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 dark:text-indigo-400">Shipped</Badge>;
+      case 'processing':
+        return <Badge variant="secondary" className="bg-blue-500/20 text-blue-600 hover:bg-blue-500/30 dark:text-blue-400">Processing</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">Cancelled</Badge>;
+      case 'pending':
+      case 'unfulfilled':
+        return <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 dark:text-amber-400">Pending</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   if (isError) {
@@ -186,7 +201,7 @@ export function OrdersTable({
             <TableHead className="w-[110px]">Date</TableHead>
             <TableHead className="w-[120px]">Total Amount</TableHead>
             <TableHead className="w-[100px]">Payment</TableHead>
-            <TableHead className="w-[120px]">Fulfillment</TableHead>
+            <TableHead className="w-[120px]">Status</TableHead>
             <TableHead className="w-[60px] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>

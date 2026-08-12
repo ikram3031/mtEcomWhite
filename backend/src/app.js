@@ -20,7 +20,7 @@ export async function createApp() {
     "https://decantrebd.com",
     "https://www.decantrebd.com",
     "https://dashboard.decantrebd.com",
-    "https://v2.decantrebd.com"
+    "http://dashboard.decantrebd.com"
   ];
 
   const envOrigins = env.ALLOWED_ORIGINS
@@ -75,7 +75,7 @@ export async function createApp() {
   // Helper to detect request origin source
   function getRequestSource(req) {
     const origin = (req.headers["origin"] || req.headers["referer"] || "").toLowerCase();
-    
+
     const dashboardKeywords = env.DASHBOARD_DOMAIN_KEYWORDS
       ? env.DASHBOARD_DOMAIN_KEYWORDS.split(",").map((kw) => kw.trim().toLowerCase())
       : ["dashboard"];
@@ -83,7 +83,7 @@ export async function createApp() {
       ? env.FRONTEND_DOMAIN_KEYWORDS.split(",").map((kw) => kw.trim().toLowerCase())
       : ["localhost", "decantrebd.com"];
 
-    const isDashboard = dashboardKeywords.some((kw) => origin.includes(kw)) || 
+    const isDashboard = dashboardKeywords.some((kw) => origin.includes(kw)) ||
       (req.originalUrl && req.originalUrl.includes("/dashboard/"));
     if (isDashboard) {
       return "DASHBOARD";
@@ -104,12 +104,12 @@ export async function createApp() {
     }
 
     const startTime = process.hrtime();
-    
+
     // Robust IP extraction logic
     const xRealIp = req.headers["x-real-ip"];
     const xForwardedFor = req.headers["x-forwarded-for"];
     const rawIp = xRealIp || (xForwardedFor ? xForwardedFor.split(",")[0].trim() : null) || req.ip || req.socket?.remoteAddress || "Unknown IP";
-    
+
     // Clean IPv6 prefix if present (e.g. ::ffff:103.145.xx.xx)
     const clientIp = rawIp.replace(/^::ffff:/, "");
     const source = getRequestSource(req);
@@ -119,7 +119,7 @@ export async function createApp() {
     res.on("finish", () => {
       const diff = process.hrtime(startTime);
       const timeMs = Math.round(diff[0] * 1000 + diff[1] / 1e6);
-      
+
       const contentLength = res.get("content-length") || 0;
       const sizeStr = formatBytes(Number(contentLength));
 
@@ -157,8 +157,8 @@ export async function createApp() {
         source === "DASHBOARD"
           ? `${colors.purple}[DASHBOARD]${colors.reset}`
           : source === "FRONTEND"
-          ? `${colors.green}[FRONTEND ]${colors.reset}`
-          : `${colors.yellow}[EXTERNAL ]${colors.reset}`;
+            ? `${colors.green}[FRONTEND ]${colors.reset}`
+            : `${colors.yellow}[EXTERNAL ]${colors.reset}`;
 
       const methodStr = colors[req.method] || (req.method + "      ").slice(0, 6);
       const timePadded = `${timeMs}ms`.padStart(6, " ");
