@@ -91,6 +91,9 @@ ALLOWED_ORIGINS=
 FRONTEND_DOMAIN_KEYWORDS=
 DASHBOARD_DOMAIN_KEYWORDS=
 
+# Frontend/Dashboard Build Env (Used during docker build of dashboard)
+VITE_API_BASE_URL=
+
 # Google OAuth (optional)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=

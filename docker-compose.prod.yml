@@ -39,6 +39,8 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
     container_name: ${DASHBOARD_CONTAINER_NAME}
     restart: always
     # dashboard এর .env ও dynamically specified path বা default path থেকে mount
