@@ -24,8 +24,7 @@ services:
     # .env ফাইল VPS এর dynamically specified path বা default path থেকে mount করা হচ্ছে
     volumes:
       - ${CLIENT_CONFIG_PATH:-/opt/${CLIENT_NAME}/configs}/backend.env:/app/.env:ro
-      - ${CLIENT_UPLOADS_PATH:-/opt/${CLIENT_NAME}/uploads}:/app/uploads
-      - ${PUBLIC_UPLOADS_PATH:-/var/www/uploads}:/app/src/uploads
+      - ${PUBLIC_UPLOADS_PATH:-/var/www/uploads}:/app/uploads
     environment:
       PORT: ${BACKEND_PORT:-5092}
     ports:

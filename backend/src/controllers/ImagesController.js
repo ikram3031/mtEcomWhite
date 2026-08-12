@@ -23,9 +23,11 @@ export const uploadProductImage = async (req, res, next) => {
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
-    const dateFolder = `${yy}${mm}${dd}`; // Format folder as YYMMDD
+    const yearMonthFolder = `${yy}${mm}`;
+    const dayFolder = `${yy}${mm}${dd}`;
+    const dateFolder = `${yearMonthFolder}/${dayFolder}`; // Format folder as YYMM/YYMMDD (e.g. 2608/260813)
 
-    const destinationDir = path.join(process.cwd(), "src", "uploads", dateFolder);
+    const destinationDir = path.join(process.cwd(), "uploads", yearMonthFolder, dayFolder);
 
     // Ensure the directory exists
     await fs.promises.mkdir(destinationDir, { recursive: true });
@@ -96,8 +98,8 @@ export const uploadProductImage = async (req, res, next) => {
         .toFile(thumbFilePath);
 
       // Construct public URLs
-      const mainUrl = `/src/uploads/${dateFolder}/${mainFilename}`;
-      const thumbUrl = `/src/uploads/${dateFolder}/${thumbFilename}`;
+      const mainUrl = `/uploads/${dateFolder}/${mainFilename}`;
+      const thumbUrl = `/uploads/${dateFolder}/${thumbFilename}`;
 
       return res.status(200).json({
         status: "success",
@@ -117,7 +119,7 @@ export const uploadProductImage = async (req, res, next) => {
         .webp({ quality: 90 })
         .toFile(filePath);
 
-      const imageUrl = `/src/uploads/${dateFolder}/${filename}`;
+      const imageUrl = `/uploads/${dateFolder}/${filename}`;
 
       return res.status(200).json({
         status: "success",
