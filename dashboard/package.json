@@ -7,11 +7,11 @@
     "dev": "vite",
     "dev:decantre": "vite --mode decantre",
     "dev:engulfic": "vite --mode engulfic",
-    "dev:toyland": "vite --mode toyland",
+    "dev:toyoland": "vite --mode toyoland",
     "build": "vite build",
     "build:decantre": "vite build --mode decantre",
     "build:engulfic": "vite build --mode engulfic",
-    "build:toyland": "vite build --mode toyland",
+    "build:toyoland": "vite build --mode toyoland",
     "lint": "oxlint",
     "preview": "vite preview"
   },

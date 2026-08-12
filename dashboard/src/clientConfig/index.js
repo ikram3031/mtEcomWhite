@@ -1,11 +1,11 @@
 import decantreConfig from './01decantre/config.json';
 import engulficConfig from './02engulfic/config.json';
-import toylandConfig from './03toyland/config.json';
+import toyolandConfig from './03toyoland/config.json';
 
 const clientConfigs = {
   decantre: decantreConfig,
   engulfic: engulficConfig,
-  toyland: toylandConfig,
+  toyoland: toyolandConfig,
 };
 
 // Resolve the active client identifier
@@ -16,7 +16,7 @@ const getClientFromHostname = () => {
   if (typeof window === 'undefined') return 'decantre';
   const hostname = window.location.hostname.toLowerCase();
   if (hostname.includes('engulfic')) return 'engulfic';
-  if (hostname.includes('toyland')) return 'toyland';
+  if (hostname.includes('toyoland')) return 'toyoland';
   return 'decantre';
 };
 

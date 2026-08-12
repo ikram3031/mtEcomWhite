@@ -93,7 +93,7 @@ VITE_CLIENT=decantre
 
 > [!NOTE]
 > **VITE_CLIENT Parameter:**
-> This variable controls client-specific properties like theme branding, custom logos, and menu permissions. Make sure to match the client key exactly as defined in the `dashboard/src/clientConfig` folders (e.g., `decantre`, `engulfic`, `toyland`). If left blank, it falls back to hostname checking or defaults to `decantre`.
+> This variable controls client-specific properties like theme branding, custom logos, and menu permissions. Make sure to match the client key exactly as defined in the `dashboard/src/clientConfig` folders (e.g., `decantre`, `engulfic`, `toyoland`). If left blank, it falls back to hostname checking or defaults to `decantre`.
 
 ---
 

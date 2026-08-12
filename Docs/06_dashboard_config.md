@@ -15,8 +15,8 @@ dashboard/src/
     │   └── config.json       # Decantre configuration
     ├── 02engulfic/
     │   └── config.json       # Engulfic configuration
-    ├── 03toyland/
-    │   └── config.json       # Toyland configuration
+    ├── 03toyoland/
+    │   └── config.json       # Toyoland configuration
     └── index.js              # Resolves the active client config
 ```
 
@@ -27,7 +27,7 @@ dashboard/src/
 The configuration system resolves the active client using the following order of precedence:
 
 1. **Environment Variable:** Inspects `import.meta.env.VITE_CLIENT` (set during dev/build time).
-2. **Hostname Matching:** Fallback that checks if `window.location.hostname` contains `'engulfic'` or `'toyland'`.
+2. **Hostname Matching:** Fallback that checks if `window.location.hostname` contains `'engulfic'` or `'toyoland'`.
 3. **Default:** Defaults to `'decantre'` (Client ID: `01`).
 
 The resolver is exported from [`src/clientConfig/index.js`](file:///c:/Users/mdikr/Documents/CODE/Decantre_Fullstack/dashboard/src/clientConfig/index.js):
@@ -134,5 +134,5 @@ npm run dev:decantre
 npm run build:engulfic
 
 # Run Toyland Dev environment
-npm run dev:toyland
+npm run dev:toyoland
 ```
