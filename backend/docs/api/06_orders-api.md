@@ -22,21 +22,28 @@ https://server.decantrebd.com/api/v1
 
 ```json
 {
-  "fullName": "Nadia Rahman",
-  "phone": "+8801712345678",
-  "email": "customer@example.com",
-  "address": "House 12, Road 3",
-  "city": "Dhaka",
-  "thana": "Dhanmondi",
-  "district": "Dhaka",
-  "zip": "1209",
-  "giftWrap": false,
+  "billingInfo": {
+    "fullName": "Nadia Rahman",
+    "phone": "+8801712345678",
+    "email": "customer@example.com",
+    "address": "House 12, Road 3",
+    "thana": "Dhanmondi",
+    "district": "Dhaka",
+    "zip": "1209"
+  },
+  "shippingInfo": {
+    "fullName": "Nadia Rahman",
+    "phone": "+8801712345678",
+    "address": "House 12, Road 3",
+    "thana": "Dhanmondi",
+    "district": "Dhaka",
+    "zip": "1209"
+  },
   "paymentMethod": "cod",
   "subtotal": 1200,
-  "shippingFee": 0,
+  "shippingFee": 100,
   "tax": 96,
-  "total": 1296,
-  "shippingAddress": {},
+  "total": 1396,
   "items": [
     {
       "name": "Oud Imperial",
@@ -58,20 +65,25 @@ https://server.decantrebd.com/api/v1
   "data": {
     "id": "64a8c9b3f8e3a5c1d2e7f0a1",
     "orderNumber": "ORD-20260719-123456",
-    "status": "received",
-    "customer": {
+    "status": "processing",
+    "billingInfo": {
       "fullName": "Nadia Rahman",
       "phone": "+8801712345678",
       "email": "customer@example.com",
       "address": "House 12, Road 3",
-      "city": "Dhaka",
       "thana": "Dhanmondi",
       "district": "Dhaka",
-      "zip": "1209",
-      "giftWrap": false
+      "zip": "1209"
+    },
+    "shippingInfo": {
+      "fullName": "Nadia Rahman",
+      "phone": "+8801712345678",
+      "address": "House 12, Road 3",
+      "thana": "Dhanmondi",
+      "district": "Dhaka",
+      "zip": "1209"
     },
     "paymentMethod": "cod",
-    "shippingAddress": {},
     "items": [
       {
         "name": "Oud Imperial",
@@ -83,9 +95,9 @@ https://server.decantrebd.com/api/v1
     ],
     "totals": {
       "subtotal": 1200,
-      "shippingFee": 0,
+      "shippingFee": 100,
       "tax": 96,
-      "total": 1296
+      "total": 1396
     },
     "createdAt": "2026-07-19T10:00:00.000Z",
     "updatedAt": "2026-07-19T10:00:00.000Z"
@@ -123,20 +135,25 @@ Authorization: Bearer <accessToken>
     {
       "id": "64a8c9b3f8e3a5c1d2e7f0a1",
       "orderNumber": "ORD-20260719-123456",
-      "status": "received",
-      "customer": {
+      "status": "processing",
+      "billingInfo": {
         "fullName": "Nadia Rahman",
         "phone": "+8801712345678",
         "email": "customer@example.com",
         "address": "House 12, Road 3",
-        "city": "Dhaka",
         "thana": "Dhanmondi",
         "district": "Dhaka",
-        "zip": "1209",
-        "giftWrap": false
+        "zip": "1209"
+      },
+      "shippingInfo": {
+        "fullName": "Nadia Rahman",
+        "phone": "+8801712345678",
+        "address": "House 12, Road 3",
+        "thana": "Dhanmondi",
+        "district": "Dhaka",
+        "zip": "1209"
       },
       "paymentMethod": "cod",
-      "shippingAddress": {},
       "items": [
         {
           "name": "Oud Imperial",
@@ -148,9 +165,9 @@ Authorization: Bearer <accessToken>
       ],
       "totals": {
         "subtotal": 1200,
-        "shippingFee": 0,
+        "shippingFee": 100,
         "tax": 96,
-        "total": 1296
+        "total": 1396
       },
       "createdAt": "2026-07-19T10:00:00.000Z",
       "updatedAt": "2026-07-19T10:00:00.000Z"
@@ -181,20 +198,25 @@ Authorization: Bearer <accessToken>
   "data": {
     "id": "64a8c9b3f8e3a5c1d2e7f0a1",
     "orderNumber": "ORD-20260719-123456",
-    "status": "received",
-    "customer": {
+    "status": "processing",
+    "billingInfo": {
       "fullName": "Nadia Rahman",
       "phone": "+8801712345678",
       "email": "customer@example.com",
       "address": "House 12, Road 3",
-      "city": "Dhaka",
       "thana": "Dhanmondi",
       "district": "Dhaka",
-      "zip": "1209",
-      "giftWrap": false
+      "zip": "1209"
+    },
+    "shippingInfo": {
+      "fullName": "Nadia Rahman",
+      "phone": "+8801712345678",
+      "address": "House 12, Road 3",
+      "thana": "Dhanmondi",
+      "district": "Dhaka",
+      "zip": "1209"
     },
     "paymentMethod": "cod",
-    "shippingAddress": {},
     "items": [
       {
         "name": "Oud Imperial",
@@ -206,9 +228,9 @@ Authorization: Bearer <accessToken>
     ],
     "totals": {
       "subtotal": 1200,
-      "shippingFee": 0,
+      "shippingFee": 100,
       "tax": 96,
-      "total": 1296
+      "total": 1396
     },
     "createdAt": "2026-07-19T10:00:00.000Z",
     "updatedAt": "2026-07-19T10:00:00.000Z"
@@ -234,13 +256,17 @@ Update status:
 }
 ```
 
-Update shipping address:
+Update shipping info:
 
 ```json
 {
-  "shippingAddress": {
+  "shippingInfo": {
+    "fullName": "Nadia Rahman",
+    "phone": "+8801712345678",
     "address": "House 14, Road 7",
-    "city": "Dhaka"
+    "thana": "Dhanmondi",
+    "district": "Dhaka",
+    "zip": "1209"
   }
 }
 ```
