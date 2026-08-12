@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
-import { buildOtpEmailHtml } from "../../templates/otpEmailTemplate.js";
-import { env } from "../../config/env.js";
+import { buildOtpEmailHtml } from "../templates/otpEmailTemplate.js";
+import { env } from "../config/env.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;

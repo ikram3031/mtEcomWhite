@@ -1,5 +1,5 @@
 import { CouponModel } from "../models/coupon.model.js";
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 import { validateCouponPayload } from "../utils/couponValidation.js";
 
 const normalizeCouponPayload = (coupon) => {

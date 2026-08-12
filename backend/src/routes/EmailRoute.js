@@ -1,7 +1,7 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import { buildInvoiceEmailHtml } from "../utils/invoiceEmailTemplate.js";
-import { env } from "../../config/env.js";
+import { env } from "../config/env.js";
 
 const emailRouter = Router();
 

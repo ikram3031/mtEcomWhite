@@ -11,7 +11,7 @@ import { buildAllowedOrderUpdates,
   updateMemberOrderReference,
   updateMemberTotals,
 } from '../helper/orderControllerHelper.js';
-import { buildOrderInvoiceEmailHtml } from '../../templates/orderInvoiceEmailTemplate.js';
+import { buildOrderInvoiceEmailHtml } from '../templates/orderInvoiceEmailTemplate.js';
 
 const { Types } = mongoose;
 

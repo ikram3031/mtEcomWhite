@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { BillingModel } from "../models/billing.model.js";
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 
 const { Types } = mongoose;
 

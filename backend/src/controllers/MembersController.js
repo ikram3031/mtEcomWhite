@@ -3,8 +3,8 @@ import { MemberModel } from "../models/member.model.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
-import { env } from "../../config/env.js";
-import { logger } from "../../config/logger.js";
+import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 import { sendOtpEmail } from "../utils/otpDelivery.js";
 import {
   sanitizeInfo,

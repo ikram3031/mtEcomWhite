@@ -1,6 +1,6 @@
 // src/controllers/BrandController.js
 import { BrandModel } from "../models/brand.model.js";
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 
 /**
  * GET /api/v1/brands

@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
-import { buildOrderInvoiceEmailHtml } from "../../templates/orderInvoiceEmailTemplate.js";
-import { buildAdminOrderEmailHtml } from "../../templates/adminOrderEmailTemplate.js";
-import { env } from "../../config/env.js";
+import { buildOrderInvoiceEmailHtml } from "../templates/orderInvoiceEmailTemplate.js";
+import { buildAdminOrderEmailHtml } from "../templates/adminOrderEmailTemplate.js";
+import { env } from "../config/env.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;

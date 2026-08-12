@@ -4,9 +4,9 @@ import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
 import { comparePassword } from "../utils/password.js";
 import { createAccessToken, createRefreshToken } from "./AuthController.js";
-import { env } from "../../config/env.js";
-import { logger } from "../../config/logger.js";
-import { buildTwoFactorQrEmailHtml } from "../../templates/twoFactorEmailTemplate.js";
+import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
+import { buildTwoFactorQrEmailHtml } from "../templates/twoFactorEmailTemplate.js";
 
 // Cached SMTP transport connection instance
 let defaultTransport;

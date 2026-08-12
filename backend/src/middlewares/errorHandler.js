@@ -1,4 +1,4 @@
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
   const clientIp =

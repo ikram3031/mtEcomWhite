@@ -1,13 +1,13 @@
 import express from "express";
 import path from "path";
 import cors from "cors";
-import { errorHandler } from "./core/middlewares/errorHandler.js";
-import { authenticateToken, authorizeRoles } from "./core/middlewares/auth.middleware.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import { authenticateToken, authorizeRoles } from "./middlewares/auth.middleware.js";
 import fs from "fs";
 import { logger } from "./config/logger.js";
-import coreRouter from "./core/routesIndex.js";
+import coreRouter from "./routesIndex.js";
 import attributeRouter from "./dashboard/routes/attribute.route.js";
-import developerRouter, { broadcastLogToClients } from "./core/routes/DeveloperRoute.js";
+import developerRouter, { broadcastLogToClients } from "./routes/DeveloperRoute.js";
 import { env } from "./config/env.js";
 
 export async function createApp() {

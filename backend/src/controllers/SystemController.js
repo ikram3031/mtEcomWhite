@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 let backendVersion = '2.0.1';
 try {
-  const pkgPath = path.resolve(__dirname, '../../../package.json');
+  const pkgPath = path.resolve(__dirname, '../../package.json');
   if (fs.existsSync(pkgPath)) {
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     if (pkg.version) {

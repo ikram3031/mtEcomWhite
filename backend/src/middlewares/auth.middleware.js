@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { env } from "../../config/env.js";
+import { env } from "../config/env.js";
 import { UserModel } from "../models/user.model.js";
 import { MemberModel } from "../models/member.model.js";
 

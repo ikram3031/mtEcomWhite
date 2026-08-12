@@ -1,5 +1,5 @@
 import { AttributeModel } from "../models/attribute.model.js";
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 
 const sortAttributeValues = (values = []) => {
   if (!Array.isArray(values)) return [];

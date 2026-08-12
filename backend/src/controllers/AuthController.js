@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.model.js";
-import { env } from "../../config/env.js";
-import { logger } from "../../config/logger.js";
+import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
 
 export const createAccessToken = (user) => {

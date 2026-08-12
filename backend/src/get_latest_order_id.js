@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { OrderModel } from "./core/models/order.model.js";
+import { OrderModel } from "./models/order.model.js";
 
 const MONGODB_URI = "mongodb://admin:11223345@144.79.218.126:27017/perfume-store?authSource=admin";
 

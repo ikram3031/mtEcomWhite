@@ -1,6 +1,6 @@
 import { CategoryModel } from "../models/category.model.js";
 import { ProductModel } from "../models/product.model.js";
-import { logger } from "../../config/logger.js";
+import { logger } from "../config/logger.js";
 import { PLACEHOLDER_IMAGE_URL } from "../utils/productUtils.js";
 
 /**
