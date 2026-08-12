@@ -56,25 +56,40 @@ export const normalizeOrderItems = (items = []) =>
 export const buildOrderDocument = async (payload) => {
   const createdByUserId = await resolveUserIdFromReference(payload.createdBy);
 
+  const billingInfo = {
+    fullName: normalizeText(payload.billingInfo?.fullName || payload.fullName),
+    phone: normalizeText(payload.billingInfo?.phone || payload.phone),
+    email: normalizeText(payload.billingInfo?.email || payload.email),
+    address: normalizeText(payload.billingInfo?.address || payload.address),
+    thana: normalizeText(payload.billingInfo?.thana || payload.thana),
+    district: normalizeText(payload.billingInfo?.district || payload.district),
+    zip: normalizeText(payload.billingInfo?.zip || payload.zip),
+  };
+
+  const hasCustomShipping = payload.shippingInfo && 
+    (normalizeText(payload.shippingInfo.address) || normalizeText(payload.shippingInfo.street));
+
+  const shippingInfo = hasCustomShipping
+    ? {
+        fullName: normalizeText(payload.shippingInfo.fullName || billingInfo.fullName),
+        phone: normalizeText(payload.shippingInfo.phone || billingInfo.phone),
+        address: normalizeText(payload.shippingInfo.address || payload.shippingInfo.street || billingInfo.address),
+        thana: normalizeText(payload.shippingInfo.thana || billingInfo.thana),
+        district: normalizeText(payload.shippingInfo.district || billingInfo.district),
+        zip: normalizeText(payload.shippingInfo.zip || billingInfo.zip),
+      }
+    : { ...billingInfo };
+
   return {
     orderNumber: await buildOrderNumber(payload.orderType === 'instore'),
     status: 'processing',
     createdBy: createdByUserId,
     updatedBy: null,
     member: payload.memberId && Types.ObjectId.isValid(payload.memberId) ? payload.memberId : undefined,
-    customer: {
-      fullName: normalizeText(payload.fullName),
-      phone: normalizeText(payload.phone),
-      email: normalizeText(payload.email),
-      address: normalizeText(payload.address),
-      city: normalizeText(payload.city),
-      thana: normalizeText(payload.thana),
-      district: normalizeText(payload.district),
-      zip: normalizeText(payload.zip),
-      giftWrap: Boolean(payload.giftWrap),
-    },
+    billingInfo,
+    shippingInfo,
     paymentMethod: normalizeText(payload.paymentMethod),
-    shippingAddress: payload.shippingAddress ?? {},
+    shippingTotalAmount: Number(payload.shippingTotalAmount || 0),
     discountTotalAmount: Number(payload.discountTotalAmount || 0),
     couponCode: payload.couponCode ? String(payload.couponCode).trim().toUpperCase() : null,
     items: normalizeOrderItems(payload.items),
@@ -123,7 +138,7 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
   const paymentPhone =
     orderData.paymentPhone ||
     orderData.paymentDetails?.paymentPhone ||
-    orderData.customer?.phone ||
+    orderData.billingInfo?.phone ||
     '';
 
   await PaymentModel.findOneAndUpdate(
@@ -209,8 +224,15 @@ export const buildAllowedOrderUpdates = async (payload, existingOrder) => {
     const validEnums = ['processing', 'shipped', 'completed', 'cancelled'];
     allowedUpdates.status = validEnums.includes(s) ? s : 'processing';
   }
-  if (payload.shippingAddress) {
-    allowedUpdates.shippingAddress = payload.shippingAddress;
+  if (payload.shippingInfo) {
+    allowedUpdates.shippingInfo = {
+      fullName: normalizeText(payload.shippingInfo.fullName) || existingOrder.shippingInfo?.fullName || '',
+      phone: normalizeText(payload.shippingInfo.phone) || existingOrder.shippingInfo?.phone || '',
+      address: normalizeText(payload.shippingInfo.address) || existingOrder.shippingInfo?.address || '',
+      thana: normalizeText(payload.shippingInfo.thana) || existingOrder.shippingInfo?.thana || '',
+      district: normalizeText(payload.shippingInfo.district) || existingOrder.shippingInfo?.district || '',
+      zip: normalizeText(payload.shippingInfo.zip) || existingOrder.shippingInfo?.zip || '',
+    };
   }
   if (payload.paymentMethod) {
     allowedUpdates.paymentMethod = payload.paymentMethod;
@@ -230,17 +252,15 @@ export const buildAllowedOrderUpdates = async (payload, existingOrder) => {
   if (payload.shippingTotalAmount !== undefined) {
     allowedUpdates.shippingTotalAmount = Number(payload.shippingTotalAmount || 0);
   }
-  if (payload.customer) {
-    allowedUpdates.customer = {
-      fullName: normalizeText(payload.customer.fullName) || existingOrder.customer?.fullName || '',
-      phone: normalizeText(payload.customer.phone) || existingOrder.customer?.phone || '',
-      email: normalizeText(payload.customer.email) || existingOrder.customer?.email || '',
-      address: normalizeText(payload.customer.address) || existingOrder.customer?.address || '',
-      city: normalizeText(payload.customer.city) || existingOrder.customer?.city || '',
-      thana: normalizeText(payload.customer.thana) || existingOrder.customer?.thana || '',
-      district: normalizeText(payload.customer.district) || existingOrder.customer?.district || '',
-      zip: normalizeText(payload.customer.zip) || existingOrder.customer?.zip || '',
-      giftWrap: payload.customer.giftWrap !== undefined ? Boolean(payload.customer.giftWrap) : existingOrder.customer?.giftWrap,
+  if (payload.billingInfo) {
+    allowedUpdates.billingInfo = {
+      fullName: normalizeText(payload.billingInfo.fullName) || existingOrder.billingInfo?.fullName || '',
+      phone: normalizeText(payload.billingInfo.phone) || existingOrder.billingInfo?.phone || '',
+      email: normalizeText(payload.billingInfo.email) || existingOrder.billingInfo?.email || '',
+      address: normalizeText(payload.billingInfo.address) || existingOrder.billingInfo?.address || '',
+      thana: normalizeText(payload.billingInfo.thana) || existingOrder.billingInfo?.thana || '',
+      district: normalizeText(payload.billingInfo.district) || existingOrder.billingInfo?.district || '',
+      zip: normalizeText(payload.billingInfo.zip) || existingOrder.billingInfo?.zip || '',
     };
   }
   if (payload.items) {

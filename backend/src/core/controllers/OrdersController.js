@@ -109,7 +109,7 @@ export const listOrders = async (req, res, next) => {
     }
 
     if (req.query.email) {
-      filter['customer.email'] = req.query.email.toLowerCase().trim();
+      filter['billingInfo.email'] = req.query.email.toLowerCase().trim();
     }
 
     const total = await OrderModel.countDocuments(filter);
@@ -406,7 +406,7 @@ export const bulkUpdateOrders = async (req, res, next) => {
           { orderId: updatedOrder._id },
           {
             paymentMethod: updatedOrder.paymentMethod,
-            paymentPhone: updatedOrder.customer?.phone || '',
+            paymentPhone: updatedOrder.billingInfo?.phone || '',
             totalAmount,
             paidAmount,
             pendingAmount,
@@ -453,11 +453,11 @@ export const getOrderInvoiceView = async (req, res, next) => {
     const formattedOrderData = {
       orderId: order.orderNumber || order.did || order._id?.toString()?.slice(-6),
       createdAt: order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-      customerName: order.customer?.fullName || order.customer?.name || "Customer",
-      customerEmail: order.customer?.email || "",
-      customerPhone: order.customer?.phone || "",
-      billingAddress: order.customer?.address || order.billingAddress || {},
-      shippingAddress: order.shippingAddress || order.customer?.address || {},
+      customerName: order.billingInfo?.fullName || "Customer",
+      customerEmail: order.billingInfo?.email || "",
+      customerPhone: order.billingInfo?.phone || "",
+      billingAddress: order.billingInfo || {},
+      shippingAddress: order.shippingInfo || {},
       items: Array.isArray(order.items) ? order.items.map(item => ({
         productName: item.name || "Product",
         variantName: item.size || item.variant || "",
