@@ -19,13 +19,8 @@ export async function createApp() {
   const defaultOrigins = [
     "https://decantrebd.com",
     "https://www.decantrebd.com",
-    "https://v2.decantrebd.com",
-    "https://service.decantrebd.com",
-    "https://server.decantrebd.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:8001",
-    "http://localhost:8015"
+    "https://dashboard.decantrebd.com",
+    "https://v2.decantrebd.com"
   ];
 
   const envOrigins = env.ALLOWED_ORIGINS
