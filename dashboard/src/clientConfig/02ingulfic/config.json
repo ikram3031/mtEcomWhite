@@ -1,0 +1,30 @@
+{
+  "clientId": "02",
+  "clientKey": "ingulfic",
+  "brandName": "Ingulfic",
+  "allowedMenus": [
+    "overview",
+    "orders",
+    "orders.new",
+    "orders.list",
+    "products",
+    "products.new",
+    "products.list",
+    "products.categories",
+    "products.brands",
+    "products.attributes",
+    "products.coupons"
+  ],
+  "theme": {
+    "light": {
+      "--primary": "#059669",
+      "--ring": "#059669",
+      "--sidebar-primary": "#059669"
+    },
+    "dark": {
+      "--primary": "#34d399",
+      "--ring": "#34d399",
+      "--sidebar-primary": "#34d399"
+    }
+  }
+}

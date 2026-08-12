@@ -1,0 +1,37 @@
+{
+  "clientId": "01",
+  "clientKey": "decantre",
+  "brandName": "Decantre",
+  "allowedMenus": [
+    "overview",
+    "orders",
+    "orders.new",
+    "orders.list",
+    "products",
+    "products.new",
+    "products.list",
+    "products.categories",
+    "products.brands",
+    "products.attributes",
+    "products.coupons",
+    "members",
+    "billing",
+    "billing.billings",
+    "billing.payments",
+    "reports",
+    "users",
+    "developer"
+  ],
+  "theme": {
+    "light": {
+      "--primary": "#d87943",
+      "--ring": "#d87943",
+      "--sidebar-primary": "#d87943"
+    },
+    "dark": {
+      "--primary": "#e78a53",
+      "--ring": "#e78a53",
+      "--sidebar-primary": "#e78a53"
+    }
+  }
+}

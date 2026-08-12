@@ -1,0 +1,32 @@
+{
+  "clientId": "03",
+  "clientKey": "toyland",
+  "brandName": "Toyland",
+  "allowedMenus": [
+    "overview",
+    "orders",
+    "orders.new",
+    "orders.list",
+    "products",
+    "products.new",
+    "products.list",
+    "products.categories",
+    "products.brands",
+    "products.attributes",
+    "products.coupons",
+    "members",
+    "reports"
+  ],
+  "theme": {
+    "light": {
+      "--primary": "#7c3aed",
+      "--ring": "#7c3aed",
+      "--sidebar-primary": "#7c3aed"
+    },
+    "dark": {
+      "--primary": "#a78bfa",
+      "--ring": "#a78bfa",
+      "--sidebar-primary": "#a78bfa"
+    }
+  }
+}
