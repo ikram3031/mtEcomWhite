@@ -32,8 +32,10 @@ const fetchOrders = async (params) => {
       let fulfillment = 'Pending';
       if (o.status === 'processing') {
         fulfillment = 'Processing';
-      } else if (o.status === 'shipped' || o.status === 'completed') {
+      } else if (o.status === 'shipped') {
         fulfillment = 'Shipped';
+      } else if (o.status === 'completed') {
+        fulfillment = 'Completed';
       } else if (o.status === 'cancelled') {
         fulfillment = 'Cancelled';
       }

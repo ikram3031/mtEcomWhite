@@ -90,8 +90,8 @@ export function OrdersTable({
     setIsUpdatingStatus(true);
     try {
       await apiClient.put(`/api/v1/orders/${statusTarget.id}`, {
-        orderStatus: targetOrderStatus,
-        paymentStatus: targetPaymentStatus,
+        status: targetOrderStatus.toLowerCase(),
+        paymentStatus: targetPaymentStatus.toLowerCase(),
       });
       toast.success(`Status for order #${statusTarget.orderNumber} updated successfully.`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -293,10 +293,10 @@ export function OrdersTable({
                   <SelectValue placeholder="Order status" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Processing">Processing</SelectItem>
+                  <SelectItem value="Shipped">Shipped</SelectItem>
+                  <SelectItem value="Completed">Delivered</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -308,10 +308,10 @@ export function OrdersTable({
                   <SelectValue placeholder="Payment status" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="n-a">N/A</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Paid">Paid</SelectItem>
+                  <SelectItem value="Partial">Partial</SelectItem>
+                  <SelectItem value="N/A">N/A</SelectItem>
                 </SelectContent>
               </Select>
             </div>
