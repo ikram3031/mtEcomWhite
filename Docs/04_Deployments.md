@@ -15,13 +15,13 @@ This document serves as the master record of all white-label clients deployed on
 ### B. Active Containers & Port Routing
 | Container Name | Service / Role | Host Port | Internal Port | Domain / Routing | Firewall Rule |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`decantre-backend-live`** | Express Node.js API | `5093` | `5093` | `https://service.decantrebd.com` | Allowed publicly |
+| **`decantre-backend-live`** | Express Node.js API | `5093` | `5093` | `https://service.decantrebd.com` & `https://server.decantrebd.com` | Allowed publicly |
 | **`decantre-dashboard-live`** | Next.js Dashboard | `8015` | `8005` | `https://v2.decantrebd.com` | Allowed publicly |
 | **`decantre-mongodb-live`** | MongoDB Engine | `27019` | `27017` | Direct Access / Local IP | Whitelisted IP only |
-| **`decantre-backend-dev`** | Legacy Dev API | `5092` | `5092` | `https://server.decantrebd.com` | Allowed publicly |
-| **`decantre-dashboard-dev`** | Legacy Dev Dashboard | `8005` | `8005` | `https://dashboard.decantrebd.com` | Allowed publicly |
+| **`decantre-backend-dev`** | Legacy Dev API | `5092` | `5092` | Direct Access (No Nginx domain routing) | Allowed publicly |
+| **`decantre-dashboard-dev`** | Legacy Dev Dashboard (Stopped) | `8005` | `8005` | `https://dashboard.decantrebd.com` (Stopped) | Allowed publicly |
 | **`decantre-mongodb-dev`** | Dev MongoDB Engine | `27017` | `27017` | Direct Access | Whitelisted IP only |
-| **`decantre-frontend-dev`** | Legacy Dev Frontend | `8001` | `8001` | `https://decantrebd.com` | Allowed publicly |
+| **`decantre-frontend-dev`** | Legacy Dev Frontend (Stopped) | `8001` | `8001` | `https://decantrebd.com` (Stopped) | Allowed publicly |
 
 ---
 

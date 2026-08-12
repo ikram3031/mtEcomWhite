@@ -76,7 +76,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 | Service | Container Name | Internal Port | Host Port | Connected Domain |
 | :--- | :--- | :--- | :--- | :--- |
-| **Backend** | `decantre-backend-live` | `5093` | `5093` | `https://service.decantrebd.com` |
+| **Backend** | `decantre-backend-live` | `5093` | `5093` | `https://service.decantrebd.com` & `https://server.decantrebd.com` |
 | **Dashboard** | `decantre-dashboard-live` | `8005` | `8015` | `https://v2.decantrebd.com` |
 | **Database** | `decantre-mongodb-live` | `27017` | `None` (Internal) | `N/A` |
 
