@@ -50,7 +50,13 @@ export const buildAdminOrderEmailHtml = ({
   const formatAddr = (addr) => {
     if (!addr) return "N/A";
     if (typeof addr === "string") return addr;
-    return `${addr.street || ''}${addr.city ? ', ' + addr.city : ''}${addr.state ? ', ' + addr.state : ''}${addr.zipCode ? ' - ' + addr.zipCode : ''}`.replace(/^,\s*/, '');
+    const parts = [
+      addr.street || addr.address,
+      addr.thana,
+      addr.district || addr.city || addr.state,
+      addr.zipCode || addr.zip ? `Zip: ${addr.zipCode || addr.zip}` : ''
+    ].filter(Boolean);
+    return parts.join(', ');
   };
 
   const billingStr = formatAddr(billingAddress);
@@ -324,18 +330,19 @@ export const buildAdminOrderEmailHtml = ({
             <td width="48%" class="responsive-col" style="vertical-align: top;">
               <h3 class="address-title">Billing address</h3>
               <p class="address-text">
-                <strong style="color: #FFFFFF;">${customerName}</strong><br>
+                <strong style="color: #FFFFFF;">${billingAddress.name || customerName}</strong><br>
                 ${billingStr}<br>
-                ${customerPhone}<br>
-                <a href="mailto:${customerEmail}" style="color: #C5A059; text-decoration: none;">${customerEmail}</a>
+                ${billingAddress.phone || customerPhone}<br>
+                <a href="mailto:${billingAddress.email || customerEmail}" style="color: #C5A059; text-decoration: none;">${billingAddress.email || customerEmail}</a>
               </p>
             </td>
             <td width="4%" class="responsive-col"></td>
             <td width="48%" class="responsive-col" style="vertical-align: top;">
               <h3 class="address-title">Shipping address</h3>
               <p class="address-text">
-                <strong style="color: #FFFFFF;">${customerName}</strong><br>
-                ${shippingStr}
+                <strong style="color: #FFFFFF;">${shippingAddress.name || billingAddress.name || customerName}</strong><br>
+                ${shippingStr}<br>
+                ${shippingAddress.phone || billingAddress.phone || customerPhone}
               </p>
             </td>
           </tr>

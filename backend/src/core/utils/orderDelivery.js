@@ -45,49 +45,49 @@ export function sendOrderEmailsAsynchronously(order) {
 
       // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
-      const customerEmail = order.customer?.email || "";
-      const customerName = order.customer?.fullName || order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || "Customer";
-      const customerPhone = order.customer?.phone || "N/A";
+      const customerEmail = order.billingInfo?.email || "";
+      const customerName = order.billingInfo?.fullName || "Customer";
+      const customerPhone = order.billingInfo?.phone || "N/A";
       const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-      // Build primary customer address (Billing Address) from OrderModel customer schema
+      // Build primary customer address (Billing Address) from OrderModel billingInfo schema
       const primaryAddrParts = [
-        order.customer?.address,
-        order.customer?.thana,
-        order.customer?.district || order.customer?.city,
-        order.customer?.zip ? `Zip: ${order.customer?.zip}` : ''
+        order.billingInfo?.address,
+        order.billingInfo?.thana,
+        order.billingInfo?.district,
+        order.billingInfo?.zip ? `Zip: ${order.billingInfo?.zip}` : ''
       ].filter(Boolean);
 
       const billingAddress = {
         name: customerName,
         phone: customerPhone,
         email: customerEmail,
-        street: order.customer?.address || "",
-        thana: order.customer?.thana || "",
-        district: order.customer?.district || order.customer?.city || "",
-        zipCode: order.customer?.zip || "",
+        street: order.billingInfo?.address || "",
+        thana: order.billingInfo?.thana || "",
+        district: order.billingInfo?.district || "",
+        zipCode: order.billingInfo?.zip || "",
         fullAddress: primaryAddrParts.join(', ')
       };
 
-      // Resolve Shipping Address (Use custom shippingAddress if provided; otherwise fallback to billingAddress)
+      // Resolve Shipping Address (Use custom shippingInfo if provided; otherwise fallback to billingAddress)
       let shippingAddress = billingAddress;
-      if (order.shippingAddress && typeof order.shippingAddress === 'object' && Object.keys(order.shippingAddress).length > 0) {
-        const customStreet = order.shippingAddress.street || order.shippingAddress.address;
+      if (order.shippingInfo && typeof order.shippingInfo === 'object') {
+        const customStreet = order.shippingInfo.address || order.shippingInfo.street;
         if (customStreet && customStreet.trim()) {
           const customAddrParts = [
             customStreet,
-            order.shippingAddress.thana || order.shippingAddress.state,
-            order.shippingAddress.district || order.shippingAddress.city,
-            (order.shippingAddress.zipCode || order.shippingAddress.zip) ? `Zip: ${order.shippingAddress.zipCode || order.shippingAddress.zip}` : ''
+            order.shippingInfo.thana,
+            order.shippingInfo.district,
+            order.shippingInfo.zip ? `Zip: ${order.shippingInfo.zip}` : ''
           ].filter(Boolean);
 
           shippingAddress = {
-            name: order.shippingAddress.fullName || order.shippingAddress.name || customerName,
-            phone: order.shippingAddress.phone || customerPhone,
+            name: order.shippingInfo.fullName || customerName,
+            phone: order.shippingInfo.phone || customerPhone,
             street: customStreet,
-            thana: order.shippingAddress.thana || order.shippingAddress.state || "",
-            district: order.shippingAddress.district || order.shippingAddress.city || "",
-            zipCode: order.shippingAddress.zipCode || order.shippingAddress.zip || "",
+            thana: order.shippingInfo.thana || "",
+            district: order.shippingInfo.district || "",
+            zipCode: order.shippingInfo.zip || "",
             fullAddress: customAddrParts.join(', ')
           };
         }
@@ -117,7 +117,6 @@ export function sendOrderEmailsAsynchronously(order) {
       const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
       const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
-      const giftWrap = Boolean(order.customer?.giftWrap || order.giftWrap);
 
       const formattedOrderData = {
         orderId,
@@ -131,8 +130,7 @@ export function sendOrderEmailsAsynchronously(order) {
         subtotal,
         shippingFee,
         totalAmount,
-        paymentMethod,
-        giftWrap
+        paymentMethod
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)
