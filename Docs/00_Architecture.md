@@ -1,4 +1,4 @@
-# Project Architecture & Directory Map (`z_architecture.md`)
+# Project Architecture & Directory Map (`00_Architecture.md`)
 
 > **Note for AI Assistant / LLM**: Read this file to instantly understand the full-stack architecture, folder layout, data flow, and key patterns of this repository without needing to scan every folder.
 
@@ -11,11 +11,11 @@ This repository is a **Monorepo / Multi-App Fullstack E-Commerce System** named 
 ```
 Decantre_Fullstack/
 ├── backend/          # Node.js (ESM) + Express + MongoDB REST API backend
-├── frontend/         # React + Vite customer-facing Storefront application
+├── frontend/         # React + Vite customer-facing Storefront application (isolated in production)
 ├── dashboard/        # Next.js (App Router) + Tailwind + TypeScript Admin Panel
 ├── docker-compose.yml / dev / prod # Docker container orchestrations
 ├── nginx.conf / prod # Nginx reverse proxy configurations
-└── z_*.md            # Architectural, command, and deployment guides (Root level context)
+└── Docs/             # Architectural, command, and deployment guides
 ```
 
 ---
@@ -27,10 +27,6 @@ Decantre_Fullstack/
 - `docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.prod.yml` - Docker compose setups for local dev, staging, and production environments.
 - `nginx.conf`, `nginx-prod.conf`, `nginx-prod-secure.conf` - Nginx reverse-proxy rules routing requests (`/api` -> backend, `/dashboard` -> dashboard app, `/` -> storefront).
 - `prod-deploy.sh`, `prod-deploy-v2.sh`, `update-deploy.sh` - Automated deployment scripts for Linux servers.
-- `z_command.md` - Useful deployment, docker, and operational commands.
-- `z_domainConnect.md` - Domain, SSL, and DNS connection guides.
-- `z_git_architecture_guide.md` - Multi-client Git branch & environment configuration strategy.
-- `z_architecture.md` - **[THIS FILE]** Overall architecture map & guide for AI & developers.
 
 ---
 
@@ -47,6 +43,7 @@ backend/
 │   │   └── index.js         # MongoDB connection setup using Mongoose
 │   ├── core/                # Public Storefront Logic & APIS
 │   │   ├── controllers/     # Core Business logic controllers (Products, Orders, Auth, Cart, etc.)
+│   │   Model schema mapping logic: billingInfo, shippingInfo, items, totals.
 │   │   ├── helper/          # Utility helpers & calculation functions
 │   │   ├── middlewares/     # Auth checks, admin authorization, validation middlewares
 │   │   ├── models/          # Mongoose database schemas & models for core storefront
@@ -60,7 +57,6 @@ backend/
 │   ├── assets/              # Uploaded assets & static file storage
 │   └── templates/           # Email templates (Nodemailer html templates)
 ├── scripts/                 # Maintenance, migration, and DB seed scripts
-├── API_ENDPOINTS.md         # Detailed backend API documentation
 ├── Dockerfile               # Backend Docker build instructions
 └── package.json             # ESM Express configuration & dependencies
 ```
@@ -148,7 +144,20 @@ dashboard/
 
 ---
 
-## 4. Key Conventions for AI Developers & Agents
+## 4. Multi-Client Architecture & Code Isolation
+
+To allow multiple client branches to co-exist without generating merge conflicts over core product logic, all base features reside inside a unified `core/` folder, while configurations follow a base-and-override schema:
+
+### Re-creating this Isolation Layout:
+1. **Directory Setup**: Keep public/customer logics inside `backend/src/core/` (under nested subfolders: controllers, models, routes, middlewares, utils, helper).
+2. **Settings Override**: Keep client config file ignored in Git:
+   - `src/config/config.core.json` (tracked template)
+   - `src/config/config.client.json` (gitignored local override configuration)
+3. **App Loader**: `src/config/index.js` automatically merges the core JSON with the local client JSON to dynamic runtime environment.
+
+---
+
+## 5. Key Conventions for AI Developers & Agents
 
 1. **Backend Layer Separation**:
    - Storefront APIs live inside `backend/src/core/`.
@@ -160,8 +169,5 @@ dashboard/
    - `dashboard/` is Next.js App Router with TypeScript.
 
 3. **Branch & Environment Guidelines**:
-   - Always refer to `z_git_architecture_guide.md` when modifying environment configuration.
    - Do not commit local `.env` files to git. Use `.env.example` templates.
-
-4. **Root Docs (`z_*`)**:
-   - Any operational or architectural document in root must start with `z_` for quick AI & developer recognition.
+   - Core configurations are protected using merge=ours attributes in `.gitattributes`.
