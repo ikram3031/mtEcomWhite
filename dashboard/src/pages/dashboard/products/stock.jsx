@@ -6,20 +6,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/core/ui/table';
-import { Badge } from '@/components/core/ui/badge';
-import { Input } from '@/components/core/ui/input';
-import { Skeleton } from '@/components/core/ui/skeleton';
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
+} from '@/components/ui/select';
 import { Search, Package, AlertTriangle, CheckCircle2, XCircle, TrendingDown } from 'lucide-react';
-import { useProducts } from '@/hooks/core/use-products';
-import { useCategories, useBrands } from '@/lib/core/category-cache';
+import { useProducts } from '@/hooks/use-products';
+import { useCategories, useBrands } from '@/lib/category-cache';
 
 const StockManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState('');

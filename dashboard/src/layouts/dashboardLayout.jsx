@@ -1,10 +1,10 @@
 import { Outlet } from 'react-router-dom';
-import { AppSidebar } from '@/components/core/dashboard/appSidebar';
-import { Header } from '@/components/core/dashboard/header';
-import { ClientSidebarProvider } from '@/components/core/dashboard/clientSidebarProvider';
-import { AuthGuard } from '@/components/core/auth-guard';
-import { ClientThemeProvider } from '@/components/core/clientThemeProvider';
-import { ClientRouteGuard } from '@/components/core/clientRouteGuard';
+import { AppSidebar } from '@/components/dashboard/app-sidebar';
+import { Header } from '@/components/dashboard/header';
+import { ClientSidebarProvider } from '@/components/dashboard/client-sidebar-provider';
+import { AuthGuard } from '@/components/auth-guard';
+import { ClientThemeProvider } from '@/components/clientThemeProvider';
+import { ClientRouteGuard } from '@/components/clientRouteGuard';
 
 const DashboardLayout = ({ children }) => {
   return (

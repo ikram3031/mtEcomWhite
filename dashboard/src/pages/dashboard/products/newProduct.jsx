@@ -1,16 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/core/ui/button";
-import { Input } from "@/components/core/ui/input";
-import { Switch } from "@/components/core/ui/switch";
-import { RichTextEditor } from "@/components/core/dashboard/rich-text-editor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/core/ui/select";
+} from "@/components/ui/select";
 import {
   Plus,
   UploadCloud,
@@ -18,14 +18,14 @@ import {
   ArrowLeft,
   AlertCircle,
 } from "lucide-react";
-import { apiClient } from "@/lib/core/api-client";
+import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   useCategories,
   useBrands,
-} from "@/lib/core/category-cache";
-import { getApiErrorMessage } from '@/lib/core/error-handler';
+} from "@/lib/category-cache";
+import { getApiErrorMessage } from '@/lib/error-handler';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB limit
 

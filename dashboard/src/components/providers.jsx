@@ -1,15 +1,9 @@
 import * as React from 'react';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
-<<<<<<< HEAD:dashboard/src/components/providers.jsx
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/components/theme-provider';
 import { handleGlobalError } from '@/lib/error-handler';
-=======
-import { Toaster } from '@/components/core/ui/sonner';
-import { AuthProvider } from '@/lib/core/auth-context';
-import { ThemeProvider } from '@/components/core/theme-provider';
-import { handleGlobalError } from '@/lib/core/error-handler';
->>>>>>> Decantre:dashboard/src/components/core/providers.jsx
 
 export const ReactQueryProvider = ({ children }) => {
   const [queryClient] = React.useState(

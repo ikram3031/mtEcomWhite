@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
-import { KpiCard } from '@/components/core/dashboard/kpiCard';
-import { RevenueChart } from '@/components/core/dashboard/revenue-chart';
-import { OrderStatusPie } from '@/components/core/dashboard/OrderStatusPie';
+import { KpiCard } from '@/components/dashboard/kpi-card';
+import { RevenueChart } from '@/components/dashboard/revenue-chart';
 import { DollarSign, Users, CreditCard, Activity } from 'lucide-react';
-import { useDashboardKpi } from '@/hooks/core/use-dashboard-kpi';
-import { Skeleton } from '@/components/core/ui/skeleton';
+import { useDashboardKpi } from '@/hooks/use-dashboard-kpi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const DashboardPage = () => {
   const { data: stats, isLoading } = useDashboardKpi('30days');
@@ -74,7 +73,6 @@ const DashboardPage = () => {
       
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <RevenueChart />
-        <OrderStatusPie range="30days" />
       </div>
     </div>
   );

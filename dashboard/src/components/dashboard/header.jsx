@@ -1,16 +1,7 @@
-import * as React from 'react';
-<<<<<<< HEAD:dashboard/src/components/dashboard/header.jsx
 import { Input } from '@/components/ui/input';
-import { Search, Bell, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
-=======
-import { Input } from '@/components/core/ui/input';
 import { Search, Bell, LogOut, Settings, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/core/ui/button';
-import { ThemeToggle } from '@/components/core/ui/theme-toggle';
->>>>>>> Decantre:dashboard/src/components/core/dashboard/header.jsx
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,

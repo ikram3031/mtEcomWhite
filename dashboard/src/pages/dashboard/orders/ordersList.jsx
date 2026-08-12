@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { OrdersTable } from '@/components/core/dashboard/orders-table';
-import { Input } from '@/components/core/ui/input';
-import { Button } from '@/components/core/ui/button';
+import { OrdersTable } from '@/components/dashboard/orders-table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, Download, PlusCircle } from 'lucide-react';
 
 import {
@@ -10,7 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -19,10 +19,10 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/core/ui/pagination';
+} from '@/components/ui/pagination';
 
 import { Trash2 } from 'lucide-react';
-import { ConfirmDeleteDialog } from '@/components/core/ui/confirm-delete-dialog';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import {
   Dialog,
   DialogContent,
@@ -30,8 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/core/ui/dialog';
-import { apiClient } from '@/lib/core/api-client';
+} from '@/components/ui/dialog';
+import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 

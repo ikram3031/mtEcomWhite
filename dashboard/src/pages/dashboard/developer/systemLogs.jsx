@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/lib/core/auth-context";
-import { apiClient } from "@/lib/core/api-client";
-import { Button } from "@/components/core/ui/button";
-import { Input } from "@/components/core/ui/input";
+import { useAuth } from "@/lib/auth-context";
+import { apiClient } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ShieldAlert, Terminal, Trash2, Search, Pause, Play, Download } from "lucide-react";
 
 const SystemLogs = () => {

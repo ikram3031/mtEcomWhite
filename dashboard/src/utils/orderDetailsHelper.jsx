@@ -1,4 +1,4 @@
-import { Badge } from "@/components/core/ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 // Check if an order is an In-Store order based on order number prefix, type, or customer email.
 export const checkIsInStoreOrder = (order) => {

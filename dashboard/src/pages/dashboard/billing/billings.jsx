@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Input } from '@/components/core/ui/input';
-import { Button } from '@/components/core/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, Download, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
 import {
   Select,
@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
-import { Badge } from '@/components/core/ui/badge';
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/core/ui/table';
+} from '@/components/ui/table';
 import {
   Pagination,
   PaginationContent,
@@ -26,8 +26,8 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/core/ui/pagination';
-import { useBillings } from '@/hooks/core/use-billings';
+} from '@/components/ui/pagination';
+import { useBillings } from '@/hooks/use-billings';
 
 function getStatusBadge(status) {
   switch (status) {

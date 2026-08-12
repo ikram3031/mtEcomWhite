@@ -6,10 +6,10 @@ import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
 ========
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { Button } from "@/components/core/ui/button";
-import { Input } from "@/components/core/ui/input";
-import { Switch } from "@/components/core/ui/switch";
-import { RichTextEditor } from "@/components/core/dashboard/rich-text-editor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
 >>>>>>>> Decantre:dashboard/src/pages/dashboard/products/productDetails.jsx
 import {
   Select,

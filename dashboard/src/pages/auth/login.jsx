@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, Mail, Lock, Eye, EyeOff, Shield, QrCode, ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/lib/core/auth-context';
-import { Button } from '@/components/core/ui/button';
-import { Input } from '@/components/core/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/core/ui/card';
-import { handleGlobalError } from '@/lib/core/error-handler';
+import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { handleGlobalError } from '@/lib/error-handler';
 import { toast } from 'sonner';
-import { DecantreLogo } from '@/components/core/DecantreLogo';
-import { apiClient } from '@/lib/core/api-client';
+import { DecantreLogo } from '@/components/DecantreLogo';
+import { apiClient } from '@/lib/api-client';
 
 
 const LoginPage = () => {

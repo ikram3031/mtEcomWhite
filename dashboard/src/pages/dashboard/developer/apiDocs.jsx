@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/core/auth-context";
-import { apiClient } from "@/lib/core/api-client";
+import { useAuth } from "@/lib/auth-context";
+import { apiClient } from "@/lib/api-client";
 import { ShieldAlert, FileCode, ExternalLink } from "lucide-react";
-import { Button } from "@/components/core/ui/button";
+import { Button } from "@/components/ui/button";
 
 const ApiDocs = () => {
   const { user } = useAuth();

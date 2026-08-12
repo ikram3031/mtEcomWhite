@@ -1,10 +1,6 @@
 import React, { useEffect } from 'react';
-<<<<<<< HEAD:dashboard/src/components/auth-guard.jsx
-import { useAuth } from '@/lib/auth-context';
-=======
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/lib/core/auth-context';
->>>>>>> Decantre:dashboard/src/components/core/auth-guard.jsx
+import { useAuth } from '@/lib/auth-context';
 
 export function AuthGuard({ children }) {
   const { user, isLoading } = useAuth();

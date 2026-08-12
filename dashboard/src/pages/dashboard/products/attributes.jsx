@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/core/ui/button';
-import { Input } from '@/components/core/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/core/ui/dialog';
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -15,12 +15,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/core/ui/table';
+} from '@/components/ui/table';
 import { Plus, Search, Edit2, Trash2, Sliders, X } from 'lucide-react';
-import { apiClient } from '@/lib/core/api-client';
+import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { ConfirmDeleteDialog } from '@/components/core/ui/confirm-delete-dialog';
-import { getApiErrorMessage } from '@/lib/core/error-handler';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { getApiErrorMessage } from '@/lib/error-handler';
 
 function slugify(text) {
   return text

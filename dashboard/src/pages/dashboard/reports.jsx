@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Input } from '@/components/core/ui/input';
-import { Button } from '@/components/core/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, BarChart3, TrendingUp, Download, Eye, Calendar, RefreshCw } from 'lucide-react';
 import {
   Select,
@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
-import { Badge } from '@/components/core/ui/badge';
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/core/ui/table';
+} from '@/components/ui/table';
 
 const mockReports = [
   { id: 'REP-2026-001', title: 'Monthly Revenue Summary - July 2026', type: 'Sales', generatedDate: '2026-07-30', size: '2.4 MB' },

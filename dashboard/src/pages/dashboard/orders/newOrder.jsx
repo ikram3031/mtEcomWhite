@@ -1,19 +1,19 @@
 import { useState, useMemo, useCallback } from "react";
-import { useProducts } from "@/hooks/core/use-products";
-import { apiClient } from "@/lib/core/api-client";
-import { useAuth } from "@/lib/core/auth-context";
-import { useCategories, useBrands } from "@/lib/core/category-cache";
+import { useProducts } from "@/hooks/use-products";
+import { apiClient } from "@/lib/api-client";
+import { useAuth } from "@/lib/auth-context";
+import { useCategories, useBrands } from "@/lib/category-cache";
 import { toast } from "sonner";
-import { Button } from "@/components/core/ui/button";
-import { Input } from "@/components/core/ui/input";
-import { Badge } from "@/components/core/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/core/ui/select";
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/core/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Search,
   Plus,
@@ -36,7 +36,7 @@ import {
   Tag,
 } from "lucide-react";
 
-import { effectivePrice, formatBDT } from "@/utils/core/orderHelper";
+import { effectivePrice, formatBDT } from "@/utils/orderHelper";
 
 function ProductAddDialog({
   product,

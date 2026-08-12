@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { CouponsTable } from '@/components/core/dashboard/coupons-table';
-import { CouponDialog } from '@/components/core/dashboard/coupon-dialog';
-import { Input } from '@/components/core/ui/input';
-import { Button } from '@/components/core/ui/button';
+import { CouponsTable } from '@/components/dashboard/coupons-table';
+import { CouponDialog } from '@/components/dashboard/coupon-dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
 import {
   Select,
@@ -10,7 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -19,10 +19,10 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/core/ui/pagination';
-import { ConfirmDeleteDialog } from '@/components/core/ui/confirm-delete-dialog';
+} from '@/components/ui/pagination';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Trash2 } from 'lucide-react';
-import { apiClient } from '@/lib/core/api-client';
+import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 

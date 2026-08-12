@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Input } from '@/components/core/ui/input';
-import { Button } from '@/components/core/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Search, Download, CheckCircle2, XCircle, Clock, Trash2, MoreHorizontal } from 'lucide-react';
 import {
   Select,
@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/core/ui/select';
-import { Badge } from '@/components/core/ui/badge';
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/core/ui/table';
+} from '@/components/ui/table';
 import {
   Pagination,
   PaginationContent,
@@ -26,7 +26,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/core/ui/pagination';
+} from '@/components/ui/pagination';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,13 +34,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/core/ui/dropdown-menu';
-import { usePayments } from '@/hooks/core/use-payments';
-import { apiClient } from '@/lib/core/api-client';
+} from '@/components/ui/dropdown-menu';
+import { usePayments } from '@/hooks/use-payments';
+import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ConfirmDeleteDialog } from '@/components/core/ui/confirm-delete-dialog';
-import { getApiErrorMessage } from '@/lib/core/error-handler';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { getApiErrorMessage } from '@/lib/error-handler';
 
 const METHOD_COLORS = {
   bKash: 'bg-pink-500/10 text-pink-600 border-pink-500/30',

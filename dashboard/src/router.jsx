@@ -36,7 +36,7 @@ import Billings from './pages/dashboard/billing/billings';
 import ApiDocs from './pages/dashboard/developer/apiDocs';
 import SystemLogs from './pages/dashboard/developer/systemLogs';
 
-import { RouteErrorElement } from './components/core/ErrorBoundary';
+import { RouteErrorElement } from './components/ErrorBoundary';
 
 export const router = createBrowserRouter([
   {

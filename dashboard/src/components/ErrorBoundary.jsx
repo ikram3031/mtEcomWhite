@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useRouteError } from "react-router-dom";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
-import { Button } from "@/components/core/ui/button";
+import { Button } from "@/components/ui/button";
 
 import { useState, useEffect } from "react";
 
