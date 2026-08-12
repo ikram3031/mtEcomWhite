@@ -108,7 +108,9 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
   const totalAmount = Number(orderData.totals?.total || 0);
 
   let paidAmount = 0;
-  if (payload.paidAmount !== undefined && payload.paidAmount !== null) {
+  if (orderData.status === 'completed') {
+    paidAmount = totalAmount;
+  } else if (payload.paidAmount !== undefined && payload.paidAmount !== null) {
     paidAmount = Number(payload.paidAmount);
   } else if (orderData.paidAmount !== undefined && orderData.paidAmount !== null) {
     paidAmount = Number(orderData.paidAmount);
