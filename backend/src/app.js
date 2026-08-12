@@ -20,7 +20,8 @@ export async function createApp() {
     "https://decantrebd.com",
     "https://www.decantrebd.com",
     "https://dashboard.decantrebd.com",
-    "http://dashboard.decantrebd.com"
+    "http://dashboard.decantrebd.com",
+    "http://localhost:8001",
   ];
 
   const envOrigins = env.ALLOWED_ORIGINS
