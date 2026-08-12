@@ -16,18 +16,33 @@ export async function createApp() {
   app.set("wpTablePrefix", process.env.WP_TABLE_PREFIX || "wp_");
   app.set("trust proxy", true);
 
-  const allowedOrigins = env.ALLOWED_ORIGINS
+  const defaultOrigins = [
+    "https://decantrebd.com",
+    "https://www.decantrebd.com",
+    "https://v2.decantrebd.com",
+    "https://service.decantrebd.com",
+    "https://server.decantrebd.com",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8001",
+    "http://localhost:8015"
+  ];
+
+  const envOrigins = env.ALLOWED_ORIGINS
     ? env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
     : [];
+
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+      if (allowedOrigins.includes("*") || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        logger.warn(`CORS request from origin ${origin} - allowed`);
+        callback(null, true);
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
