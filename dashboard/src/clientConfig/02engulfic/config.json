@@ -1,7 +1,7 @@
 {
   "clientId": "02",
-  "clientKey": "ingulfic",
-  "brandName": "Ingulfic",
+  "clientKey": "engulfic",
+  "brandName": "Engulfic",
   "allowedMenus": [
     "overview",
     "orders",

@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:decantre": "vite --mode decantre",
-    "dev:ingulfic": "vite --mode ingulfic",
+    "dev:engulfic": "vite --mode engulfic",
     "dev:toyland": "vite --mode toyland",
     "build": "vite build",
     "build:decantre": "vite build --mode decantre",
-    "build:ingulfic": "vite build --mode ingulfic",
+    "build:engulfic": "vite build --mode engulfic",
     "build:toyland": "vite build --mode toyland",
     "lint": "oxlint",
     "preview": "vite preview"

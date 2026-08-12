@@ -83,12 +83,17 @@ Open the dashboard configuration template:
 ```bash
 nano /opt/decantre/configs/dashboard.env
 ```
-Provide the public API base URL of the client backend API service:
+Provide the public API base URL and the active client configuration key:
 ```env
 PORT=8005
 VITE_PORT=8005
 VITE_API_BASE_URL=https://service.decantrebd.com
+VITE_CLIENT=decantre
 ```
+
+> [!NOTE]
+> **VITE_CLIENT Parameter:**
+> This variable controls client-specific properties like theme branding, custom logos, and menu permissions. Make sure to match the client key exactly as defined in the `dashboard/src/clientConfig` folders (e.g., `decantre`, `engulfic`, `toyland`). If left blank, it falls back to hostname checking or defaults to `decantre`.
 
 ---
 
