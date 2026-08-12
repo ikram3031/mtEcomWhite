@@ -16,21 +16,34 @@ const orderItemSchema = new Schema(
   { _id: false },
 );
 
-const customerSchema = new Schema(
+// Schema defining customer billing contact and location details
+const billingInfoSchema = new Schema(
   {
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, required: false, trim: true, lowercase: true },
-    address: { type: String, required: false, trim: true },
-    city: { type: String, trim: true, default: '' },
+    address: { type: String, required: true, trim: true },
     thana: { type: String, trim: true, default: '' },
-    district: { type: String, required: false, trim: true },
+    district: { type: String, required: true, trim: true },
     zip: { type: String, trim: true, default: '' },
-    giftWrap: { type: Boolean, default: false },
   },
   { _id: false },
 );
 
+// Schema defining recipient shipping contact and location details
+const shippingInfoSchema = new Schema(
+  {
+    fullName: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    address: { type: String, required: true, trim: true },
+    thana: { type: String, trim: true, default: '' },
+    district: { type: String, required: true, trim: true },
+    zip: { type: String, trim: true, default: '' },
+  },
+  { _id: false },
+);
+
+// Schema defining checkout order totals
 const orderTotalsSchema = new Schema(
   {
     subtotal: { type: Number, required: true, min: 0 },
@@ -41,6 +54,7 @@ const orderTotalsSchema = new Schema(
   { _id: false },
 );
 
+// Unified Order schema for transaction tracking
 const orderSchema = new Schema(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
@@ -54,9 +68,9 @@ const orderSchema = new Schema(
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     member: { type: Schema.Types.ObjectId, ref: "Member", required: false },
-    customer: { type: customerSchema, required: true },
+    billingInfo: { type: billingInfoSchema, required: true },
+    shippingInfo: { type: shippingInfoSchema, required: true },
     paymentMethod: { type: String, required: true, trim: true },
-    shippingAddress: { type: Schema.Types.Mixed, default: {} },
     shippingTotalAmount: { type: Number, default: 0, min: 0 },
     discountTotalAmount: { type: Number, default: 0, min: 0 },
     couponCode: { type: String, default: null, trim: true, uppercase: true },
