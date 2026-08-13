@@ -87,7 +87,7 @@ export const buildOrderInvoiceEmailHtml = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Decantre Dev - Thank you for your order</title>
+  <title>Invoice-${orderId}</title>
   <!-- Google Fonts Import -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -276,6 +276,101 @@ export const buildOrderInvoiceEmailHtml = ({
         width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 20px !important;
+      }
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body, .wrapper {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .container {
+        border: none !important;
+        box-shadow: none !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .header {
+        background-color: #FFFFFF !important;
+        border-bottom: 2px solid #C5A059 !important;
+        padding: 15px 0 !important;
+      }
+      .content {
+        padding: 15px !important;
+      }
+      .title {
+        color: #000000 !important;
+        font-size: 20px !important;
+        margin-bottom: 10px !important;
+      }
+      .greeting, .message-text {
+        color: #000000 !important;
+        margin-bottom: 10px !important;
+      }
+      .notice-box {
+        background-color: #F9F9FB !important;
+        border: 1px solid #C5A059 !important;
+        color: #000000 !important;
+        padding: 10px !important;
+        margin-bottom: 15px !important;
+      }
+      .items-table {
+        margin-bottom: 15px !important;
+      }
+      .items-table th {
+        background-color: #F4F4F5 !important;
+        color: #000000 !important;
+        border-bottom: 1px solid #C5A059 !important;
+        padding: 8px !important;
+      }
+      .items-table td {
+        padding: 8px !important;
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+      }
+      .summary-table {
+        margin-bottom: 15px !important;
+      }
+      .summary-table td {
+        padding: 5px 8px !important;
+      }
+      .summary-val {
+        color: #000000 !important;
+      }
+      .total-row td {
+        border-top: 1px solid #C5A059 !important;
+      }
+      .total-row .summary-val {
+        color: #C5A059 !important;
+      }
+      .divider {
+        margin: 15px 0 !important;
+        background-color: #E4E4E7 !important;
+      }
+      .address-title {
+        color: #C5A059 !important;
+        margin-bottom: 4px !important;
+      }
+      .address-text {
+        color: #3F3F46 !important;
+      }
+      .footer {
+        background-color: #FFFFFF !important;
+        border-top: 1px solid #E4E4E7 !important;
+        color: #71717A !important;
+        padding: 15px 0 !important;
+      }
+      @page {
+        size: A4;
+        margin: 10mm;
       }
     }
   </style>
