@@ -9,6 +9,7 @@ dist/
 wp_db/
 img/
 RawUploads/
+RawUpload/
 
 # Runtime files
 .env

@@ -13,6 +13,8 @@ import categoriesRouter from "./routes/CategoryRoute.js";
 import brandRouter from "./routes/BrandRoute.js";
 import dashboardRouter from "./routes/DashboardRoute.js";
 import couponRouter from "./routes/CouponRoute.js";
+import systemRouter from "./routes/SystemRoute.js";
+import searchRouter from "./routes/SearchRoute.js";
 import { searchProducts } from "./controllers/SearchController.js";
 
 const coreRouter = Router();
@@ -31,6 +33,8 @@ coreRouter.use("/categories", categoriesRouter);
 coreRouter.use("/brands", brandRouter);
 coreRouter.use("/dashboard", dashboardRouter);
 coreRouter.use("/coupons", couponRouter);
+coreRouter.use("/system", systemRouter);
+coreRouter.use("/search", searchRouter);
 coreRouter.get("/search-products", searchProducts);
 
 export default coreRouter;

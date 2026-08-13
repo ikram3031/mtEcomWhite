@@ -107,9 +107,25 @@ export const buildOrderDocument = async (payload) => {
 export const syncPaymentDocument = async (orderData, payload = {}) => {
   const totalAmount = Number(orderData.totals?.total || 0);
 
+  const isInstore = 
+    (payload.orderType === 'instore') || 
+    (orderData.orderNumber && orderData.orderNumber.startsWith('IS')) ||
+    (orderData.billingInfo?.email && orderData.billingInfo.email.includes('instore@decantre.com'));
+
   let paidAmount = 0;
-  if (orderData.status === 'completed') {
+  if (isInstore || orderData.status === 'completed') {
     paidAmount = totalAmount;
+  } else if (payload.paymentStatus !== undefined && payload.paymentStatus !== null) {
+    const pStatus = String(payload.paymentStatus).toLowerCase();
+    if (pStatus === 'paid') {
+      paidAmount = totalAmount;
+    } else if (pStatus === 'pending') {
+      paidAmount = 0;
+    } else if (payload.paidAmount !== undefined && payload.paidAmount !== null) {
+      paidAmount = Number(payload.paidAmount);
+    } else {
+      paidAmount = 0;
+    }
   } else if (payload.paidAmount !== undefined && payload.paidAmount !== null) {
     paidAmount = Number(payload.paidAmount);
   } else if (orderData.paidAmount !== undefined && orderData.paidAmount !== null) {
@@ -129,12 +145,29 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
   const pendingAmount = Math.max(0, totalAmount - paidAmount);
 
   let paymentStatus = 'pending';
-  if (paidAmount >= totalAmount && totalAmount > 0) {
+  if (isInstore) {
     paymentStatus = 'paid';
-  } else if (paidAmount > 0) {
-    paymentStatus = 'partial';
+  } else if (payload.paymentStatus !== undefined && payload.paymentStatus !== null) {
+    const pStatus = String(payload.paymentStatus).toLowerCase();
+    if (['paid', 'partial', 'pending', 'n-a'].includes(pStatus)) {
+      paymentStatus = pStatus;
+    } else {
+      if (paidAmount >= totalAmount && totalAmount > 0) {
+        paymentStatus = 'paid';
+      } else if (paidAmount > 0) {
+        paymentStatus = 'partial';
+      } else {
+        paymentStatus = 'pending';
+      }
+    }
   } else {
-    paymentStatus = 'pending';
+    if (paidAmount >= totalAmount && totalAmount > 0) {
+      paymentStatus = 'paid';
+    } else if (paidAmount > 0) {
+      paymentStatus = 'partial';
+    } else {
+      paymentStatus = 'pending';
+    }
   }
 
   const paymentPhone =
@@ -254,17 +287,24 @@ export const buildAllowedOrderUpdates = async (payload, existingOrder) => {
   if (payload.shippingTotalAmount !== undefined) {
     allowedUpdates.shippingTotalAmount = Number(payload.shippingTotalAmount || 0);
   }
-  if (payload.billingInfo) {
+
+  const customerInfo = payload.billingInfo || payload.customer;
+  if (customerInfo) {
     allowedUpdates.billingInfo = {
-      fullName: normalizeText(payload.billingInfo.fullName) || existingOrder.billingInfo?.fullName || '',
-      phone: normalizeText(payload.billingInfo.phone) || existingOrder.billingInfo?.phone || '',
-      email: normalizeText(payload.billingInfo.email) || existingOrder.billingInfo?.email || '',
-      address: normalizeText(payload.billingInfo.address) || existingOrder.billingInfo?.address || '',
-      thana: normalizeText(payload.billingInfo.thana) || existingOrder.billingInfo?.thana || '',
-      district: normalizeText(payload.billingInfo.district) || existingOrder.billingInfo?.district || '',
-      zip: normalizeText(payload.billingInfo.zip) || existingOrder.billingInfo?.zip || '',
+      fullName: normalizeText(customerInfo.fullName || customerInfo.name) || existingOrder.billingInfo?.fullName || '',
+      phone: normalizeText(customerInfo.phone) || existingOrder.billingInfo?.phone || '',
+      email: normalizeText(customerInfo.email) || existingOrder.billingInfo?.email || '',
+      address: normalizeText(customerInfo.address || customerInfo.street) || existingOrder.billingInfo?.address || '',
+      thana: normalizeText(customerInfo.thana) || existingOrder.billingInfo?.thana || '',
+      district: normalizeText(customerInfo.district) || existingOrder.billingInfo?.district || '',
+      zip: normalizeText(customerInfo.zip) || existingOrder.billingInfo?.zip || '',
     };
+
+    if (!payload.shippingInfo) {
+      allowedUpdates.shippingInfo = { ...allowedUpdates.billingInfo };
+    }
   }
+
   if (payload.items) {
     allowedUpdates.items = normalizeOrderItems(payload.items);
   }

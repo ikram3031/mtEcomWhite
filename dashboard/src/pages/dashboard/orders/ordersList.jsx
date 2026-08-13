@@ -143,10 +143,9 @@ const OrdersPage = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-popover border shadow-md" side="bottom">
                   <SelectItem value="All">Order Status: All</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="Processing">Processing</SelectItem>
                   <SelectItem value="Shipped">Shipped</SelectItem>
-                  <SelectItem value="Delivered">Delivered</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
                   <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
@@ -186,10 +185,9 @@ const OrdersPage = () => {
                   <span>Order Status</span>
                 </SelectTrigger>
                 <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="Pending" className="cursor-pointer text-xs">Pending</SelectItem>
                   <SelectItem value="Processing" className="cursor-pointer text-xs">Processing</SelectItem>
                   <SelectItem value="Shipped" className="cursor-pointer text-xs">Shipped</SelectItem>
-                  <SelectItem value="Delivered" className="cursor-pointer text-xs">Delivered</SelectItem>
+                  <SelectItem value="Completed" className="cursor-pointer text-xs">Completed</SelectItem>
                   <SelectItem value="Cancelled" className="cursor-pointer text-xs">Cancelled</SelectItem>
                 </SelectContent>
               </Select>

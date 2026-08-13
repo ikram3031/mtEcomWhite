@@ -35,3 +35,45 @@ export const getSystemInfo = async (req, res, next) => {
     next(error);
   }
 };
+
+import { OrderModel } from '../models/order.model.js';
+import { PaymentModel } from '../models/payment.model.js';
+import { CategoryModel } from '../models/category.model.js';
+
+// Retrieve dynamic metadata configuration (order statuses, payment statuses, categories)
+export const getMetadata = async (req, res, next) => {
+  try {
+    const orderStatusesEnum = OrderModel.schema.path('status').enumValues || [];
+    const paymentStatusesEnum = PaymentModel.schema.path('status').enumValues || [];
+
+    const orderStatuses = orderStatusesEnum.map((val) => ({
+      did: `order-status-${val}`,
+      name: val.charAt(0).toUpperCase() + val.slice(1),
+      slug: val,
+    }));
+
+    const paymentStatuses = paymentStatusesEnum.map((val) => ({
+      did: `payment-status-${val}`,
+      name: val.charAt(0).toUpperCase() + val.slice(1),
+      slug: val,
+    }));
+
+    const categoriesRaw = await CategoryModel.find().select('did name slug').lean();
+    const categories = categoriesRaw.map((c) => ({
+      did: c.did || c._id?.toString(),
+      name: c.name,
+      slug: c.slug,
+    }));
+
+    return res.json({
+      status: 'success',
+      data: {
+        orderStatuses,
+        paymentStatuses,
+        categories,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

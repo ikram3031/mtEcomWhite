@@ -1,15 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
-import { useOrder } from "@/hooks/use-orders";
-import { useProducts } from "@/hooks/use-products";
-import { useCategories, useBrands } from "@/lib/category-cache";
-import { apiClient } from "@/lib/api-client";
-import { useAuth } from "@/lib/auth-context";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-========
 import { useParams } from "react-router-dom";
 import { useOrder } from "@/hooks/use-orders";
 import { useAuth } from "@/lib/auth-context";
@@ -21,7 +10,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
->>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import {
   Select,
   SelectContent,
@@ -36,12 +24,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
-} from "@/components/ui/dialog";
-========
 } from "@/components/ui/dialog";
 
->>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import {
   ArrowLeft,
   Calendar,
@@ -65,9 +49,6 @@ import {
   Tag,
 } from "lucide-react";
 
-<<<<<<<< HEAD:dashboard/src/pages/OrderDetailPage.jsx
-import { effectivePrice, formatBDT } from "@/utils/orderHelper";
-========
 import { effectivePrice, formatBDT } from "@/utils/orderHelper";
 import {
   checkIsInStoreOrder,
@@ -82,7 +63,6 @@ import {
   mapOrderItemsToCart,
   buildUpdatePayload,
 } from "@/utils/orderDetailsHelper";
->>>>>>>> Decantre:dashboard/src/pages/dashboard/orders/orderDetails.jsx
 import { useQueryClient } from "@tanstack/react-query";
 
 const ProductAddDialog = ({ product, onClose, onAddToCart }) => {

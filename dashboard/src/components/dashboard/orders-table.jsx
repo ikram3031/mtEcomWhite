@@ -145,7 +145,7 @@ export function OrdersTable({
     switch (String(status).toLowerCase()) {
       case 'delivered':
       case 'completed':
-        return <Badge className="bg-emerald-500 hover:bg-emerald-600">Delivered</Badge>;
+        return <Badge className="bg-emerald-500 hover:bg-emerald-600">Completed</Badge>;
       case 'shipped':
         return <Badge variant="secondary" className="bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 dark:text-indigo-400">Shipped</Badge>;
       case 'processing':
@@ -310,7 +310,7 @@ export function OrdersTable({
                 <SelectContent className="bg-popover border shadow-md" side="bottom">
                   <SelectItem value="Processing">Processing</SelectItem>
                   <SelectItem value="Shipped">Shipped</SelectItem>
-                  <SelectItem value="Completed">Delivered</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
                   <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>

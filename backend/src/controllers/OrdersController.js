@@ -59,10 +59,10 @@ export const createOrder = async (req, res, next) => {
       });
     }
 
-    const orderData = await buildOrderDocument(payload);
+        const orderData = await buildOrderDocument(payload);
     const createdOrder = await OrderModel.create(orderData);
 
-    await syncPaymentDocument(createdOrder);
+    await syncPaymentDocument(createdOrder, payload);
     await syncMemberOrderSnapshot(orderData.member, createdOrder, payload);
 
     // Safely trigger non-blocking email notifications for Customer and Admin
@@ -123,12 +123,14 @@ export const listOrders = async (req, res, next) => {
     const payments = await PaymentModel.find({ orderId: { $in: orderIds } }).select('orderId status').lean();
     const paymentMap = new Map(payments.map((p) => [p.orderId.toString(), p.status]));
 
-    const data = orders.map((order) => {
+        const data = orders.map((order) => {
       const pStatus = paymentMap.get(order._id.toString());
       const fallbackPaid = ['completed', 'shipped'].includes(order.status);
       const effectivePaymentStatus = pStatus || (fallbackPaid ? 'paid' : 'pending');
       return {
         ...order,
+        id: order._id.toString(),
+        customer: order.billingInfo,
         paymentStatus: effectivePaymentStatus,
       };
     });
@@ -156,12 +158,23 @@ export const getOrderById = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Invalid order ID' });
     }
 
-    const order = await OrderModel.findById(orderId).lean();
+        const order = await OrderModel.findById(orderId).lean();
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
     }
 
-    return res.json({ status: 'success', data: order });
+    const payment = await PaymentModel.findOne({ orderId: order._id }).lean();
+    const fallbackPaid = ['completed', 'shipped'].includes(order.status);
+    const effectivePaymentStatus = payment?.status || (fallbackPaid ? 'paid' : 'pending');
+
+    const orderWithCustomer = {
+      ...order,
+      id: order._id.toString(),
+      customer: order.billingInfo,
+      paymentStatus: effectivePaymentStatus,
+    };
+
+    return res.json({ status: 'success', data: orderWithCustomer });
   } catch (error) {
     next(error);
   }
@@ -226,7 +239,7 @@ export const updateOrder = async (req, res, next) => {
       await updateMemberOrderReference(newMemberId, orderDid, orderValue);
     }
 
-    await syncPaymentDocument(order, payload);
+        await syncPaymentDocument(order, payload);
 
     if (oldMemberId) affectedMemberIds.add(oldMemberId);
     if (newMemberId) affectedMemberIds.add(newMemberId);
@@ -235,7 +248,18 @@ export const updateOrder = async (req, res, next) => {
       await updateMemberTotals(memberId);
     }
 
-    return res.status(200).json({ status: 'success', data: order });
+    const payment = await PaymentModel.findOne({ orderId: order._id }).lean();
+    const fallbackPaid = ['completed', 'shipped'].includes(order.status);
+    const effectivePaymentStatus = payment?.status || (fallbackPaid ? 'paid' : 'pending');
+
+    const orderWithCustomer = {
+      ...order,
+      id: order._id.toString(),
+      customer: order.billingInfo,
+      paymentStatus: effectivePaymentStatus,
+    };
+
+    return res.status(200).json({ status: 'success', data: orderWithCustomer });
   } catch (error) {
     next(error);
   }
