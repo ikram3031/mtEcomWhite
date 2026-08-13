@@ -17,7 +17,7 @@ export const createRefreshToken = () => {
   return crypto.randomBytes(48).toString("hex");
 };
 
-// POST /auth/login - Validates credentials and prompts for 2FA OTP verification
+// POST /auth/login - Validates credentials and logs in directly or prompts 2FA if enabled
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body ?? {};
@@ -32,16 +32,52 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ status: "error", message: "Invalid credentials" });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({ status: "error", message: "This user account is currently deactivated." });
+    }
+
     const isPasswordValid = await comparePassword(password, user.passwordHash);
     if (!isPasswordValid) {
       return res.status(401).json({ status: "error", message: "Invalid credentials" });
     }
 
-    // Respond indicating 2FA verification is required
+    // If user has explicitly enabled 2FA, require 2FA OTP verification
+    if (user.twoFactorEnabled) {
+      return res.json({
+        status: "success",
+        requires2fa: true,
+        email: user.email,
+      });
+    }
+
+    // Direct Login without 2FA
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken();
+    const refreshTokenExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_EXPIRES_MS);
+
+    user.lastLogin = new Date();
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiresAt = refreshTokenExpiresAt;
+    await user.save();
+
+    logger.info({ userId: user.id }, "Successfully logged in directly (2FA disabled)");
+
     res.json({
       status: "success",
-      requires2fa: true,
-      email: user.email,
+      data: {
+        user: {
+          id: user.id,
+          did: user.did,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          lastLogin: user.lastLogin,
+        },
+        accessToken,
+        accessTokenExpiresIn: env.ACCESS_TOKEN_EXPIRES_IN,
+        refreshToken,
+        refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
+      },
     });
   } catch (error) {
     next(error);
