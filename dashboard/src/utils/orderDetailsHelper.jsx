@@ -69,12 +69,15 @@ export const getBackendStatus = (fullStatus) => {
 export const calculatePendingAmount = (total, paidAmount) =>
   Math.max(0, Number(total || 0) - Number(paidAmount || 0));
 
-// Determine payment status preview string based on total and paid amounts.
-export const calculatePaymentStatus = (total, paidAmount) => {
+// Determine payment status preview string based on total, paid amounts, and method.
+export const calculatePaymentStatus = (total, paidAmount, paymentMethod = "") => {
   const paid = Number(paidAmount || 0);
   const netTotal = Number(total || 0);
+  const method = String(paymentMethod || "").toLowerCase();
+  const isMfs = ["bkash", "nagad", "rocket"].some(m => method.includes(m));
+
   if (paid >= netTotal && netTotal > 0) return "Paid";
-  if (paid > 0) return "Partial";
+  if (paid > 0 || isMfs) return "Partial";
   return "Pending";
 };
 
@@ -174,7 +177,7 @@ export const buildUpdatePayload = ({
   return {
     status: getBackendStatus(orderStatus),
     paymentMethod: fullPaymentMethod,
-    paidAmount: Number(paidAmount || 0),
+    paidAmount: isInStoreOrder ? Number(total || 0) : Number(paidAmount || 0),
     paymentPhone: formattedPaymentPhone,
     customer: {
       fullName: customerName.trim(),

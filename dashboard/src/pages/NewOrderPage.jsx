@@ -273,6 +273,17 @@ function ProductAddDialog({
   );
 }
 
+const formatPaymentMethod = (method) => {
+  if (!method) return "";
+  const lower = method.toLowerCase();
+  if (lower.includes("bkash")) return "bKash";
+  if (lower.includes("nagad")) return "Nagad";
+  if (lower.includes("rocket")) return "Rocket";
+  if (lower.includes("cash")) return "Cash";
+  if (lower.includes("card")) return "Card";
+  return method;
+};
+
 const NewInStoreOrderPage = () => {
   const { user } = useAuth();
 
@@ -901,7 +912,7 @@ const NewInStoreOrderPage = () => {
           <div className="bg-muted/50 border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
               <span className="font-semibold text-foreground">Payment:</span>{" "}
-              <span className="capitalize">{paymentMethod}</span>
+              <span>{formatPaymentMethod(paymentMethod)}</span>
               {(paymentMethod === "bkash" || paymentMethod === "nagad") &&
                 paymentPhone && (
                   <span className="text-muted-foreground ml-1">
@@ -991,7 +1002,7 @@ const NewInStoreOrderPage = () => {
                     <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                       Payment
                     </p>
-                    <p className="capitalize">{completedOrder.paymentMethod}</p>
+                    <p>{formatPaymentMethod(completedOrder.paymentMethod)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">

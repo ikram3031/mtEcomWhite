@@ -230,6 +230,19 @@ const ProductAddDialog = ({ product, onClose, onAddToCart }) => {
   );
 };
 
+const formatPaymentMethod = (method) => {
+  if (!method) return "N/A";
+  const lower = method.toLowerCase();
+  if (lower.includes("bkash")) return "bKash";
+  if (lower.includes("nagad")) return "Nagad";
+  if (lower.includes("rocket")) return "Rocket";
+  if (lower.includes("cash")) return "Cash";
+  if (lower.includes("card")) return "Card";
+  if (lower.includes("bank")) return "Bank Transfer";
+  if (lower.includes("cod")) return "Cash on Delivery (COD)";
+  return method;
+};
+
 const OrderDetailsPage = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
@@ -354,14 +367,18 @@ const OrderDetailsPage = () => {
   );
 
   const calculatedPaymentStatus = useMemo(
-    () => calculatePaymentStatus(total, paidAmount),
-    [paidAmount, total],
+    () => calculatePaymentStatus(total, paidAmount, paymentMethod),
+    [paidAmount, total, paymentMethod],
   );
 
   const isDigitalPayment = useMemo(() => {
     const m = paymentMethod.toLowerCase();
     return m === "bkash" || m === "nagad" || m === "rocket" || m === "bank";
   }, [paymentMethod]);
+
+  const hasShippingInfo = useMemo(() => {
+    return order?.shippingInfo && (order.shippingInfo.address || order.shippingInfo.fullName || order.shippingInfo.phone);
+  }, [order]);
 
   const paymentOptions = useMemo(
     () => resolvePaymentOptions(isInStoreOrder),
@@ -507,6 +524,92 @@ const OrderDetailsPage = () => {
       {!isEditMode ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Billing & Shipping Info Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Billing Info */}
+              <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+                <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
+                  <User className="h-4 w-4 text-primary" /> Billing Info
+                </h3>
+                <div className="space-y-3.5 text-sm">
+                  <div className="flex items-start gap-2.5">
+                    <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Full Name</span>
+                      <span className="font-medium text-foreground">{order.billingInfo?.fullName || order.customer?.fullName || order.customerName || "N/A"}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Phone</span>
+                      <span className="font-medium text-foreground">{order.billingInfo?.phone || order.customer?.phone || "N/A"}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Email</span>
+                      <span className="font-medium text-foreground">{order.billingInfo?.email || order.customer?.email || "N/A"}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Address</span>
+                      <span className="font-medium text-foreground">
+                        {order.billingInfo?.address || order.customer?.address || "N/A"}
+                        {order.billingInfo?.district ? `, ${order.billingInfo.district}` : ""}
+                        {order.billingInfo?.thana ? `, ${order.billingInfo.thana}` : ""}
+                        {order.billingInfo?.zip ? ` - ${order.billingInfo.zip}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Info */}
+              <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+                <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
+                  <Truck className="h-4 w-4 text-primary" /> Shipping Info
+                </h3>
+                {hasShippingInfo ? (
+                  <div className="space-y-3.5 text-sm">
+                    <div className="flex items-start gap-2.5">
+                      <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Recipient Name</span>
+                        <span className="font-medium text-foreground">{order.shippingInfo?.fullName || "N/A"}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Phone</span>
+                        <span className="font-medium text-foreground">{order.shippingInfo?.phone || "N/A"}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Shipping Address</span>
+                        <span className="font-medium text-foreground">
+                          {order.shippingInfo?.address || "N/A"}
+                          {order.shippingInfo?.district ? `, ${order.shippingInfo.district}` : ""}
+                          {order.shippingInfo?.thana ? `, ${order.shippingInfo.thana}` : ""}
+                          {order.shippingInfo?.zip ? ` - ${order.shippingInfo.zip}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground text-xs py-8">
+                    No separate shipping info (In-Store / Same as Billing)
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="bg-card border border-border/80 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-border/60 bg-muted/20">
                 <h3 className="font-semibold text-base flex items-center gap-2">
@@ -598,55 +701,14 @@ const OrderDetailsPage = () => {
           <div className="space-y-6">
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
-                <User className="h-4 w-4 text-primary" /> Customer Info
-              </h3>
-              <div className="space-y-3.5 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Full Name</span>
-                    <span className="font-medium text-foreground">{order.customer?.fullName || order.customerName || "N/A"}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Phone</span>
-                    <span className="font-medium text-foreground">{order.customer?.phone || "N/A"}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Email</span>
-                    <span className="font-medium text-foreground">{order.customer?.email || "N/A"}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Address</span>
-                    <span className="font-medium text-foreground">
-                      {order.customer?.address || "N/A"}
-                      {order.customer?.city ? `, ${order.customer.city}` : ""}
-                      {order.customer?.thana ? `, ${order.customer.thana}` : ""}
-                      {order.customer?.zip ? ` - ${order.customer.zip}` : ""}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
-              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
                 <CreditCard className="h-4 w-4 text-primary" /> Method Details
               </h3>
               <div className="space-y-3.5 text-sm">
                 <div>
                   <span className="text-xs text-muted-foreground block">Payment Method</span>
-                  <span className="font-semibold text-foreground capitalize flex items-center gap-1.5 mt-0.5">
+                  <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
                     <CreditCard className="h-4 w-4 text-primary" />
-                    {order.paymentMethod || "N/A"}
+                    {formatPaymentMethod(order.paymentMethod)}
                   </span>
                 </div>
                 {(paymentPhone || (order.paymentMethod || "").includes("+880")) && (
@@ -949,36 +1011,55 @@ const OrderDetailsPage = () => {
                   </div>
                 )}
 
-                <div className="col-span-2 space-y-2 pt-2 border-t border-border">
-                  <div className="grid grid-cols-2 items-center gap-2">
-                    <label className="text-xs font-semibold text-foreground">Paid Amount (৳)</label>
-                    <Input
-                      type="number"
-                      className="h-8 text-right font-medium text-xs"
-                      min={0}
-                      max={total}
-                      value={paidAmount}
-                      onChange={(e) => setPaidAmount(Number(e.target.value || 0))}
-                    />
-                  </div>
+                {!isInStoreOrder ? (
+                  <div className="col-span-2 space-y-2 pt-2 border-t border-border">
+                    <div className="grid grid-cols-2 items-center gap-2">
+                      <label className="text-xs font-semibold text-foreground">Paid Amount (৳)</label>
+                      <Input
+                        type="number"
+                        className="h-8 text-right font-medium text-xs"
+                        min={0}
+                        max={total}
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(Number(e.target.value || 0))}
+                      />
+                    </div>
 
-                  <div className="bg-muted/40 rounded-lg p-2.5 space-y-1.5 border border-border/60">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Paid Amount:</span>
-                      <span className="font-semibold text-emerald-600">{formatBDT(paidAmount)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Remaining Pending:</span>
-                      <span className={`font-bold ${calculatedPendingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                        {formatBDT(calculatedPendingAmount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
-                      <span className="text-muted-foreground">Payment Status:</span>
-                      {getPaymentBadge(calculatedPaymentStatus)}
+                    <div className="bg-muted/40 rounded-lg p-2.5 space-y-1.5 border border-border/60">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Paid Amount:</span>
+                        <span className="font-semibold text-emerald-600">{formatBDT(paidAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Remaining Pending:</span>
+                        <span className={`font-bold ${calculatedPendingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                          {formatBDT(calculatedPendingAmount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
+                        <span className="text-muted-foreground">Payment Status:</span>
+                        {getPaymentBadge(calculatedPaymentStatus)}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="col-span-2 space-y-2 pt-2 border-t border-border">
+                    <div className="bg-muted/40 rounded-lg p-2.5 space-y-1.5 border border-border/60">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Paid Amount:</span>
+                        <span className="font-semibold text-emerald-600">{formatBDT(total)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Remaining Pending:</span>
+                        <span className="font-bold text-emerald-600">{formatBDT(0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
+                        <span className="text-muted-foreground">Payment Status:</span>
+                        {getPaymentBadge("Paid")}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

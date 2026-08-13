@@ -20,12 +20,11 @@ export const isPaidPaymentMethod = (paymentMethod) => {
 export const getPaymentStatus = (paymentMethod, totalAmount, paidAmount) => {
   const method = normalizeText(paymentMethod).toLowerCase();
   if (!method) return 'pending';
-  if (method === 'cod' || method.includes('cash') || method.includes('full') || method === 'paid') {
-    if (paidAmount >= totalAmount) return 'paid';
-    if (paidAmount > 0) return 'partial';
-    return 'pending';
-  }
-  return paidAmount >= totalAmount ? 'paid' : paidAmount > 0 ? 'partial' : 'pending';
+  const isMfs = ['bkash', 'nagad', 'rocket'].some((m) => method.includes(m));
+
+  if (paidAmount >= totalAmount && totalAmount > 0) return 'paid';
+  if (paidAmount > 0 || isMfs) return 'partial';
+  return 'pending';
 };
 
 // Resolve a user reference into a stable Mongo ObjectId or return null when absent.
@@ -145,6 +144,9 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
   const pendingAmount = Math.max(0, totalAmount - paidAmount);
 
   let paymentStatus = 'pending';
+  const rawMethod = normalizeText(orderData.paymentMethod || payload.paymentMethod).toLowerCase();
+  const isMfs = ['bkash', 'nagad', 'rocket'].some((m) => rawMethod.includes(m));
+
   if (isInstore) {
     paymentStatus = 'paid';
   } else if (payload.paymentStatus !== undefined && payload.paymentStatus !== null) {
@@ -154,7 +156,7 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
     } else {
       if (paidAmount >= totalAmount && totalAmount > 0) {
         paymentStatus = 'paid';
-      } else if (paidAmount > 0) {
+      } else if (paidAmount > 0 || isMfs) {
         paymentStatus = 'partial';
       } else {
         paymentStatus = 'pending';
@@ -163,7 +165,7 @@ export const syncPaymentDocument = async (orderData, payload = {}) => {
   } else {
     if (paidAmount >= totalAmount && totalAmount > 0) {
       paymentStatus = 'paid';
-    } else if (paidAmount > 0) {
+    } else if (paidAmount > 0 || isMfs) {
       paymentStatus = 'partial';
     } else {
       paymentStatus = 'pending';
