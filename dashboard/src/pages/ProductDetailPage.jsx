@@ -80,6 +80,10 @@ const EditProductPage = () => {
   const [mainImageError, setMainImageError] = useState("");
   const fileInputRef = useRef(null);
 
+  // Gallery image state
+  const [galleryImages, setGalleryImages] = useState([]);
+  const galleryInputRef = useRef(null);
+
   // Type toggle
   const [productType, setProductType] = useState("simple");
 
@@ -226,6 +230,18 @@ const EditProductPage = () => {
             setUploadedImageUrl(product.imageUrl);
           }
 
+          if (product.images && product.images.length > 0) {
+            const initialGallery = product.images.map((img, i) => ({
+              id: `existing-${i}`,
+              file: null,
+              preview: img.url.startsWith("http") ? img.url : getFullPreviewUrl(img.url),
+              altText: img.altText || "",
+              existingUrl: img.url,
+              sortOrder: img.sortOrder || i
+            }));
+            setGalleryImages(initialGallery);
+          }
+
           if (product.type === "simple") {
             setPrice(product.price?.toString() || "");
             setOfferPrice(product.offerPrice?.toString() || "");
@@ -365,6 +381,44 @@ const EditProductPage = () => {
     }
   };
 
+  const handleGalleryImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    if (galleryImages.length + files.length > 5) {
+      toast.error("Maximum 5 gallery images allowed.");
+      return;
+    }
+
+    const newImages = [];
+    for (const file of files) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error(`File ${file.name} exceeds 2MB limit.`);
+        continue;
+      }
+      newImages.push({
+        id: Date.now() + Math.random(),
+        file,
+        preview: URL.createObjectURL(file),
+        altText: "",
+      });
+    }
+
+    if (newImages.length > 0) {
+      setGalleryImages(prev => [...prev, ...newImages].slice(0, 5));
+    }
+    
+    if (e.target) e.target.value = '';
+  };
+
+  const removeGalleryImage = (id) => {
+    setGalleryImages(prev => prev.filter(img => img.id !== id));
+  };
+
+  const updateGalleryAltText = (id, altText) => {
+    setGalleryImages(prev => prev.map(img => img.id === id ? { ...img, altText } : img));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -467,6 +521,36 @@ const EditProductPage = () => {
       } else {
         body.variants = uploadedVariants;
       }
+
+      const uploadedGalleryImages = [];
+      for (let i = 0; i < galleryImages.length; i++) {
+        const item = galleryImages[i];
+        if (item.file) {
+          const formData = new FormData();
+          formData.append("image", item.file);
+          formData.append("type", "product");
+          formData.append("productSlug", slug.trim());
+          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          const uploadedUrl = uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+          if (uploadedUrl) {
+            uploadedGalleryImages.push({
+              url: uploadedUrl,
+              altText: item.altText.trim() || name.trim(),
+              sortOrder: i
+            });
+          }
+        } else if (item.existingUrl) {
+          uploadedGalleryImages.push({
+            url: item.existingUrl,
+            altText: item.altText.trim() || name.trim(),
+            sortOrder: i
+          });
+        }
+      }
+      
+      body.images = uploadedGalleryImages;
 
       await apiClient.put(`/api/v1/products/${id}`, body);
       toast.success("Product updated successfully!");
@@ -917,6 +1001,58 @@ const EditProductPage = () => {
                 ref={fileInputRef}
                 onChange={handleImageSelect}
                 accept="image/*"
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h3 className="text-sm font-semibold border-b pb-2">
+              Gallery Images (Max 5)
+            </h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {galleryImages.map((img) => (
+                  <div key={img.id} className="relative rounded-lg border bg-muted/10 overflow-hidden group">
+                    <img
+                      src={img.preview}
+                      alt="Gallery preview"
+                      className="object-cover w-full h-24"
+                    />
+                    <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 gap-2">
+                      <Input
+                        placeholder="Alt text..."
+                        value={img.altText}
+                        onChange={(e) => updateGalleryAltText(img.id, e.target.value)}
+                        className="h-7 text-[10px] w-full"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryImage(img.id)}
+                        className="bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-sm hover:bg-destructive/90 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {galleryImages.length < 5 && (
+                  <div
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="border-2 border-dashed border-border/80 hover:border-primary/50 hover:bg-muted/10 rounded-lg flex flex-col items-center justify-center min-h-[96px] cursor-pointer transition-all"
+                  >
+                    <Plus className="h-6 w-6 text-muted-foreground mb-1" />
+                    <span className="text-[10px] font-medium text-muted-foreground">Add Image</span>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={galleryInputRef}
+                onChange={handleGalleryImageSelect}
+                accept="image/*"
+                multiple
                 className="hidden"
               />
             </div>
