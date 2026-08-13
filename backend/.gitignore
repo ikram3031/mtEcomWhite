@@ -8,6 +8,7 @@ node_modules*
 dist/
 wp_db/
 img/
+RawUploads/
 
 # Runtime files
 .env
@@ -37,7 +38,9 @@ Thumbs.db
 
 # Optional REPL history
 .node_repl_history
-uploads*
+uploads/
+src/uploads/
+src/uploads_*.zip
 
 # Client Specific Config
 src/config/config.client.json
