@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
+import { RecentTransactionsTable } from '@/components/dashboard/recent-transactions-table';
 import { DollarSign, Users, CreditCard, Activity } from 'lucide-react';
 import { useDashboardKpi } from '@/hooks/use-dashboard-kpi';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -73,9 +74,10 @@ const DashboardPage = () => {
       
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <RevenueChart />
+        <RecentTransactionsTable />
       </div>
     </div>
   );
-}
+};
 
 export default DashboardPage;
