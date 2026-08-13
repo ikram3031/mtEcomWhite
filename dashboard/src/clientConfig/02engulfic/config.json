@@ -2,6 +2,7 @@
   "clientId": "02",
   "clientKey": "engulfic",
   "brandName": "Engulfic",
+  "logoUrl": "/src/uploads/assets/engulfic_logo.png",
   "allowedMenus": [
     "overview",
     "orders",

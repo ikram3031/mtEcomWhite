@@ -2,6 +2,7 @@
   "clientId": "03",
   "clientKey": "toyoland",
   "brandName": "Toyoland",
+  "logoUrl": "/src/uploads/assets/toyoland_logo.png",
   "allowedMenus": [
     "overview",
     "orders",
