@@ -73,6 +73,7 @@ export const validateOrderPayload = (body) => {
     errors.push('items must be a non-empty array');
   }
 
+  // 4. Payment method validation
   if (typeof body.paymentMethod !== 'string' || body.paymentMethod.trim() === '') {
     errors.push('paymentMethod is required');
   }
