@@ -6,6 +6,7 @@ import { clientConfig } from '@/clientConfig';
 export const DecantreLogo = ({
   className = 'h-10 w-auto',
   alt = 'Brand logo',
+  iconOnly = false,
 }) => {
   const { clientKey, brandName } = clientConfig;
 
@@ -18,6 +19,17 @@ export const DecantreLogo = ({
           alt={alt || brandName}
           className="w-full h-full object-contain"
         />
+      </div>
+    );
+  }
+
+  // Render a clean, stylized badge icon for other clients
+  if (iconOnly) {
+    return (
+      <div className={`flex items-center justify-center font-bold text-primary ${className}`}>
+        <span className="bg-primary/20 px-2 py-0.5 rounded border border-primary/30 uppercase text-xs font-black">
+          {clientKey.slice(0, 2)}
+        </span>
       </div>
     );
   }

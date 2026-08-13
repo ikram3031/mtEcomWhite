@@ -33,12 +33,14 @@ import {
 } from "@/components/ui/sidebar"
 import { DecantreLogo } from "@/components/DecantreLogo"
 import { useAuth } from "@/lib/auth-context"
+import { clientConfig } from "@/clientConfig"
 
 export function AppSidebar({ ...props }) {
   const location = useLocation()
   const pathname = location.pathname
   const { user } = useAuth()
   const { state, setOpen } = useSidebar()
+  const { brandName } = clientConfig
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -47,10 +49,10 @@ export function AppSidebar({ ...props }) {
           {state === "expanded" ? (
             <>
               <div className="flex items-center gap-3">
-                <DecantreLogo className="h-8 w-8 text-primary shrink-0" />
+                <DecantreLogo className="h-8 w-8 text-primary shrink-0" iconOnly={true} />
                 <div className="flex flex-col">
                   <span className="font-bold text-lg tracking-tight text-sidebar-foreground">
-                    Decantre
+                    {brandName}
                   </span>
                 </div>
               </div>
