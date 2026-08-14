@@ -15,6 +15,8 @@ import {
   X,
   Menu,
   Sliders,
+  Terminal,
+  Database,
 } from "lucide-react"
 
 import {
@@ -310,6 +312,40 @@ export function AppSidebar({ ...props }) {
                 <ShieldAlert className="h-4 w-4" />
                 <span>System Users</span>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
+          {/* Developer Tools */}
+          {isAllowed("developer") && user?.email?.toLowerCase().trim() === "ikramul.web@gmail.com" && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname.startsWith("/dashboard/developer")}
+                tooltip="Developer Tools"
+                render={<Link to="/dashboard/developer/logs" />}
+              >
+                <Terminal className="h-4 w-4" />
+                <span>Developer Tools</span>
+              </SidebarMenuButton>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    isActive={pathname === "/dashboard/developer/logs"}
+                    render={<Link to="/dashboard/developer/logs" />}
+                  >
+                    <Terminal className="h-3.5 w-3.5" />
+                    <span>System Logs</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    isActive={pathname === "/dashboard/developer/v1/doc.html"}
+                    render={<Link to="/dashboard/developer/v1/doc.html" />}
+                  >
+                    <Sliders className="h-3.5 w-3.5" />
+                    <span>API Docs</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
           )}
         </SidebarMenu>

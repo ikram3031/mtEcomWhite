@@ -3,16 +3,51 @@ import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShieldAlert, Terminal, Trash2, Search, Pause, Play, Download } from "lucide-react";
+import { ShieldAlert, Terminal, Trash2, Search, Pause, Play, Download, Database } from "lucide-react";
 
 const SystemLogs = () => {
   const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [filter, setFilter] = useState("");
   const [isPaused, setIsPaused] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const logEndRef = useRef(null);
 
   const isDeveloper = user?.email?.toLowerCase().trim() === "ikramul.web@gmail.com";
+
+  const handleDownloadBackup = async () => {
+    try {
+      setIsDownloading(true);
+      const response = await apiClient.get("/api/v1/developer/db-backup", {
+        responseType: "blob",
+      });
+      
+      const blob = new Blob([response.data], { type: "application/gzip" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = `mongodb_backup_${new Date().toISOString().replace(/[:.]/g, "-")}.json.gz`;
+      if (contentDisposition) {
+        const matches = /filename="?([^";]+)"?/g.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+      
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Backup download failed:", err);
+      alert("Failed to download database backup. Please check logs.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isDeveloper) return;
@@ -138,6 +173,17 @@ const SystemLogs = () => {
           >
             <Trash2 className="h-4 w-4" />
             Clear
+          </Button>
+
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleDownloadBackup}
+            disabled={isDownloading}
+            className="h-9 gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/95"
+          >
+            <Database className="h-4 w-4" />
+            {isDownloading ? "Downloading..." : "Backup DB"}
           </Button>
         </div>
       </div>

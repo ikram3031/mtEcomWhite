@@ -190,4 +190,63 @@ developerRouter.get(
   }
 );
 
+// GET /api/v1/developer/db-backup (Compressed MongoDB Database Backup)
+import mongoose from "mongoose";
+import zlib from "node:zlib";
+
+developerRouter.get(
+  "/db-backup",
+  authenticateToken,
+  verifyDeveloperAccess,
+  async (req, res, next) => {
+    try {
+      const db = mongoose.connection.db;
+      if (!db) {
+        return res.status(500).json({
+          status: "error",
+          message: "Database connection not established",
+        });
+      }
+
+      // Get all collections in the database
+      const collections = await db.listCollections().toArray();
+      const backupData = {};
+
+      for (const col of collections) {
+        const name = col.name;
+        // Skip system collections
+        if (name.startsWith("system.")) continue;
+        const docs = await db.collection(name).find({}).toArray();
+        backupData[name] = docs;
+      }
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+
+      // Gzip compress the JSON string
+      zlib.gzip(jsonStr, (err, buffer) => {
+        if (err) {
+          console.error("Gzip compression failed:", err);
+          return res.status(500).json({
+            status: "error",
+            message: "Failed to compress database backup",
+          });
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const filename = `mongodb_backup_${timestamp}.json.gz`;
+
+        res.setHeader("Content-disposition", `attachment; filename=${filename}`);
+        res.setHeader("Content-Type", "application/gzip");
+        res.send(buffer);
+      });
+    } catch (error) {
+      console.error("Database backup export failed:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Failed to export database collections",
+      });
+    }
+  }
+);
+
 export default developerRouter;
