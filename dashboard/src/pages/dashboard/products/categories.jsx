@@ -84,7 +84,12 @@ const CategoriesPage = () => {
     setSlug(category.slug);
     setSlugManual(true);
     setDescription(category.description || '');
-    setParentId(category.parent?.id || '');
+    const parentVal =
+      category.parent?.did ||
+      category.parent?._id ||
+      category.parent?.id ||
+      (typeof category.parent === 'string' ? category.parent : '');
+    setParentId(parentVal);
     setIsOpen(true);
   };
 
@@ -270,16 +275,23 @@ const CategoriesPage = () => {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold">Parent Category</label>
-              <Select value={parentId || '__none__'} onValueChange={(val) => setParentId(val === '__none__' ? '' : (val ?? ''))}>
+              <Select
+                value={parentId || '__none__'}
+                onValueChange={(val) => setParentId(val === '__none__' ? '' : (val ?? ''))}
+              >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select parent category" />
+                  <SelectValue placeholder="Select parent category">
+                    {parentId && parentId !== '__none__'
+                      ? categories.find((c) => c.did === parentId || c.id === parentId || c._id === parentId)?.name || parentId
+                      : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
                   {categories
-                    .filter((c) => !editingCategory || c.did !== editingCategory.did)
+                    .filter((c) => !editingCategory || (c.did !== editingCategory.did && c.id !== editingCategory.id && c._id !== editingCategory._id))
                     .map((c) => (
-                      <SelectItem key={c.did} value={c.did}>
+                      <SelectItem key={c.did || c.id || c._id} value={c.did || c.id || c._id}>
                         {c.name}
                       </SelectItem>
                     ))}

@@ -11,7 +11,7 @@ export const getAllCategories = async (req, res) => {
   try {
     const [categories, counts] = await Promise.all([
       CategoryModel.find()
-        .populate({ path: "parent", select: "name slug" })
+        .populate({ path: "parent", select: "name slug did imageUrl" })
         .lean(),
       ProductModel.aggregate([
         { $match: { imageUrl: { $ne: PLACEHOLDER_IMAGE_URL } } },
