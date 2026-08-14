@@ -14,6 +14,16 @@ const envSchema = z.object({
   ALLOW_SUPER_ADMIN_CREATION: z.coerce.boolean().default(false),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  ALLOWED_ORIGINS: z.string().default("http://localhost:8001,http://localhost:8005,http://localhost:3000"),
+  FRONTEND_DOMAIN_KEYWORDS: z.string().default("localhost,decantrebd.com"),
+  DASHBOARD_DOMAIN_KEYWORDS: z.string().default("dashboard,localhost:8005"),
+  SMTP_HOST: z.string().default("smtp.hostinger.com"),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_ENCRYPTION: z.string().default("TLS"),
+  SMTP_USER: z.string().min(1, "SMTP_USER is required"),
+  SMTP_PASSWORD: z.string().min(1, "SMTP_PASSWORD is required"),
+  SMTP_FROM_NAME: z.string().default("Decantre BD"),
+  SMTP_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

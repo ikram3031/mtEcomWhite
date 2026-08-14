@@ -5,13 +5,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: decantre-backend-dev
+    container_name: decantre-backend-live
     restart: always
     ports:
       - "5000:5000"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     volumes:
       - .:/app
       - /app/node_modules
-      - /var/www/uploads:/app/uploads
+      - /var/www/uploads:/app/src/uploads

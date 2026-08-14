@@ -16,7 +16,13 @@ Base API Address in Dev Environment: `https://server.decantrebd.com`
 
 ## 2. Search Endpoints
 
-- **GET `/api/v1/search-products`** - Search products in the database with fuzzy/wildcard match (handled by SearchController).
+**Base Prefix:** `/api/v1/search`
+
+- **GET `/`** - Search products with keyword (`q`), returning matching products and tracking search analytics.
+- **GET `/popular`** - Fetch top popular search terms sorted by frequency.
+- **GET `/recent`** - Fetch user's recent search terms _(Requires JWT Authorization Header)_.
+- **DELETE `/recent`** - Clear user's recent search history or specific term using `?q=term` _(Requires JWT Authorization Header)_.
+
 
 ---
 

@@ -1,3 +1,0 @@
-# Protect client theme configuration overrides from master/upstream merges
-src/config.theme.client.json merge=ours
-src/config.theme.json merge=ours

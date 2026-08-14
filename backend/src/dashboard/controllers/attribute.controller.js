@@ -1,6 +1,15 @@
 import { AttributeModel } from "../models/attribute.model.js";
 import { logger } from "../../config/logger.js";
 
+const sortAttributeValues = (values = []) => {
+  if (!Array.isArray(values)) return [];
+  return [...values].sort((a, b) => {
+    const valA = typeof a === "string" ? a : (a?.name || a?.size || "");
+    const valB = typeof b === "string" ? b : (b?.name || b?.size || "");
+    return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: "base" });
+  });
+};
+
 /**
  * GET /api/v1/dashboard/attributes
  * Returns a list of all attribute groups.
@@ -8,7 +17,11 @@ import { logger } from "../../config/logger.js";
 export const getAttributes = async (req, res) => {
   try {
     const attributes = await AttributeModel.find().lean();
-    res.json({ status: "success", data: attributes });
+    const sorted = attributes.map((attr) => ({
+      ...attr,
+      values: sortAttributeValues(attr.values || []),
+    }));
+    res.json({ status: "success", data: sorted });
   } catch (err) {
     logger.error({ err }, "Failed to fetch attributes");
     res.status(500).json({ status: "error", message: "Unable to fetch attributes" });
@@ -31,11 +44,13 @@ export const createAttribute = async (req, res) => {
       return res.status(400).json({ status: "error", message: "Attribute slug already exists" });
     }
 
+    const sortedValues = sortAttributeValues(values || []);
+
     const attribute = new AttributeModel({
       name,
       slug,
-      values: values || [],
-      createdBy: req.body.createdBy || req.user?._id || req.user?.id || "66af9b0d9c49d21c988a6d66", // fallback dummy admin ID if no req.user (since auth middleware might not populate it on simple environments)
+      values: sortedValues,
+      createdBy: req.body.createdBy || req.user?._id || req.user?.id || "66af9b0d9c49d21c988a6d66",
     });
 
     await attribute.save();
@@ -62,7 +77,9 @@ export const updateAttribute = async (req, res) => {
 
     if (name) attribute.name = name;
     if (slug) attribute.slug = slug;
-    if (values !== undefined) attribute.values = values;
+    if (values !== undefined) {
+      attribute.values = sortAttributeValues(values);
+    }
 
     attribute.updatedBy = req.body.updatedBy || req.user?._id || req.user?.id || "66af9b0d9c49d21c988a6d66";
     await attribute.save();

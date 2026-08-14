@@ -27,7 +27,7 @@ services:
     ports:
       - "${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
     volumes:
-      - /var/www/uploads:/app/uploads
+      - /decantre/uploads:/app/uploads
     depends_on:
       - mongodb
     networks:
@@ -50,6 +50,8 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
     container_name: ${DASHBOARD_CONTAINER_NAME:-decantre-dashboard-dev}
     restart: always
     env_file:

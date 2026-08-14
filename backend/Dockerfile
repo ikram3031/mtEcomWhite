@@ -27,18 +27,18 @@ COPY --from=builder /app/src ./src
 COPY --from=builder /app/scripts ./scripts
 
 # Create public and uploads directories for compatibility with existing deployments
-RUN mkdir -p /app/public /app/uploads
+RUN mkdir -p /app/public /app/uploads /app/src/uploads
 
 # Create non-root user for security and set ownership of app directories
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app/public /app/uploads
+    chown -R nodejs:nodejs /app/public /app/uploads /app/src/uploads
 
 USER nodejs
 
 EXPOSE 5092
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 \
-    CMD node -e "require('http').get('http://localhost:5092', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 5092), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
 CMD ["npm", "run", "prod"]

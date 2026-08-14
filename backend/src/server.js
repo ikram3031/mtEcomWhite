@@ -3,7 +3,7 @@ import { createApp } from "./app.js";
 import { connectDatabase } from "./database/index.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
-import { createShutdownHandler } from "./core/helper/sutdownHelper.js";
+import { createShutdownHandler } from "./helper/sutdownHelper.js";
 
 async function bootstrap() {
   // await connectMySQL();
