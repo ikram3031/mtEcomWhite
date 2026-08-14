@@ -88,6 +88,7 @@ export const createProduct = async (req, res, next) => {
         message: "Product image is required. Please upload an image before saving.",
       });
     }
+    const imageUrl = rawImageUrl.trim();
     const rawGallery = body.images || body.galleryImages || body.gallery || [];
     const images = Array.isArray(rawGallery)
       ? rawGallery
