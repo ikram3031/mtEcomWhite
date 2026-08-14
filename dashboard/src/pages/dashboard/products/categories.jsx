@@ -321,7 +321,11 @@ const CategoriesPage = () => {
                 onValueChange={(val) => setParentId(val === '__none__' ? '' : (val ?? ''))}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select parent category" />
+                  <SelectValue placeholder="Select parent category">
+                    {parentId && parentId !== '__none__'
+                      ? categories.find((c) => c.did === parentId || c.slug === parentId || c._id === parentId || c.id === parentId)?.name || parentId
+                      : 'None'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
