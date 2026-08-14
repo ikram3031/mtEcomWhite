@@ -17,7 +17,6 @@
     "products.new",
     "products.list",
     "products.categories",
-    "products.brands",
     "products.attributes",
     "products.coupons"
   ],

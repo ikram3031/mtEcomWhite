@@ -292,18 +292,57 @@ export const SidebarCards = ({
               }
             >
               <SelectTrigger className="flex-1 cursor-pointer h-9">
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Select a category">
+                  {categorySlug && categorySlug !== "__none__" ? (() => {
+                    const found = categories.find((c) => c.slug === categorySlug || c.did === categorySlug);
+                    if (!found) return categorySlug;
+                    if (found.parent) {
+                      const pName = typeof found.parent === 'object' ? found.parent.name : categories.find(c => c.did === found.parent || c.id === found.parent || c._id === found.parent)?.name;
+                      return pName ? `${pName} › ${found.name}` : found.name;
+                    }
+                    return found.name;
+                  })() : undefined}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-md">
+              <SelectContent className="bg-popover border shadow-md max-h-72">
                 <SelectItem value="__none__">None</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem
-                    key={cat.did || cat.slug}
-                    value={cat.slug || cat.did}
-                  >
-                    {cat.name}
-                  </SelectItem>
-                ))}
+                {(() => {
+                  const rootCats = categories.filter((c) => !c.parent);
+                  const subCats = categories.filter((c) => !!c.parent);
+
+                  return rootCats.map((root) => {
+                    const children = subCats.filter((sub) => {
+                      const p = sub.parent;
+                      if (typeof p === 'object' && p !== null) {
+                        return p.did === root.did || p.slug === root.slug || p._id === root._id || p.id === root.id;
+                      }
+                      return p === root.did || p === root.slug || p === root._id || p === root.id;
+                    });
+
+                    return (
+                      <div key={root.did || root.slug}>
+                        {/* Parent Category Option */}
+                        <SelectItem
+                          value={root.slug || root.did}
+                          className="font-semibold text-foreground"
+                        >
+                          📁 {root.name}
+                        </SelectItem>
+
+                        {/* Child Categories indented with arrow */}
+                        {children.map((child) => (
+                          <SelectItem
+                            key={child.did || child.slug}
+                            value={child.slug || child.did}
+                            className="pl-6 text-xs text-muted-foreground font-normal"
+                          >
+                            └─ {child.name}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
               </SelectContent>
             </Select>
           </div>
