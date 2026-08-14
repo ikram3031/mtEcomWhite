@@ -8,6 +8,16 @@ const productSchema = new Schema(
     slug: { type: String, required: true, trim: true, unique: true, index: true },
     did: { type: String, default: () => generateDid(), unique: true, index: true },
     description: { type: String, required: true, trim: true },
+    longDescription: { type: String, trim: true },
+    chargeTax: { type: Boolean, default: false },
+    taxRate: { type: Number, default: null },
+    isActive: { type: Boolean, default: true, index: true },
+    metaData: {
+      metaTitle: { type: String, trim: true, default: "" },
+      metaDescription: { type: String, trim: true, default: "" },
+      keywords: [{ type: String, trim: true }],
+      ogImage: { type: String, trim: true, default: "" },
+    },
 
     // Product Type (Simple or Variant)
     type: {
