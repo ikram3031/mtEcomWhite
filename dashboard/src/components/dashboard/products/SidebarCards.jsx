@@ -310,13 +310,18 @@ export const SidebarCards = ({
                   const rootCats = categories.filter((c) => !c.parent);
                   const subCats = categories.filter((c) => !!c.parent);
 
-                  return rootCats.map((root) => {
+                  const renderedDids = new Set();
+
+                  const trees = rootCats.map((root) => {
+                    renderedDids.add(root.did);
                     const children = subCats.filter((sub) => {
                       const p = sub.parent;
-                      if (typeof p === 'object' && p !== null) {
-                        return p.did === root.did || p.slug === root.slug || p._id === root._id || p.id === root.id;
+                      const pId = typeof p === 'object' && p !== null ? (p.did || p._id || p.id) : p;
+                      const matches = pId === root.did || pId === root.id || pId === root._id || pId === root.slug;
+                      if (matches) {
+                        renderedDids.add(sub.did);
                       }
-                      return p === root.did || p === root.slug || p === root._id || p === root.id;
+                      return matches;
                     });
 
                     return (
@@ -330,18 +335,35 @@ export const SidebarCards = ({
                         </SelectItem>
 
                         {/* Child Categories indented with arrow */}
-                        {children.map((child) => (
-                          <SelectItem
-                            key={child.did || child.slug}
-                            value={child.slug || child.did}
-                            className="pl-6 text-xs text-muted-foreground font-normal"
-                          >
-                            └─ {child.name}
-                          </SelectItem>
-                        ))}
+                        {children.map((child) => {
+                          renderedDids.add(child.did);
+                          return (
+                            <SelectItem
+                              key={child.did || child.slug}
+                              value={child.slug || child.did}
+                              className="pl-6 text-xs text-muted-foreground font-normal"
+                            >
+                              └─ {child.name}
+                            </SelectItem>
+                          );
+                        })}
                       </div>
                     );
                   });
+
+                  // Handle any categories that were not rendered as part of a tree
+                  const remainingCats = categories.filter(c => !renderedDids.has(c.did));
+                  const remainingElements = remainingCats.map((cat) => (
+                    <SelectItem
+                      key={cat.did || cat.slug}
+                      value={cat.slug || cat.did}
+                      className="font-semibold text-foreground"
+                    >
+                      📁 {cat.name}
+                    </SelectItem>
+                  ));
+
+                  return [...trees, ...remainingElements];
                 })()}
               </SelectContent>
             </Select>
