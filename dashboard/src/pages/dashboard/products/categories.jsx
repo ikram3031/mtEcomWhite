@@ -326,7 +326,11 @@ const CategoriesPage = () => {
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
                   {categories
-                    .filter((c) => !editingCategory || c.did !== editingCategory.did)
+                    .filter(
+                      (c) =>
+                        !c.parent && // Only root/parent categories (not sub-categories)
+                        (!editingCategory || c.did !== editingCategory.did)
+                    )
                     .map((c) => (
                       <SelectItem key={c.did} value={c.did}>
                         {c.name}
