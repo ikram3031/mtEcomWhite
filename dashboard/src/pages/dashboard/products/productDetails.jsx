@@ -463,7 +463,18 @@ const EditProductPage = () => {
     }
 
     setIsUpdating(true);
+    let uploadToastId = null;
     try {
+      const hasFilesToUpload = Boolean(
+        mainImageFile ||
+        variants.some((v) => v.imageFile) ||
+        galleryImages.some((img) => img.file)
+      );
+
+      if (hasFilesToUpload) {
+        uploadToastId = toast.loading("Uploading product images...");
+      }
+
       let finalMainImageUrl = uploadedImageUrl || "";
       let finalThumbnailUrl = "";
       if (mainImageFile) {
@@ -529,19 +540,19 @@ const EditProductPage = () => {
           const uploadedUrl =
             uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
           if (uploadedUrl) {
-            uploadedGalleryImages.push({
-              url: uploadedUrl,
-              altText: item.altText || "",
-              sortOrder: i,
-            });
+            uploadedGalleryImages.push(uploadedUrl);
           }
         } else if (item.isLoaded || item.preview || item.url) {
-          uploadedGalleryImages.push({
-            url: item.url || item.preview,
-            altText: item.altText || "",
-            sortOrder: i,
-          });
+          const existingUrl = item.url || item.preview;
+          if (typeof existingUrl === "string" && existingUrl.trim()) {
+            uploadedGalleryImages.push(existingUrl.trim());
+          }
         }
+      }
+
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+        uploadToastId = null;
       }
 
       const body = {
@@ -558,13 +569,12 @@ const EditProductPage = () => {
         taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
         isActive: Boolean(isActive),
         tags: Array.isArray(tags) ? tags : [],
+        images: uploadedGalleryImages,
         metaData: {
           metaTitle: metaTitle.trim(),
           metaDescription: metaDescription.trim(),
         },
       };
-
-      body.images = uploadedGalleryImages;
 
       if (categorySlug) body.category = categorySlug;
       if (brandSlug) body.brand = brandSlug;
@@ -581,6 +591,9 @@ const EditProductPage = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       navigate("/dashboard/products");
     } catch (err) {
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+      }
       toast.error(getApiErrorMessage(err, "Failed to update product."));
     } finally {
       setIsUpdating(false);

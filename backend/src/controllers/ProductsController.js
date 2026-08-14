@@ -91,18 +91,11 @@ export const createProduct = async (req, res, next) => {
     const rawGallery = body.images || body.galleryImages || body.gallery || [];
     const images = Array.isArray(rawGallery)
       ? rawGallery
-          .map((item, index) => {
-            if (typeof item === "string" && item.trim()) {
-              return { url: item.trim(), altText: "", sortOrder: index };
-            }
+          .map((item) => {
+            if (typeof item === "string" && item.trim()) return item.trim();
             if (typeof item === "object" && item !== null) {
-              const url = (item.url || item.imageUrl || item.preview || "").trim();
-              if (!url) return null;
-              return {
-                url,
-                altText: item.altText || "",
-                sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : index,
-              };
+              const url = item.url || item.imageUrl || item.preview || "";
+              return typeof url === "string" && url.trim() ? url.trim() : null;
             }
             return null;
           })
@@ -308,18 +301,11 @@ export const updateProduct = async (req, res, next) => {
     if (rawGallery !== undefined) {
       product.images = Array.isArray(rawGallery)
         ? rawGallery
-            .map((item, index) => {
-              if (typeof item === "string" && item.trim()) {
-                return { url: item.trim(), altText: "", sortOrder: index };
-              }
+            .map((item) => {
+              if (typeof item === "string" && item.trim()) return item.trim();
               if (typeof item === "object" && item !== null) {
-                const url = (item.url || item.imageUrl || item.preview || "").trim();
-                if (!url) return null;
-                return {
-                  url,
-                  altText: item.altText || "",
-                  sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : index,
-                };
+                const url = item.url || item.imageUrl || item.preview || "";
+                return typeof url === "string" && url.trim() ? url.trim() : null;
               }
               return null;
             })

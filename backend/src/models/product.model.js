@@ -88,14 +88,7 @@ const productSchema = new Schema(
     // Images
     imageUrl: { type: String, required: true, trim: true },
     thumbnailUrl: { type: String, trim: true }, // Product thumbnail image
-    images: [
-      {
-        _id: false,
-        url: { type: String, required: true, trim: true },
-        altText: { type: String, trim: true },
-        sortOrder: { type: Number, default: 0 },
-      }
-    ],
+    images: [{ type: String, trim: true }],
 
     stockStatus: {
       type: String,

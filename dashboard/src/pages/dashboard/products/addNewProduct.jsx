@@ -334,7 +334,18 @@ const AddNewProduct = () => {
     }
 
     setIsCreating(true);
+    let uploadToastId = null;
     try {
+      const hasFilesToUpload = Boolean(
+        mainImageFile ||
+        variants.some((v) => v.imageFile) ||
+        galleryImages.some((img) => img.file)
+      );
+
+      if (hasFilesToUpload) {
+        uploadToastId = toast.loading("Uploading product images...");
+      }
+
       let finalMainImageUrl = uploadedImageUrl || "";
       let finalThumbnailUrl = "";
       if (mainImageFile) {
@@ -400,19 +411,19 @@ const AddNewProduct = () => {
           const uploadedUrl =
             uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
           if (uploadedUrl) {
-            uploadedGalleryImages.push({
-              url: uploadedUrl,
-              altText: item.altText || "",
-              sortOrder: i,
-            });
+            uploadedGalleryImages.push(uploadedUrl);
           }
         } else if (item.url || item.preview) {
-          uploadedGalleryImages.push({
-            url: item.url || item.preview,
-            altText: item.altText || "",
-            sortOrder: i,
-          });
+          const existingUrl = item.url || item.preview;
+          if (typeof existingUrl === "string" && existingUrl.trim()) {
+            uploadedGalleryImages.push(existingUrl.trim());
+          }
         }
+      }
+
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+        uploadToastId = null;
       }
 
       const body = {
@@ -451,6 +462,9 @@ const AddNewProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       navigate("/dashboard/products");
     } catch (err) {
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+      }
       toast.error(getApiErrorMessage(err, "Failed to create product."));
     } finally {
       setIsCreating(false);
