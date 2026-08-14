@@ -15,7 +15,7 @@ import Members from './pages/dashboard/members';
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
 import ProductDetails from './pages/dashboard/products/productDetails';
-import NewProduct from './pages/dashboard/products/newProduct';
+import AddNewProduct from './pages/dashboard/products/addNewProduct';
 import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
 import Categories from './pages/dashboard/products/categories';
@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
         path: 'products',
         children: [
           { path: '', element: <ProductsList /> },
-          { path: 'new', element: <NewProduct /> },
+          { path: 'new', element: <AddNewProduct /> },
           { path: 'stock', element: <Stock /> },
           { path: 'coupons', element: <Coupons /> },
           { path: 'categories', element: <Categories /> },
