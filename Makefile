@@ -16,7 +16,7 @@ ENV_FILE ?= $(shell if [ -f /opt/$(CLIENT)/configs/backend.env ]; then echo /opt
 	elif [ -f .env ]; then echo .env; \
 	else echo /opt/$(CLIENT)/configs/backend.env; fi)
 
-COMPOSE = docker compose --env-file $(ENV_FILE) -f docker-compose.prod.yml
+COMPOSE = CLIENT_NAME=$(CLIENT) CLIENT_CONFIG_PATH=/opt/$(CLIENT)/configs docker compose --env-file $(ENV_FILE) -f docker-compose.prod.yml
 
 # ── Targets ───────────────────────────────────────────────────
 
