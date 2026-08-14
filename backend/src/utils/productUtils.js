@@ -280,14 +280,59 @@ export const buildProductFilter = async (input = {}) => {
 };
 
 /**
- * Builds a Mongoose sort options object.
- * @param {string} sortBy - The field name to sort by.
- * @param {string} order - Sort order, either "asc" or "desc".
- * @returns {Object} The Mongoose sort configuration.
+ * Builds a Mongoose sort options object for product listings.
+ * 
+ * Architectural Handling:
+ * - Polymorphic Input: Safely accepts either individual arguments (sortBy, order)
+ *   or a queryOptions object ({ skip, limit, sort, sortBy, order }).
+ * - Presets Support: Automatically maps frontend sort keywords (e.g. 'newest', 'price-asc')
+ *   to direct Mongo sort keys.
+ * - Prevents TypeErrors: Guards against raw object-to-primitive conversions when
+ *   parsing Express req.query parameters.
+ * 
+ * @param {string|Object} [sortByOrInput="createdAt"] - Field name to sort by or query object.
+ * @param {string} [order="desc"] - Sort direction ('asc' or 'desc').
+ * @returns {Object} Mongoose sort specification (e.g., { createdAt: -1 } or { price: 1 }).
  */
-export const buildProductSort = (sortBy = "createdAt", order = "desc") => {
-  const field = SORT_FIELD_MAP[normalizeValue(sortBy)] || "createdAt";
-  const direction = normalizeValue(order).toLowerCase() === "asc" ? 1 : -1;
+export const buildProductSort = (sortByOrInput = "createdAt", order = "desc") => {
+  let sortBy = "createdAt";
+  let sortOrder = "desc";
+
+  // Case 1: When an object is passed (e.g. req.query / queryOptions)
+  if (typeof sortByOrInput === "object" && sortByOrInput !== null) {
+    const input = sortByOrInput;
+
+    // Handle high-level preset string aliases from storefront / client requests
+    if (typeof input.sort === "string") {
+      const s = input.sort.toLowerCase().trim();
+      if (s === "newest") {
+        return { createdAt: -1 };
+      } else if (s === "oldest") {
+        return { createdAt: 1 };
+      } else if (s === "price-asc" || s === "price_asc" || s === "price-low-to-high") {
+        return { price: 1 };
+      } else if (s === "price-desc" || s === "price_desc" || s === "price-high-to-low") {
+        return { price: -1 };
+      } else if (s === "name-asc" || s === "name_asc") {
+        return { name: 1 };
+      } else if (s === "name-desc" || s === "name_desc") {
+        return { name: -1 };
+      }
+    }
+
+    // Extract explicit sortBy and order keys if present
+    sortBy = input.sortBy || input.sort_by || "createdAt";
+    sortOrder = input.order || input.sortOrder || input.sort_order || "desc";
+  } else if (typeof sortByOrInput === "string") {
+    // Case 2: Direct string arguments passed
+    sortBy = sortByOrInput;
+    sortOrder = order || "desc";
+  }
+
+  // Ensure field exists in SORT_FIELD_MAP and fallback safely to createdAt
+  const cleanSortBy = typeof sortBy === "string" ? sortBy.trim() : "createdAt";
+  const field = SORT_FIELD_MAP[cleanSortBy] || "createdAt";
+  const direction = String(sortOrder).toLowerCase().trim() === "asc" ? 1 : -1;
 
   return { [field]: direction };
 };
