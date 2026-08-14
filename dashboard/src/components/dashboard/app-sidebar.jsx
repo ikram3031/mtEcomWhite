@@ -49,12 +49,7 @@ export function AppSidebar({ ...props }) {
           {state === "expanded" ? (
             <>
               <div className="flex items-center gap-3">
-                <DecantreLogo className="h-8 w-8 text-primary shrink-0" iconOnly={true} />
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg tracking-tight text-sidebar-foreground">
-                    {brandName}
-                  </span>
-                </div>
+                <DecantreLogo className="h-8 w-auto max-w-[130px] text-primary shrink-0" iconOnly={false} />
               </div>
               <button
                 onClick={() => setOpen(false)}

@@ -224,19 +224,40 @@ const AddNewProduct = () => {
   const handleGalleryImageSelect = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    if (galleryImages.length + files.length > 5) {
-      toast.error("Maximum 5 gallery images allowed.");
+
+    const fileList = Array.from(files);
+    const oversizedFiles = fileList.filter((file) => file.size > MAX_IMAGE_SIZE);
+
+    if (oversizedFiles.length > 0) {
+      toast.error(
+        oversizedFiles.length === 1
+          ? `"${oversizedFiles[0].name}" exceeds 2MB limit. Please upload images under 2MB.`
+          : `${oversizedFiles.length} images exceed the 2MB limit and were skipped.`
+      );
+    }
+
+    const validFiles = fileList.filter((file) => file.size <= MAX_IMAGE_SIZE);
+    if (validFiles.length === 0) {
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
       return;
     }
 
-    const newImages = Array.from(files).map((file) => ({
+    if (galleryImages.length + validFiles.length > 5) {
+      toast.error("Maximum 5 gallery images allowed.");
+    }
+
+    const remainingSlots = Math.max(0, 5 - galleryImages.length);
+    const filesToAdd = validFiles.slice(0, remainingSlots);
+
+    const newImages = filesToAdd.map((file) => ({
       id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       file,
       preview: URL.createObjectURL(file),
       altText: "",
     }));
 
-    setGalleryImages((prev) => [...prev, ...newImages].slice(0, 5));
+    setGalleryImages((prev) => [...prev, ...newImages]);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   const removeGalleryImage = (id) => {
@@ -460,7 +481,7 @@ const AddNewProduct = () => {
               variant="ghost"
               type="button"
               onClick={() => navigate("/dashboard/products")}
-              className="text-xs font-semibold text-muted-foreground"
+              className="text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
             >
               Discard
             </Button>
@@ -486,7 +507,7 @@ const AddNewProduct = () => {
         </div>
 
         {/* Content Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           {/* Left Column: Form Details */}
           <div className="space-y-6">
             <ProductDetailsCard
@@ -523,6 +544,7 @@ const AddNewProduct = () => {
               updateVariant={updateVariant}
               handleVariantImageSelect={handleVariantImageSelect}
               getFullPreviewUrl={getFullPreviewUrl}
+              clientConfig={clientConfig}
             />
 
             {/* Long Description Card */}
@@ -538,6 +560,38 @@ const AddNewProduct = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Right Column: Sidebar Cards & SEO */}
+          <div className="space-y-6">
+            <SidebarCards
+              isActive={isActive}
+              setIsActive={setIsActive}
+              imagePreview={imagePreview}
+              mainImageError={mainImageError}
+              fileInputRef={fileInputRef}
+              handleImageSelect={handleImageSelect}
+              removeUploadedImage={removeUploadedImage}
+              galleryImages={galleryImages}
+              galleryInputRef={galleryInputRef}
+              handleGalleryImageSelect={handleGalleryImageSelect}
+              removeGalleryImage={removeGalleryImage}
+              categorySlug={categorySlug}
+              setCategorySlug={setCategorySlug}
+              categories={categories}
+              parentBrandSlug={parentBrandSlug}
+              setParentBrandSlug={setParentBrandSlug}
+              brandSlug={brandSlug}
+              setBrandSlug={setBrandSlug}
+              parentBrands={parentBrands}
+              childBrands={childBrands}
+              season={season}
+              setSeason={setSeason}
+              tags={tags}
+              setTags={setTags}
+              clientConfig={clientConfig}
+              getFullPreviewUrl={getFullPreviewUrl}
+            />
 
             <SEOOverviewCard
               metaTitle={metaTitle}
@@ -546,36 +600,6 @@ const AddNewProduct = () => {
               setMetaDescription={setMetaDescription}
             />
           </div>
-
-          {/* Right Column: Sidebar Cards */}
-          <SidebarCards
-            isActive={isActive}
-            setIsActive={setIsActive}
-            imagePreview={imagePreview}
-            mainImageError={mainImageError}
-            fileInputRef={fileInputRef}
-            handleImageSelect={handleImageSelect}
-            removeUploadedImage={removeUploadedImage}
-            galleryImages={galleryImages}
-            galleryInputRef={galleryInputRef}
-            handleGalleryImageSelect={handleGalleryImageSelect}
-            removeGalleryImage={removeGalleryImage}
-            categorySlug={categorySlug}
-            setCategorySlug={setCategorySlug}
-            categories={categories}
-            parentBrandSlug={parentBrandSlug}
-            setParentBrandSlug={setParentBrandSlug}
-            brandSlug={brandSlug}
-            setBrandSlug={setBrandSlug}
-            parentBrands={parentBrands}
-            childBrands={childBrands}
-            season={season}
-            setSeason={setSeason}
-            tags={tags}
-            setTags={setTags}
-            clientConfig={clientConfig}
-            getFullPreviewUrl={getFullPreviewUrl}
-          />
         </div>
       </form>
     </div>

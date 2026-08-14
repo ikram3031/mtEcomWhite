@@ -4,7 +4,8 @@
   "brandName": "Engulfic",
   "features": {
     "season": false,
-    "brand": false
+    "brand": false,
+    "variantImage": false
   },
   "logoUrl": "/src/uploads/assets/engulfic_logo.png",
   "allowedMenus": [

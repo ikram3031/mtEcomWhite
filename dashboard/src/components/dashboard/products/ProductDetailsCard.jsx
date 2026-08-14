@@ -50,7 +50,23 @@ export const ProductDetailsCard = ({
           value={slug}
           onChange={(e) => {
             setSlugManual(true);
-            setSlug(e.target.value);
+            const val = e.target.value
+              .toLowerCase()
+              .replace(/[^\w\s-]/g, "")
+              .replace(/[\s_]+/g, "-")
+              .replace(/-+/g, "-");
+            setSlug(val);
+          }}
+          onBlur={() => {
+            setSlug((prev) =>
+              prev
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s-]/g, "")
+                .replace(/[\s_]+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-+|-+$/g, "")
+            );
           }}
           disabled={!slugManual}
           className={!slugManual ? "opacity-60 cursor-not-allowed" : ""}
