@@ -84,12 +84,28 @@ const CategoriesPage = () => {
     setSlug(category.slug);
     setSlugManual(true);
     setDescription(category.description || '');
-    const parentVal =
-      category.parent?.did ||
-      category.parent?._id ||
-      category.parent?.id ||
-      (typeof category.parent === 'string' ? category.parent : '');
-    setParentId(parentVal);
+
+    // Resolve parent ID accurately matching the Select values (c.did)
+    const rawParent = category.parent;
+    let matchedParentDid = '';
+    if (rawParent) {
+      if (typeof rawParent === 'object') {
+        const found = categories.find(
+          (c) =>
+            (rawParent.did && c.did === rawParent.did) ||
+            (rawParent._id && (c._id === String(rawParent._id) || c.id === String(rawParent._id))) ||
+            (rawParent.id && (c.id === String(rawParent.id) || c._id === String(rawParent.id))) ||
+            (rawParent.slug && c.slug === rawParent.slug)
+        );
+        matchedParentDid = found?.did || rawParent.did || rawParent.slug || String(rawParent._id || rawParent.id || '');
+      } else if (typeof rawParent === 'string') {
+        const found = categories.find(
+          (c) => c.did === rawParent || c.id === rawParent || c._id === rawParent || c.slug === rawParent
+        );
+        matchedParentDid = found?.did || rawParent;
+      }
+    }
+    setParentId(matchedParentDid);
     setIsOpen(true);
   };
 
@@ -144,6 +160,18 @@ const CategoriesPage = () => {
     }
   };
 
+  const getParentCategoryName = (cat) => {
+    if (!cat.parent) return null;
+    if (typeof cat.parent === 'object' && cat.parent?.name) {
+      return cat.parent.name;
+    }
+    const parentId = typeof cat.parent === 'object' ? cat.parent.did || cat.parent._id || cat.parent.id : cat.parent;
+    const found = categories.find(
+      (c) => c.did === parentId || c._id === parentId || c.id === parentId || c.slug === parentId
+    );
+    return found?.name || null;
+  };
+
   const filteredCategories = categories.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.slug.toLowerCase().includes(searchQuery.toLowerCase())
@@ -185,37 +213,50 @@ const CategoriesPage = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Slug</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Parent Category</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCategories.map((cat) => (
-                <TableRow key={cat.did}>
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <FolderTree className="h-4 w-4 text-muted-foreground" />
-                    {cat.name}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{cat.slug}</TableCell>
-                  <TableCell className="space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(cat)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteTarget({ did: cat.did, name: cat.name })}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredCategories.map((cat) => {
+                const parentName = getParentCategoryName(cat);
+                return (
+                  <TableRow key={cat.did}>
+                    <TableCell className="font-medium flex items-center gap-2">
+                      <FolderTree className="h-4 w-4 text-muted-foreground" />
+                      {cat.name}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{cat.slug}</TableCell>
+                    <TableCell>
+                      {parentName ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border/50">
+                          {parentName}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(cat)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteTarget({ did: cat.did, name: cat.name })}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -280,18 +321,14 @@ const CategoriesPage = () => {
                 onValueChange={(val) => setParentId(val === '__none__' ? '' : (val ?? ''))}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select parent category">
-                    {parentId && parentId !== '__none__'
-                      ? categories.find((c) => c.did === parentId || c.id === parentId || c._id === parentId)?.name || parentId
-                      : undefined}
-                  </SelectValue>
+                  <SelectValue placeholder="Select parent category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
                   {categories
-                    .filter((c) => !editingCategory || (c.did !== editingCategory.did && c.id !== editingCategory.id && c._id !== editingCategory._id))
+                    .filter((c) => !editingCategory || c.did !== editingCategory.did)
                     .map((c) => (
-                      <SelectItem key={c.did || c.id || c._id} value={c.did || c.id || c._id}>
+                      <SelectItem key={c.did} value={c.did}>
                         {c.name}
                       </SelectItem>
                     ))}
