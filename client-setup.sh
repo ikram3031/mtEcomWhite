@@ -57,6 +57,10 @@ PORT=5092
 MONGODB_URI=
 MONGODB_DB_NAME=
 
+# Client Identifier & Config Path
+CLIENT_NAME=
+CLIENT_CONFIG_PATH=
+
 # Container Names (ক্লায়েন্ট নাম দিয়ে পরিবর্তন করুন)
 MONGODB_CONTAINER_NAME=
 BACKEND_CONTAINER_NAME=
