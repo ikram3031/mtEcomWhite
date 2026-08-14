@@ -518,13 +518,7 @@ const EditProductPage = () => {
       const uploadedGalleryImages = [];
       for (let i = 0; i < galleryImages.length; i++) {
         const item = galleryImages[i];
-        if (item.isLoaded) {
-          uploadedGalleryImages.push({
-            url: item.preview,
-            altText: item.altText || "",
-            sortOrder: i,
-          });
-        } else if (item.file) {
+        if (item.file) {
           const formData = new FormData();
           formData.append("image", item.file);
           formData.append("type", "product");
@@ -541,6 +535,12 @@ const EditProductPage = () => {
               sortOrder: i,
             });
           }
+        } else if (item.isLoaded || item.preview || item.url) {
+          uploadedGalleryImages.push({
+            url: item.url || item.preview,
+            altText: item.altText || "",
+            sortOrder: i,
+          });
         }
       }
 

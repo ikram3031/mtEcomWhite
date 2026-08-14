@@ -389,18 +389,26 @@ const AddNewProduct = () => {
       const uploadedGalleryImages = [];
       for (let i = 0; i < galleryImages.length; i++) {
         const item = galleryImages[i];
-        const formData = new FormData();
-        formData.append("image", item.file);
-        formData.append("type", "product");
-        formData.append("productSlug", slug.trim());
-        const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        const uploadedUrl =
-          uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
-        if (uploadedUrl) {
+        if (item.file) {
+          const formData = new FormData();
+          formData.append("image", item.file);
+          formData.append("type", "product");
+          formData.append("productSlug", slug.trim());
+          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const uploadedUrl =
+            uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+          if (uploadedUrl) {
+            uploadedGalleryImages.push({
+              url: uploadedUrl,
+              altText: item.altText || "",
+              sortOrder: i,
+            });
+          }
+        } else if (item.url || item.preview) {
           uploadedGalleryImages.push({
-            url: uploadedUrl,
+            url: item.url || item.preview,
             altText: item.altText || "",
             sortOrder: i,
           });
@@ -421,15 +429,12 @@ const AddNewProduct = () => {
         taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
         isActive: Boolean(isActive),
         tags: Array.isArray(tags) ? tags : [],
+        images: uploadedGalleryImages,
         metaData: {
           metaTitle: metaTitle.trim(),
           metaDescription: metaDescription.trim(),
         },
       };
-
-      if (uploadedGalleryImages.length > 0) {
-        body.images = uploadedGalleryImages;
-      }
 
       if (categorySlug) body.category = categorySlug;
       if (brandSlug) body.brand = brandSlug;
@@ -472,7 +477,7 @@ const AddNewProduct = () => {
               <ChevronLeft className="h-4 w-4" />
             </Link>
             <h2 className="text-xl font-bold tracking-tight text-foreground">
-              Add Products
+              Add New Product
             </h2>
           </div>
 

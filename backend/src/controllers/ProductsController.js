@@ -88,7 +88,27 @@ export const createProduct = async (req, res, next) => {
         message: "Product image is required. Please upload an image before saving.",
       });
     }
-    const imageUrl = rawImageUrl.trim();
+    const rawGallery = body.images || body.galleryImages || body.gallery || [];
+    const images = Array.isArray(rawGallery)
+      ? rawGallery
+          .map((item, index) => {
+            if (typeof item === "string" && item.trim()) {
+              return { url: item.trim(), altText: "", sortOrder: index };
+            }
+            if (typeof item === "object" && item !== null) {
+              const url = (item.url || item.imageUrl || item.preview || "").trim();
+              if (!url) return null;
+              return {
+                url,
+                altText: item.altText || "",
+                sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : index,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean)
+      : [];
+
     const productData = {
       name: body.name,
       slug: body.slug,
@@ -105,7 +125,7 @@ export const createProduct = async (req, res, next) => {
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
       brand: brandDids,
-      images: body.images || [],
+      images,
       stockStatus: body.stockStatus || "instock",
       createdBy: userId,
     };
@@ -276,6 +296,36 @@ export const updateProduct = async (req, res, next) => {
     if (body.tags !== undefined) product.tags = body.tags;
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
+
+    // Update gallery images
+    const rawGallery =
+      body.images !== undefined
+        ? body.images
+        : body.galleryImages !== undefined
+        ? body.galleryImages
+        : body.gallery;
+
+    if (rawGallery !== undefined) {
+      product.images = Array.isArray(rawGallery)
+        ? rawGallery
+            .map((item, index) => {
+              if (typeof item === "string" && item.trim()) {
+                return { url: item.trim(), altText: "", sortOrder: index };
+              }
+              if (typeof item === "object" && item !== null) {
+                const url = (item.url || item.imageUrl || item.preview || "").trim();
+                if (!url) return null;
+                return {
+                  url,
+                  altText: item.altText || "",
+                  sortOrder: item.sortOrder !== undefined ? Number(item.sortOrder) : index,
+                };
+              }
+              return null;
+            })
+            .filter(Boolean)
+        : [];
+    }
 
     if (userId) {
       product.updatedBy = userId;
