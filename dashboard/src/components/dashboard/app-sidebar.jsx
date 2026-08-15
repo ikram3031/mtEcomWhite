@@ -17,6 +17,7 @@ import {
   Sliders,
   Terminal,
   Database,
+  Sparkles,
 } from "lucide-react"
 
 import {
@@ -232,6 +233,33 @@ export function AppSidebar({ ...props }) {
                 <ListOrdered className="h-4 w-4" />
                 <span>Stock Management</span>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
+          {/* AI Photo Studio */}
+          {isAllowed("studio") && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname.startsWith("/dashboard/studio")}
+                tooltip="Studio"
+                render={<Link to="/dashboard/studio/batch-images" />}
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>Studio</span>
+              </SidebarMenuButton>
+              <SidebarMenuSub>
+                {isAllowed("studio.batch-images") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname === "/dashboard/studio/batch-images"}
+                      render={<Link to="/dashboard/studio/batch-images" />}
+                    >
+                      <Package className="h-3.5 w-3.5" />
+                      <span>Batch Images</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
+              </SidebarMenuSub>
             </SidebarMenuItem>
           )}
 

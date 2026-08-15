@@ -36,6 +36,10 @@ import Billings from './pages/dashboard/billing/billings';
 import ApiDocs from './pages/dashboard/developer/apiDocs';
 import SystemLogs from './pages/dashboard/developer/systemLogs';
 
+// AI Studio
+import Studio from './pages/dashboard/studio/index';
+import BatchImagesStudio from './pages/dashboard/studio/batchImages';
+
 import { RouteErrorElement } from './components/ErrorBoundary';
 
 export const router = createBrowserRouter([
@@ -91,6 +95,14 @@ export const router = createBrowserRouter([
           { path: '', element: <BillingOverview /> },
           { path: 'payments', element: <Payments /> },
           { path: 'billings', element: <Billings /> },
+        ],
+      },
+      {
+        path: 'studio',
+        element: <Studio />,
+        children: [
+          { path: '', element: <Navigate to="batch-images" replace /> },
+          { path: 'batch-images', element: <BatchImagesStudio /> },
         ],
       },
     ],
