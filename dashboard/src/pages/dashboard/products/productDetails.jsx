@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, baseURL } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useCategories, useBrands } from "@/lib/category-cache";
@@ -39,7 +39,7 @@ function slugify(text) {
     .replace(/^-+|-+$/g, "");
 }
 
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE = (baseURL || "").replace(/\/$/, "");
 
 const EditProductPage = () => {
   const navigate = useNavigate();

@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, baseURL } from '@/lib/api-client';
 import { getCategoryName, getBrandName } from '@/lib/category-cache';
 
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+const API_BASE = (baseURL || '').replace(/\/$/, '');
 
 const resolveImageUrl = (raw) => {
   if (!raw) return undefined;
