@@ -41,13 +41,14 @@ export const SidebarCards = ({
   removeGalleryImage,
   categorySlug,
   setCategorySlug,
-  categories,
+  categories = [],
   parentBrandSlug,
   setParentBrandSlug,
   brandSlug,
   setBrandSlug,
-  parentBrands,
-  childBrands,
+  parentBrands = [],
+  childBrands = [],
+  brands = [],
   season,
   setSeason,
   tags = [],
@@ -294,10 +295,26 @@ export const SidebarCards = ({
               <SelectTrigger className="flex-1 cursor-pointer h-9">
                 <SelectValue placeholder="Select a category">
                   {categorySlug && categorySlug !== "__none__" ? (() => {
-                    const found = categories.find((c) => c.slug === categorySlug || c.did === categorySlug);
+                    const found = categories.find(
+                      (c) =>
+                        c.slug === categorySlug ||
+                        c.did === categorySlug ||
+                        c._id === categorySlug ||
+                        String(c._id) === String(categorySlug) ||
+                        c.id === categorySlug
+                    );
                     if (!found) return categorySlug;
                     if (found.parent) {
-                      const pName = typeof found.parent === 'object' ? found.parent.name : categories.find(c => c.did === found.parent || c.id === found.parent || c._id === found.parent)?.name;
+                      const pName =
+                        typeof found.parent === "object"
+                          ? found.parent.name
+                          : categories.find(
+                              (c) =>
+                                c.did === found.parent ||
+                                c.id === found.parent ||
+                                c._id === found.parent ||
+                                String(c._id) === String(found.parent)
+                            )?.name;
                       return pName ? `${pName} › ${found.name}` : found.name;
                     }
                     return found.name;
@@ -313,22 +330,31 @@ export const SidebarCards = ({
                   const renderedDids = new Set();
 
                   const trees = rootCats.map((root) => {
-                    renderedDids.add(root.did);
+                    const rootVal = root.did || root.slug || String(root._id);
+                    renderedDids.add(root.did || String(root._id));
                     const children = subCats.filter((sub) => {
                       const p = sub.parent;
-                      const pId = typeof p === 'object' && p !== null ? (p.did || p._id || p.id) : p;
-                      const matches = pId === root.did || pId === root.id || pId === root._id || pId === root.slug;
+                      const pId =
+                        typeof p === "object" && p !== null
+                          ? p.did || p._id || p.id
+                          : p;
+                      const matches =
+                        pId === root.did ||
+                        pId === root.id ||
+                        pId === root._id ||
+                        pId === root.slug ||
+                        String(pId) === String(root._id);
                       if (matches) {
-                        renderedDids.add(sub.did);
+                        renderedDids.add(sub.did || String(sub._id));
                       }
                       return matches;
                     });
 
                     return (
-                      <div key={root.did || root.slug}>
+                      <div key={root.did || root.slug || root._id}>
                         {/* Parent Category Option */}
                         <SelectItem
-                          value={root.slug || root.did}
+                          value={rootVal}
                           className="font-semibold text-foreground"
                         >
                           📁 {root.name}
@@ -336,11 +362,12 @@ export const SidebarCards = ({
 
                         {/* Child Categories indented with arrow */}
                         {children.map((child) => {
-                          renderedDids.add(child.did);
+                          const childVal = child.did || child.slug || String(child._id);
+                          renderedDids.add(child.did || String(child._id));
                           return (
                             <SelectItem
-                              key={child.did || child.slug}
-                              value={child.slug || child.did}
+                              key={child.did || child.slug || child._id}
+                              value={childVal}
                               className="pl-6 text-xs text-muted-foreground font-normal"
                             >
                               └─ {child.name}
@@ -352,11 +379,13 @@ export const SidebarCards = ({
                   });
 
                   // Handle any categories that were not rendered as part of a tree
-                  const remainingCats = categories.filter(c => !renderedDids.has(c.did));
+                  const remainingCats = categories.filter(
+                    (c) => !renderedDids.has(c.did || String(c._id))
+                  );
                   const remainingElements = remainingCats.map((cat) => (
                     <SelectItem
-                      key={cat.did || cat.slug}
-                      value={cat.slug || cat.did}
+                      key={cat.did || cat.slug || cat._id}
+                      value={cat.did || cat.slug || String(cat._id)}
                       className="font-semibold text-foreground"
                     >
                       📁 {cat.name}
@@ -385,14 +414,27 @@ export const SidebarCards = ({
                 }}
               >
                 <SelectTrigger className="w-full cursor-pointer h-9">
-                  <SelectValue placeholder="Select Brand" />
+                  <SelectValue placeholder="Select Brand">
+                    {parentBrandSlug && parentBrandSlug !== "__none__" ? (() => {
+                      const allBrandList = brands.length > 0 ? brands : parentBrands;
+                      const found = allBrandList.find(
+                        (b) =>
+                          b.did === parentBrandSlug ||
+                          b.slug === parentBrandSlug ||
+                          b._id === parentBrandSlug ||
+                          String(b._id) === String(parentBrandSlug) ||
+                          (b.slug && b.slug.toLowerCase() === parentBrandSlug.toLowerCase())
+                      );
+                      return found ? found.name : parentBrandSlug;
+                    })() : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-popover border shadow-md">
                   <SelectItem value="__none__">None</SelectItem>
                   {parentBrands.map((pb) => (
                     <SelectItem
-                      key={pb.did || pb.slug}
-                      value={pb.slug || pb.did}
+                      key={pb.did || pb.slug || pb._id}
+                      value={pb.did || pb.slug || String(pb._id)}
                     >
                       {pb.name}
                     </SelectItem>
@@ -413,15 +455,28 @@ export const SidebarCards = ({
                   }
                 >
                   <SelectTrigger className="w-full cursor-pointer h-9">
-                    <SelectValue placeholder="Select Sub Brand" />
+                    <SelectValue placeholder="Select Sub Brand">
+                      {brandSlug && brandSlug !== "__none__" ? (() => {
+                        const allBrandList = brands.length > 0 ? brands : [...childBrands, ...parentBrands];
+                        const found = allBrandList.find(
+                          (b) =>
+                            b.did === brandSlug ||
+                            b.slug === brandSlug ||
+                            b._id === brandSlug ||
+                            String(b._id) === String(brandSlug) ||
+                            (b.slug && b.slug.toLowerCase() === brandSlug.toLowerCase())
+                        );
+                        return found ? found.name : brandSlug;
+                      })() : undefined}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-md">
                     <SelectItem value="__none__">None</SelectItem>
                     {childBrands.length > 0
                       ? childBrands.map((cb) => (
                           <SelectItem
-                            key={cb.did || cb.slug}
-                            value={cb.slug || cb.did}
+                            key={cb.did || cb.slug || cb._id}
+                            value={cb.did || cb.slug || String(cb._id)}
                           >
                             {cb.name}
                           </SelectItem>
@@ -430,12 +485,14 @@ export const SidebarCards = ({
                           .filter(
                             (pb) =>
                               pb.slug === parentBrandSlug ||
-                              pb.did === parentBrandSlug
+                              pb.did === parentBrandSlug ||
+                              pb._id === parentBrandSlug ||
+                              String(pb._id) === String(parentBrandSlug)
                           )
                           .map((pb) => (
                             <SelectItem
-                              key={pb.did || pb.slug}
-                              value={pb.slug || pb.did}
+                              key={pb.did || pb.slug || pb._id}
+                              value={pb.did || pb.slug || String(pb._id)}
                             >
                               {pb.name}
                             </SelectItem>

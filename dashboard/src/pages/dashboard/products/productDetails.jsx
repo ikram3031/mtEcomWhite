@@ -743,6 +743,7 @@ const EditProductPage = () => {
               setBrandSlug={setBrandSlug}
               parentBrands={parentBrands}
               childBrands={childBrands}
+              brands={brands}
               season={season}
               setSeason={setSeason}
               tags={tags}
