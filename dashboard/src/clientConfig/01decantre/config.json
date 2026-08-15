@@ -28,7 +28,9 @@
     "billing.payments",
     "reports",
     "users",
-    "developer"
+    "developer",
+    "studio",
+    "studio.batch-images"
   ],
   "theme": {
     "light": {

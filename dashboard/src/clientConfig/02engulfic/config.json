@@ -19,7 +19,9 @@
     "products.list",
     "products.categories",
     "products.attributes",
-    "products.coupons"
+    "products.coupons",
+    "studio",
+    "studio.batch-images"
   ],
   "theme": {
     "light": {

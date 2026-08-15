@@ -22,7 +22,9 @@
     "products.attributes",
     "products.coupons",
     "members",
-    "reports"
+    "reports",
+    "studio",
+    "studio.batch-images"
   ],
   "theme": {
     "light": {
