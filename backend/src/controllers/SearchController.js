@@ -61,8 +61,11 @@ export const searchProducts = async (req, res, next) => {
       
       const pBrandDids = Array.isArray(p.brand) ? p.brand : (p.brand ? [p.brand] : []);
       const brand = pBrandDids.map((did) => brandMap.get(did)).filter(Boolean)[0] || null;
-      
-      const rawImage = p.imageUrl || p.thumbnailUrl || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
+
+      const rawImage = p.thumbnailUrl || p.imageUrl || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
+      const fullUrl = rawImage
+        ? (rawImage.startsWith("http") ? rawImage : `https://server.decantrebd.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`)
+        : null;
 
       return {
         id: p._id?.toString?.() ?? p.id,
@@ -70,8 +73,9 @@ export const searchProducts = async (req, res, next) => {
         slug: p.slug,
         category,
         brand,
-        image: rawImage,
-        imageUrl: rawImage,
+        imageUrl: fullUrl,
+        thumbnailUrl: fullUrl,
+        image: fullUrl,
         price: p.type === "variant" && Array.isArray(p.variants) && p.variants.length > 0
           ? (p.variants[0].offerPrice || p.variants[0].price)
           : (p.offerPrice || p.price || null),
