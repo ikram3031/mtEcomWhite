@@ -2,6 +2,7 @@
   "clientId": "01",
   "clientKey": "decantre",
   "brandName": "Decantre",
+  "apiBaseUrl": "https://service.decantrebd.com",
   "features": {
     "season": true,
     "brand": true,
