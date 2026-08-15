@@ -55,7 +55,7 @@ Each client configuration is written as a JSON file matching the schema below:
   "clientId": "03",
   "clientKey": "toyoland",
   "brandName": "Toyoland",
-  "apiBaseUrl": "https://server.toyolandbd.com",
+  "apiBaseUrl": "https://server.toyoland.shop",
   "allowedMenus": [
     "overview",
     "orders",
@@ -90,7 +90,7 @@ Each client configuration is written as a JSON file matching the schema below:
 * **clientId:** Two-digit numeric ID assigned to the client.
 * **clientKey:** Unique, lowercase key representing the client.
 * **brandName:** Human-readable client brand name.
-* **apiBaseUrl:** Target production backend API URL for the client (e.g. `https://server.toyolandbd.com`, `https://server.engulfic.com`, `https://service.decantrebd.com`). Used directly by `apiClient`.
+* **apiBaseUrl:** Target production backend API URL for the client (e.g. `https://server.toyoland.shop`, `https://server.engulfic.com`, `https://service.decantrebd.com`). Used directly by `apiClient`.
 * **allowedMenus:** List of parent menus and sub-menus that this client has permission to access.
 * **theme:** Contains CSS custom properties (`--primary`, `--ring`, etc.) to be injected at runtime for `light` and `dark` modes.
 
@@ -109,7 +109,7 @@ const baseURL =
 ```
 
 - **Zero Hardcoded If-Else Blocks:** Eliminates hardcoded hostname checks for individual clients. Adding a new client automatically configures its API endpoint.
-- **Local Development:** When running the dashboard locally (e.g. `npm run dev:toyoland`), `apiClient` connects directly to the client's live backend API (`https://server.toyolandbd.com`) without requiring local backend instances.
+- **Local Development:** When running the dashboard locally (e.g. `npm run dev:toyoland`), `apiClient` connects directly to the client's live backend API (`https://server.toyoland.shop`) without requiring local backend instances.
 
 ---
 

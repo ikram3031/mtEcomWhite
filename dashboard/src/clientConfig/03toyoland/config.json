@@ -2,7 +2,7 @@
   "clientId": "03",
   "clientKey": "toyoland",
   "brandName": "Toyoland",
-  "apiBaseUrl": "https://server.toyolandbd.com",
+  "apiBaseUrl": "https://server.toyoland.shop",
   "features": {
     "season": true,
     "brand": true,
