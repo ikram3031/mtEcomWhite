@@ -364,17 +364,21 @@ const NewInStoreOrderPage = () => {
           ? `${paymentMethod} (+880${paymentPhone})`
           : paymentMethod;
 
-      const orderPayload = {
-        orderType: "instore",
-        paymentMethod: fullPaymentMethod,
-        fullName: customerName.trim(),
+      const billingInfo = {
+        fullName: customerName.trim() || "Walk-in Customer",
         phone: `+880${customerPhone.trim()}`,
         email: customerEmail.trim() || "instore@decantre.com",
         address: customerAddress.trim() || "In-Store",
-        city: "Dhaka",
         thana: "Dhaka",
         district: "Dhaka",
         zip: "1000",
+      };
+
+      const orderPayload = {
+        orderType: "instore",
+        paymentMethod: fullPaymentMethod,
+        billingInfo: billingInfo,
+        shippingInfo: billingInfo,
         giftWrap: false,
         items: cart.map((item) => ({
           name: item.name,
