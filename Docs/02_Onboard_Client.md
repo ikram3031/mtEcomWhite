@@ -85,6 +85,12 @@ FRONTEND_DOMAIN_KEYWORDS=engulfic.com
 DASHBOARD_DOMAIN_KEYWORDS=dashboard.engulfic.com
 ```
 
+> [!IMPORTANT]
+> **Pre-Deployment CORS Checklist:**
+> To prevent CORS issues when deploying new clients or custom domains (e.g. `https://dashboard.toyoland.shop`, `https://toyoland.shop`, `https://server.toyolandbd.com`):
+> 1. Always list all custom storefront, dashboard, and API URLs in `ALLOWED_ORIGINS` inside `/opt/<client>/configs/backend.env`.
+> 2. The backend (`backend/src/app.js`) automatically validates requests against `ALLOWED_ORIGINS` and dynamically allows any origin matching registered client keywords (`toyoland`, `engulfic`, `decantre`, etc.) to guarantee seamless cross-origin requests.
+
 ### 2. Configure Dashboard Environment (`/opt/<client>/configs/dashboard.env`)
 Open the dashboard configuration file:
 ```bash

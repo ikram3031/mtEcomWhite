@@ -21,8 +21,22 @@ export async function createApp() {
     "https://www.decantrebd.com",
     "https://dashboard.decantrebd.com",
     "http://dashboard.decantrebd.com",
+    "https://service.decantrebd.com",
+    "https://server.decantrebd.com",
+    "https://engulfic.com",
+    "https://www.engulfic.com",
+    "https://dashboard.engulfic.com",
+    "https://server.engulfic.com",
+    "https://toyolandbd.com",
+    "https://www.toyolandbd.com",
+    "https://server.toyolandbd.com",
+    "https://toyoland.shop",
+    "https://www.toyoland.shop",
+    "https://dashboard.toyoland.shop",
     "http://localhost:8001",
     "http://localhost:8005",
+    "http://localhost:3000",
+    "http://localhost:5173",
   ];
 
   const envOrigins = env.ALLOWED_ORIGINS
@@ -35,12 +49,25 @@ export async function createApp() {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes("*") || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        logger.warn(`CORS request from origin ${origin} - allowed`);
-        callback(null, true);
+      const isAllowedExplicit = allowedOrigins.includes("*") || allowedOrigins.includes(origin);
+      if (isAllowedExplicit) {
+        return callback(null, true);
       }
+
+      // Check if origin matches known client domain keywords or subdomains (toyoland, engulfic, decantre, etc.)
+      const isKnownClientDomain =
+        origin.includes("toyoland") ||
+        origin.includes("engulfic") ||
+        origin.includes("decantre") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1");
+
+      if (isKnownClientDomain) {
+        return callback(null, true);
+      }
+
+      logger.warn(`CORS request from origin ${origin} - allowed as dynamic client origin`);
+      callback(null, true);
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
@@ -48,6 +75,9 @@ export async function createApp() {
       "Authorization",
       "X-Requested-With",
       "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers",
     ],
     credentials: true,
     optionsSuccessStatus: 204,
