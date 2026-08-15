@@ -125,13 +125,13 @@ export const FlowControlPanel = ({
       )}
 
       {/* Control Panel Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
             <Wand2 className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="text-sm sm:text-base font-semibold text-foreground">
               Creative Prompt & Studio Specifications
             </h2>
             <p className="text-xs text-muted-foreground">
@@ -140,23 +140,23 @@ export const FlowControlPanel = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setIsSaveModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-all"
           >
             <BookmarkPlus className="h-3.5 w-3.5" />
-            <span>Save Custom Preset</span>
+            <span>Save Preset</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
           >
             <Settings2 className="h-3.5 w-3.5 text-primary" />
-            <span>{showAdvanced ? 'Hide Model Config' : 'Model Specifications'}</span>
+            <span>{showAdvanced ? 'Hide Config' : 'Model Config'}</span>
             {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         </div>

@@ -522,10 +522,10 @@ export default function BatchImagesStudio() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-foreground tracking-tight">AI Photo Studio</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">AI Photo Studio</h1>
             <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
               Gemini GenAI
             </span>
@@ -535,14 +535,14 @@ export default function BatchImagesStudio() {
           </p>
         </div>
 
-        {/* Top Actions */}
-        <div className="flex items-center gap-2">
+        {/* Top Actions & Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
           {completedCount > 0 && (
             <button
               type="button"
               onClick={handleExportZip}
               disabled={isExportingZip}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+              className="flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
               <span>Export {completedCount} Images (ZIP)</span>
@@ -550,31 +550,31 @@ export default function BatchImagesStudio() {
           )}
 
           {/* Tab Navigation */}
-          <div className="flex items-center rounded-lg bg-muted p-1 border border-border">
+          <div className="flex w-full sm:w-auto items-center rounded-lg bg-muted p-1 border border-border">
             <button
               type="button"
               onClick={() => setActiveTab('bulk-editor')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeTab === 'bulk-editor'
                   ? 'bg-background text-foreground shadow-xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Layers className="h-3.5 w-3.5" />
-              <span>Batch Background Editor</span>
+              <span>Batch Editor</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('bulk-generator')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeTab === 'bulk-generator'
                   ? 'bg-background text-foreground shadow-xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Cpu className="h-3.5 w-3.5 text-primary" />
-              <span>Bulk Shot Generator</span>
+              <span>Shot Generator</span>
             </button>
           </div>
         </div>
