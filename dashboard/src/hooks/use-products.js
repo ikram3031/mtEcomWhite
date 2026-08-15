@@ -38,7 +38,9 @@ const fetchProducts = async (params) => {
     Array.isArray(responseData.data)
   ) {
     productList = responseData.data;
-    if (responseData.meta && typeof responseData.meta === 'object') {
+    if (responseData.pagination && typeof responseData.pagination === 'object') {
+      rawMeta = responseData.pagination;
+    } else if (responseData.meta && typeof responseData.meta === 'object') {
       rawMeta = responseData.meta;
     }
   }

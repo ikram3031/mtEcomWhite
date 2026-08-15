@@ -193,6 +193,9 @@ export const listProducts = async (req, res, next) => {
     res.json({
       status: "success",
       data: products.map(serializeProduct),
+      // CRITICAL: NEVER CHANGE ANY FIELD NAME in this pagination object.
+      // Frontends and Dashboard strictly rely on `pagination.total`, `pagination.limit`, and `pagination.skip`.
+      // You may add new fields if needed, but existing field names must NEVER be modified or renamed.
       pagination: {
         total: count,
         limit,
