@@ -48,7 +48,7 @@ export const createProduct = async (req, res, next) => {
       return;
     }
 
-    // Resolve Categories: convert array of IDs or slugs to ObjectIds
+    // Resolve Categories: convert array of IDs, DIDs, or slugs to ObjectIds
     let categoryIds = [];
     if (body.categories || body.category) {
       const catInput = body.categories || body.category;
@@ -58,13 +58,15 @@ export const createProduct = async (req, res, next) => {
         if (Types.ObjectId.isValid(cat)) {
           categoryIds.push(cat);
         } else {
-          const found = await CategoryModel.findOne({ slug: cat }).lean();
+          const found = await CategoryModel.findOne({
+            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+          }).lean();
           if (found) categoryIds.push(found._id);
         }
       }
     }
 
-    // Resolve Brand: convert array of slugs or IDs to brand DIDs
+    // Resolve Brand: convert array of slugs, ObjectIds, or DIDs to brand DIDs
     let brandDids = [];
     if (body.brand || body.brands) {
       const brandInput = body.brand || body.brands;
@@ -74,7 +76,10 @@ export const createProduct = async (req, res, next) => {
         if (/^[0-9a-fA-F]{16}$/.test(br)) {
           brandDids.push(br);
         } else {
-          const found = await BrandModel.findOne({ slug: br }).lean();
+          const query = Types.ObjectId.isValid(br)
+            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
+            : { $or: [{ slug: br }, { did: br }] };
+          const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
       }
@@ -332,7 +337,9 @@ export const updateProduct = async (req, res, next) => {
         if (Types.ObjectId.isValid(cat)) {
           categoryIds.push(cat);
         } else {
-          const found = await CategoryModel.findOne({ slug: cat }).lean();
+          const found = await CategoryModel.findOne({
+            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+          }).lean();
           if (found) categoryIds.push(found._id);
         }
       }
@@ -349,7 +356,10 @@ export const updateProduct = async (req, res, next) => {
         if (/^[0-9a-fA-F]{16}$/.test(br)) {
           brandDids.push(br);
         } else {
-          const found = await BrandModel.findOne({ slug: br }).lean();
+          const query = Types.ObjectId.isValid(br)
+            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
+            : { $or: [{ slug: br }, { did: br }] };
+          const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
       }
