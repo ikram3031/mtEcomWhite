@@ -448,7 +448,8 @@ const AddNewProduct = () => {
       };
 
       if (categorySlug) body.category = categorySlug;
-      if (brandSlug) body.brand = brandSlug;
+      const effectiveBrand = brandSlug || parentBrandSlug;
+      if (effectiveBrand) body.brand = effectiveBrand;
 
       if (productType === "simple") {
         body.price = parseFloat(price);
