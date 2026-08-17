@@ -165,8 +165,8 @@ export const createMember = async (req, res, next) => {
       email: payload.email.toLowerCase().trim(),
       phone: payload.phone.trim(),
       passwordHash: await hashPassword(payload.password),
-      billingInfo: sanitizeInfo(payload.billingInfo),
-      shippingInfo: sanitizeInfo(payload.shippingInfo),
+      billingAddress: sanitizeInfo(payload.billingAddress ?? payload.billingInfo),
+      shippingAddress: sanitizeInfo(payload.shippingAddress ?? payload.shippingInfo),
       createdBy: payload.createdBy || req.user?.userId || req.user?.id || null,
     });
 
@@ -344,8 +344,8 @@ export const registerMember = async (req, res, next) => {
         role: trimmedRole || "Customer",
         emailOtp: otp,
         emailOtpExpiresAt: otpExpires,
-        billingInfo: sanitizeInfo(req.body?.billingInfo),
-        shippingInfo: sanitizeInfo(req.body?.shippingInfo),
+        billingAddress: sanitizeInfo(req.body?.billingAddress ?? req.body?.billingInfo),
+        shippingAddress: sanitizeInfo(req.body?.shippingAddress ?? req.body?.shippingInfo),
       });
 
       const emailResult = await sendOtpEmail({
