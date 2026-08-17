@@ -1,4 +1,6 @@
 import { ProductModel } from "../models/product.model.js";
+import { CategoryModel } from "../models/category.model.js";
+import { BrandModel } from "../models/brand.model.js";
 import { RecentSearchModel } from "../models/recentSearch.model.js";
 import { PopularSearchModel } from "../models/popularSearch.model.js";
 import { buildProductImageUrl } from "../utils/imageUrl.js";
@@ -18,23 +20,65 @@ export const searchProducts = async (req, res, next) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || "12", 10)));
     const regex = { $regex: q, $options: "i" };
 
-    const filter = {
-      $or: [{ name: regex }, { "brand.name": regex }, { "categories.name": regex }],
-    };
+    // Find any matching brands or categories to support searching by brand/category name
+    const [matchingBrands, matchingCategories] = await Promise.all([
+      BrandModel.find({ name: regex }).select("did name slug").lean(),
+      CategoryModel.find({ name: regex }).select("_id name slug").lean(),
+    ]);
 
-    const docs = await ProductModel.find(filter).limit(limit).lean();
+    const matchingBrandDids = matchingBrands.map((b) => b.did).filter(Boolean);
+    const matchingCategoryIds = matchingCategories.map((c) => c._id);
+
+    const searchClauses = [
+      { name: regex },
+      { slug: regex },
+      { description: regex },
+    ];
+
+    if (matchingBrandDids.length > 0) {
+      searchClauses.push({ brand: { $in: matchingBrandDids } });
+    }
+    if (matchingCategoryIds.length > 0) {
+      searchClauses.push({ categories: { $in: matchingCategoryIds } });
+    }
+
+    const docs = await ProductModel.find({ $or: searchClauses, isActive: { $ne: false } })
+      .limit(limit)
+      .populate("categories", "name slug")
+      .lean();
+
+    // Map brand names for quick lookup
+    const allBrandDids = [...new Set(docs.flatMap((d) => (Array.isArray(d.brand) ? d.brand : [d.brand]).filter(Boolean)))];
+    const brandDocs = allBrandDids.length > 0
+      ? await BrandModel.find({ did: { $in: allBrandDids } }).select("did name").lean()
+      : [];
+    const brandMap = new Map(brandDocs.map((b) => [b.did, b.name]));
 
     const results = docs.map((p) => {
-      const category = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories[0].name : null;
-      const brand = p.brand?.name || null;
-      const imageUrl = buildProductImageUrl(p.thumbnail?.url);
+      const category = Array.isArray(p.categories) && p.categories.length > 0
+        ? (p.categories[0]?.name || p.categories[0]?.slug || null)
+        : null;
+      
+      const pBrandDids = Array.isArray(p.brand) ? p.brand : (p.brand ? [p.brand] : []);
+      const brand = pBrandDids.map((did) => brandMap.get(did)).filter(Boolean)[0] || null;
+
+      const rawImage = p.thumbnailUrl || p.imageUrl || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
+      const fullUrl = rawImage
+        ? (rawImage.startsWith("http") ? rawImage : `https://server.decantrebd.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`)
+        : null;
 
       return {
         id: p._id?.toString?.() ?? p.id,
         name: p.name,
+        slug: p.slug,
         category,
         brand,
-        image: imageUrl,
+        imageUrl: fullUrl,
+        thumbnailUrl: fullUrl,
+        image: fullUrl,
+        price: p.type === "variant" && Array.isArray(p.variants) && p.variants.length > 0
+          ? (p.variants[0].offerPrice || p.variants[0].price)
+          : (p.offerPrice || p.price || null),
       };
     });
 

@@ -1,11 +1,11 @@
-# White-Label Client Onboarding & Setup Guide (`Docs/00_Onboard.md`)
+# White-Label Client Onboarding & Setup Guide (`Docs/02_Onboard_Client.md`)
 
-This guide explains how to set up and deploy a new client using the centralized, white-labeled architecture. We will use the client **"Decantre"** as the setup reference.
+This guide explains how to set up and deploy a new client using the centralized, white-labeled architecture. We will use the client **"Decantre"** and **"Engulfic"** as setup references.
 
 ---
 
 ## Prerequisites
-1. Root SSH access to the client VPS (e.g., `144.79.218.126`).
+1. Root SSH access to the client VPS (e.g., `144.79.218.126` or `144.79.218.8`).
 2. Git installed on the VPS.
 3. Docker & Docker Compose installed on the VPS.
 
@@ -14,51 +14,58 @@ This guide explains how to set up and deploy a new client using the centralized,
 ## Setup Steps
 
 ### Step 1: Initialize Client Directories & Config Templates
-Log in to your VPS as root and navigate to the project directory where you cloned the repository. Run the setup script with the client name (lowercase, no spaces):
+Log in to your VPS as root and navigate to the project directory where you cloned the repository (`/opt/live`). Run the setup script with the client name (lowercase, no spaces):
 
 ```bash
 # syntax: bash client-setup.sh <client_name>
 bash client-setup.sh decantre
+# or for engulfic:
+bash client-setup.sh engulfic
 ```
 
 This will automatically create:
-- `/opt/decantre/configs/` (Secure configurations, chmod `700`)
-- `/opt/decantre/uploads/` (Static media storage, chmod `755`)
-- `/opt/decantre/configs/backend.env` (Template for database & SMTP credentials)
-- `/opt/decantre/configs/dashboard.env` (Template for API routing variables)
+- `/opt/<client>/configs/` (Secure configurations, chmod `700`)
+- `/opt/<client>/uploads/` (Static media storage, chmod `755`)
+- `/opt/<client>/configs/backend.env` (Template for database, port, and SMTP credentials)
+- `/opt/<client>/configs/dashboard.env` (Template for dashboard API routing variables)
 
 ---
 
 ## Step 2: Configure Environment Files
 
-### 1. Configure Backend Environment (`/opt/decantre/configs/backend.env`)
-Open the backend configuration template:
+### 1. Configure Backend Environment (`/opt/<client>/configs/backend.env`)
+Open the backend configuration file:
 ```bash
-nano /opt/decantre/configs/backend.env
+nano /opt/<client>/configs/backend.env
 ```
-Fill in the client credentials. Example configuration for **Decantre**:
+
+Fill in the client credentials. Example configuration for **Engulfic**:
 ```env
 NODE_ENV=production
-PORT=5092
+PORT=5094
 
-# MongoDB Credentials
-MONGODB_URI=mongodb://admin:<your_db_password>@127.0.0.1:27017/perfume-store?authSource=admin
-MONGODB_DB_NAME=perfume-store
+# Client Identifier & Config Mount
+CLIENT_NAME=engulfic
+CLIENT_CONFIG_PATH=/opt/engulfic/configs
 
-# Container Names & Initialization
-MONGODB_CONTAINER_NAME=decantre-mongodb-live
-BACKEND_CONTAINER_NAME=decantre-backend-live
-DASHBOARD_CONTAINER_NAME=decantre-dashboard-live
+# MongoDB Connection & Credentials
+MONGODB_URI=mongodb://admin:<your_db_password>@engulfic-mongodb-live:27017/engulfic-db?authSource=admin
+MONGODB_DB_NAME=engulfic-db
+
+# Container Names
+MONGODB_CONTAINER_NAME=engulfic-mongodb-live
+BACKEND_CONTAINER_NAME=engulfic-backend-live
+DASHBOARD_CONTAINER_NAME=engulfic-dashboard-live
 
 MONGO_INITDB_ROOT_USERNAME=admin
 MONGO_INITDB_ROOT_PASSWORD=<your_db_password>
-MONGO_INITDB_DATABASE=perfume-store
+MONGO_INITDB_DATABASE=engulfic-db
 
 # Port Mappings
-BACKEND_PORT=5092
-DASHBOARD_PORT=8005
+BACKEND_PORT=5094
+DASHBOARD_PORT=8015
 
-# Security
+# Security & JWT
 ACCESS_TOKEN_SECRET=your_jwt_access_token_secret_key_at_least_20_chars
 ACCESS_TOKEN_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_MS=2592000000
@@ -67,52 +74,76 @@ REFRESH_TOKEN_EXPIRES_MS=2592000000
 SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 SMTP_ENCRYPTION=TLS
-SMTP_USER=contact@decantrebd.com
+SMTP_USER=info@engulfic.com
 SMTP_PASSWORD=<your_smtp_password>
-SMTP_FROM_NAME=Decantre BD
-SMTP_FROM=contact@decantrebd.com
+SMTP_FROM_NAME=Engulfic
+SMTP_FROM=info@engulfic.com
 
-# Dynamic CORS & Source Routing Log classification
-ALLOWED_ORIGINS=https://dev.decantrebd.com,https://v2.decantrebd.com,https://decantrebd.com,https://dashboard.decantrebd.com
-FRONTEND_DOMAIN_KEYWORDS=decantrebd.com
-DASHBOARD_DOMAIN_KEYWORDS=dashboard.decantrebd.com,v2.decantrebd.com
+# Dynamic CORS & Source Routing
+ALLOWED_ORIGINS=https://engulfic.com,https://dashboard.engulfic.com,https://server.engulfic.com,http://localhost:8005
+FRONTEND_DOMAIN_KEYWORDS=engulfic.com
+DASHBOARD_DOMAIN_KEYWORDS=dashboard.engulfic.com
 ```
 
-### 2. Configure Dashboard Environment (`/opt/decantre/configs/dashboard.env`)
-Open the dashboard configuration template:
+> [!IMPORTANT]
+> **Pre-Deployment CORS Checklist:**
+> To prevent CORS issues when deploying new clients or custom domains (e.g. `https://dashboard.toyoland.shop`, `https://toyoland.shop`, `https://server.toyoland.shop`):
+> 1. Always list all custom storefront, dashboard, and API URLs in `ALLOWED_ORIGINS` inside `/opt/<client>/configs/backend.env`.
+> 2. The backend (`backend/src/app.js`) automatically validates requests against `ALLOWED_ORIGINS` and dynamically allows any origin matching registered client keywords (`toyoland`, `engulfic`, `decantre`, etc.) to guarantee seamless cross-origin requests.
+
+### 2. Configure Dashboard Environment (`/opt/<client>/configs/dashboard.env`)
+Open the dashboard configuration file:
 ```bash
-nano /opt/decantre/configs/dashboard.env
+nano /opt/<client>/configs/dashboard.env
 ```
-Provide the public API base URL and the active client configuration key:
+
+Provide the public API base URL and client key:
 ```env
 PORT=8005
 VITE_PORT=8005
-VITE_API_BASE_URL=https://service.decantrebd.com
-VITE_CLIENT=decantre
+VITE_API_BASE_URL=https://server.engulfic.com
+VITE_CLIENT=engulfic
 ```
 
 > [!NOTE]
 > **VITE_CLIENT Parameter:**
-> This variable controls client-specific properties like theme branding, custom logos, and menu permissions. Make sure to match the client key exactly as defined in the `dashboard/src/clientConfig` folders (e.g., `decantre`, `engulfic`, `toyoland`). If left blank, it falls back to hostname checking or defaults to `decantre`.
+> This variable controls client-specific properties like theme branding, custom logos, and menu permissions. Make sure to match the client key exactly as defined in `dashboard/src/clientConfig` folders (`01decantre`, `02engulfic`, `03toyoland`).
 
 ---
 
-## Step 3: Run the Deploy Command
-Once your environment variables are configured, set the `CLIENT_NAME` system parameter and deploy using `docker compose`:
+## Step 3: Run Automated Deployment via Makefile
+
+Our dynamic `Makefile` handles client auto-detection, environment loading, and container lifecycle automatically.
+
+Navigate to `/opt/live` and run:
 
 ```bash
-# Export the client name so docker-compose.prod.yml resolves it
-export CLIENT_NAME=decantre
+cd /opt/live
 
-# Build and start services in detached mode
-docker compose -f docker-compose.prod.yml up -d --build
+# 1. Full Deploy (Backend + Dashboard + MongoDB):
+make deploy
+
+# 2. Granular Builds:
+make build-dashboard    # Rebuild & restart only the dashboard container
+make build-backend      # Rebuild & restart only the backend container
+
+# 3. Status & Logs:
+make status             # Check all container status & health
+make logs-dashboard     # View live dashboard logs
+make logs-backend       # View live backend API logs
 ```
-Alternatively, you can run the deployment via the `Makefile` options after exporting the variable.
+
+### Manual Client Override:
+If multiple client folders exist or you want to explicitly specify the tenant:
+```bash
+make deploy CLIENT=engulfic
+make deploy CLIENT=decantre
+```
 
 ---
 
-## Step 4: Configure Nginx Routing
+## Step 4: Configure Nginx Reverse Proxy
 Ensure the Nginx configuration on the VPS routes the domain names appropriately to the allocated host ports:
-- Storefront Frontend (Separate repository, running on `8011` / `8001`)
-- Backend API (Running on `5092` or `5093`) -> `proxy_pass http://127.0.0.1:5092;`
-- Admin Dashboard (Running on `8005` or `8015`) -> `proxy_pass http://127.0.0.1:8005;`
+- **Storefront Frontend:** Running on host port `8001` -> `proxy_pass http://127.0.0.1:8001;`
+- **Backend API:** Running on host port `5094` (or `5092`) -> `proxy_pass http://127.0.0.1:5094;`
+- **Admin Dashboard:** Running on host port `8015` (or `8005`) -> `proxy_pass http://127.0.0.1:8015;`

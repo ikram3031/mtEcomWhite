@@ -15,7 +15,7 @@ import Members from './pages/dashboard/members';
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
 import ProductDetails from './pages/dashboard/products/productDetails';
-import NewProduct from './pages/dashboard/products/newProduct';
+import AddNewProduct from './pages/dashboard/products/addNewProduct';
 import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
 import Categories from './pages/dashboard/products/categories';
@@ -35,6 +35,10 @@ import Billings from './pages/dashboard/billing/billings';
 // Developer Options
 import ApiDocs from './pages/dashboard/developer/apiDocs';
 import SystemLogs from './pages/dashboard/developer/systemLogs';
+
+// AI Studio
+import Studio from './pages/dashboard/studio/index';
+import BatchImagesStudio from './pages/dashboard/studio/batchImages';
 
 import { RouteErrorElement } from './components/ErrorBoundary';
 
@@ -68,7 +72,7 @@ export const router = createBrowserRouter([
         path: 'products',
         children: [
           { path: '', element: <ProductsList /> },
-          { path: 'new', element: <NewProduct /> },
+          { path: 'new', element: <AddNewProduct /> },
           { path: 'stock', element: <Stock /> },
           { path: 'coupons', element: <Coupons /> },
           { path: 'categories', element: <Categories /> },
@@ -91,6 +95,14 @@ export const router = createBrowserRouter([
           { path: '', element: <BillingOverview /> },
           { path: 'payments', element: <Payments /> },
           { path: 'billings', element: <Billings /> },
+        ],
+      },
+      {
+        path: 'studio',
+        element: <Studio />,
+        children: [
+          { path: '', element: <Navigate to="batch-images" replace /> },
+          { path: 'batch-images', element: <BatchImagesStudio /> },
         ],
       },
     ],

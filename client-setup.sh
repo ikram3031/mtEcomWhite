@@ -57,6 +57,10 @@ PORT=5092
 MONGODB_URI=
 MONGODB_DB_NAME=
 
+# Client Identifier & Config Path
+CLIENT_NAME=
+CLIENT_CONFIG_PATH=
+
 # Container Names (ক্লায়েন্ট নাম দিয়ে পরিবর্তন করুন)
 MONGODB_CONTAINER_NAME=
 BACKEND_CONTAINER_NAME=
@@ -86,10 +90,10 @@ SMTP_PASSWORD=
 SMTP_FROM_NAME=
 SMTP_FROM=
 
-# White-Label CORS & Routing
-ALLOWED_ORIGINS=
-FRONTEND_DOMAIN_KEYWORDS=
-DASHBOARD_DOMAIN_KEYWORDS=
+# White-Label CORS & Routing (Ensure all client frontend, dashboard, & shop domains are listed here)
+ALLOWED_ORIGINS=https://${CLIENT_NAME}.com,https://dashboard.${CLIENT_NAME}.com,https://${CLIENT_NAME}.shop,https://dashboard.${CLIENT_NAME}.shop
+FRONTEND_DOMAIN_KEYWORDS=${CLIENT_NAME}
+DASHBOARD_DOMAIN_KEYWORDS=dashboard.${CLIENT_NAME}
 
 # Frontend/Dashboard Build Env (Used during docker build of dashboard)
 VITE_API_BASE_URL=

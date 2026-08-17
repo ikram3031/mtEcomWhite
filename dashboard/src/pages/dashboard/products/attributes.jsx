@@ -32,6 +32,14 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+function formatTypingSlug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-');
+}
+
 function sortAttributeValues(vals = []) {
   if (!Array.isArray(vals)) return [];
   return [...vals].sort((a, b) => {
@@ -54,6 +62,8 @@ const AttributesPage = () => {
   const [slugManual, setSlugManual] = useState(false);
   const [values, setValues] = useState([]);
   const [newValueName, setNewValueName] = useState('');
+  const [newValueSlug, setNewValueSlug] = useState('');
+  const [newValueSlugManual, setNewValueSlugManual] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAttributes = async () => {
@@ -87,6 +97,13 @@ const AttributesPage = () => {
     [slugManual]
   );
 
+  const handleNewValueNameChange = (value) => {
+    setNewValueName(value);
+    if (!newValueSlugManual) {
+      setNewValueSlug(slugify(value));
+    }
+  };
+
   const openAddDialog = () => {
     setEditingAttribute(null);
     setName('');
@@ -94,6 +111,8 @@ const AttributesPage = () => {
     setSlugManual(false);
     setValues([]);
     setNewValueName('');
+    setNewValueSlug('');
+    setNewValueSlugManual(false);
     setIsOpen(true);
   };
 
@@ -104,21 +123,25 @@ const AttributesPage = () => {
     setSlugManual(true);
     setValues(sortAttributeValues(attr.values || []));
     setNewValueName('');
+    setNewValueSlug('');
+    setNewValueSlugManual(false);
     setIsOpen(true);
   };
 
   const addValue = () => {
-    const trimmed = newValueName.trim();
-    if (!trimmed) return;
-    const valueSlug = slugify(trimmed);
+    const trimmedName = newValueName.trim();
+    if (!trimmedName) return;
+    const trimmedSlug = (newValueSlug.trim() || slugify(trimmedName));
     
-    if (values.some((v) => v.slug === valueSlug)) {
-      toast.error('Value already exists in this group');
+    if (values.some((v) => v.slug === trimmedSlug || v.name.toLowerCase() === trimmedName.toLowerCase())) {
+      toast.error('Value with this name or slug already exists in this group');
       return;
     }
 
-    setValues((prev) => sortAttributeValues([...prev, { name: trimmed, slug: valueSlug }]));
+    setValues((prev) => sortAttributeValues([...prev, { name: trimmedName, slug: trimmedSlug }]));
     setNewValueName('');
+    setNewValueSlug('');
+    setNewValueSlugManual(false);
   };
 
   const removeValue = (index) => {
@@ -299,27 +322,70 @@ const AttributesPage = () => {
                 id="slug"
                 required
                 value={slug}
-                onChange={(e) => setSlug(slugify(e.target.value))}
+                onChange={(e) => setSlug(formatTypingSlug(e.target.value))}
+                onBlur={() => setSlug((prev) => slugify(prev))}
                 disabled={!slugManual}
                 placeholder="e.g. volume"
               />
             </div>
 
-            <div className="space-y-2 border-t pt-4">
-              <label className="text-sm font-medium">Attribute Values / Variations</label>
-              <div className="flex gap-2">
-                <Input
-                  value={newValueName}
-                  onChange={(e) => setNewValueName(e.target.value)}
-                  placeholder="e.g. 50ml"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addValue();
-                    }
-                  }}
-                />
-                <Button type="button" variant="secondary" onClick={addValue}>
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Attribute Values / Variations</label>
+                <span className="text-xs text-muted-foreground">{values.length} added</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground block">
+                    Value Name *
+                  </label>
+                  <Input
+                    value={newValueName}
+                    onChange={(e) => handleNewValueNameChange(e.target.value)}
+                    placeholder="e.g. 50ml"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addValue();
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-muted-foreground block">
+                      Value Slug *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setNewValueSlugManual(!newValueSlugManual)}
+                      className="text-[10px] text-primary hover:underline cursor-pointer"
+                    >
+                      {newValueSlugManual ? 'Auto-generate' : 'Edit manually'}
+                    </button>
+                  </div>
+                  <Input
+                    value={newValueSlug}
+                    onChange={(e) => {
+                      setNewValueSlugManual(true);
+                      setNewValueSlug(formatTypingSlug(e.target.value));
+                    }}
+                    onBlur={() => setNewValueSlug((prev) => slugify(prev))}
+                    placeholder="e.g. 50ml"
+                    disabled={!newValueSlugManual}
+                    className={!newValueSlugManual ? 'opacity-70 cursor-not-allowed' : ''}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addValue();
+                      }
+                    }}
+                  />
+                </div>
+
+                <Button type="button" variant="secondary" onClick={addValue} className="h-9 font-semibold">
                   Add
                 </Button>
               </div>

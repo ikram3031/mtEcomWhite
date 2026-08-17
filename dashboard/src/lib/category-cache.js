@@ -104,6 +104,9 @@ export function useCategories() {
           did: c.did ?? c.slug ?? String(c._id || c.id || ''),
           name: c.name,
           slug: c.slug ?? '',
+          description: c.description ?? '',
+          imageUrl: c.imageUrl ?? '',
+          parent: c.parent ?? null,
         }));
 
       if (typeof window !== 'undefined') {

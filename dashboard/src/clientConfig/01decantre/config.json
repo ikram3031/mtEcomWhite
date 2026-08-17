@@ -2,7 +2,14 @@
   "clientId": "01",
   "clientKey": "decantre",
   "brandName": "Decantre",
-  "logoUrl": "/src/uploads/assets/decantre_logo.png",
+  "apiBaseUrl": "https://server.decantrebd.com",
+  "features": {
+    "season": true,
+    "brand": true,
+    "variantImage": true
+  },
+  "logoUrl": "/src/uploads/logo_horizontal.png",
+  "siteIconUrl": "/src/uploads/logo.webp",
   "allowedMenus": [
     "overview",
     "orders",
@@ -21,7 +28,9 @@
     "billing.payments",
     "reports",
     "users",
-    "developer"
+    "developer",
+    "studio",
+    "studio.batch-images"
   ],
   "theme": {
     "light": {
@@ -66,7 +75,7 @@
       "--card-foreground": "#c1c1c1",
       "--popover": "#121113",
       "--popover-foreground": "#c1c1c1",
-      "--primary": "#e78a53",
+      "--primary": "#C5A059",
       "--primary-foreground": "#121113",
       "--secondary": "#c5a059",
       "--secondary-foreground": "#121113",

@@ -1,20 +1,8 @@
 import axios from 'axios';
 import { handleGlobalError } from './error-handler';
+import clientConfig from '@/clientConfig';
 
-let baseURL = import.meta.env?.VITE_API_BASE_URL || (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE_URL : undefined) || '';
-
-if (!baseURL && typeof window !== 'undefined') {
-  const hostname = window.location.hostname.toLowerCase();
-  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    baseURL = 'http://localhost:5092';
-  } else if (hostname.includes('engulfic')) {
-    baseURL = 'https://server.engulfic.com';
-  } else if (hostname.includes('toyoland')) {
-    baseURL = 'http://localhost:5092';
-  } else {
-    baseURL = 'https://service.decantrebd.com';
-  }
-}
+export const baseURL = clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
 
 export const apiClient = axios.create({
   baseURL,

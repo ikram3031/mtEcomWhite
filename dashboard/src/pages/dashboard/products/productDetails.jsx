@@ -1,31 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Plus,
-  UploadCloud,
-  X,
-  ArrowLeft,
-  AlertCircle,
-} from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { ChevronLeft } from "lucide-react";
+import { apiClient, baseURL } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useCategories, useBrands } from "@/lib/category-cache";
+import { getApiErrorMessage } from "@/lib/error-handler";
+import { clientConfig } from "@/clientConfig";
+import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
 import {
-  useCategories,
-  useBrands,
-} from "@/lib/category-cache";
-import { getApiErrorMessage } from '@/lib/error-handler';
+  ProductDetailsCard,
+  ProductDataCard,
+  SEOOverviewCard,
+  SidebarCards,
+} from "@/components/dashboard/products";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB limit
 
@@ -50,22 +39,48 @@ function slugify(text) {
     .replace(/^-+|-+$/g, "");
 }
 
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE = (baseURL || "").replace(/\/$/, "");
 
 const EditProductPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Basic fields
+  // 1. Basic details
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugManual, setSlugManual] = useState(false);
+  const [sku, setSku] = useState("");
   const [description, setDescription] = useState("");
+  const [longDescription, setLongDescription] = useState("");
 
-  // Image upload state
+  // 2. SEO details
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+
+  // 3. Product data & type
+  const [productType, setProductType] = useState("simple");
+  const [price, setPrice] = useState("");
+  const [offerPrice, setOfferPrice] = useState("");
+  const [chargeTax, setChargeTax] = useState(false);
+  const [taxRate, setTaxRate] = useState("");
+
+  // 4. Variant product fields
+  const [variants, setVariants] = useState([emptyVariant()]);
+  const [attributeGroups, setAttributeGroups] = useState([]);
+  const [selectedAttributeGroup, setSelectedAttributeGroup] = useState("");
+
+  // 5. Sidebar & Organization (isActive boolean & Tags)
+  const [isActive, setIsActive] = useState(true);
+  const [tags, setTags] = useState([]);
+  const [categorySlug, setCategorySlug] = useState("");
+  const [brandSlug, setBrandSlug] = useState("");
+  const [parentBrandSlug, setParentBrandSlug] = useState("");
+  const [season, setSeason] = useState("All-Season");
+
+  // 6. Media / Upload states
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
@@ -73,37 +88,14 @@ const EditProductPage = () => {
   const [mainImageError, setMainImageError] = useState("");
   const fileInputRef = useRef(null);
 
-  // Type toggle
-  const [productType, setProductType] = useState("simple");
-
-  // Simple product fields
-  const [price, setPrice] = useState("");
-  const [offerPrice, setOfferPrice] = useState("");
-  const [stockStatus, setStockStatus] = useState("instock");
-  const [sku, setSku] = useState("");
-
-  // Variant product fields
-  const [variants, setVariants] = useState([emptyVariant()]);
-  const [attributeGroups, setAttributeGroups] = useState([]);
-  const [selectedAttributeGroup, setSelectedAttributeGroup] = useState("");
-  const [variantInputModes, setVariantInputModes] = useState({});
-
-  // Category & Brand
-  const [categorySlug, setCategorySlug] = useState("");
-  const [brandSlug, setBrandSlug] = useState("");
-  const [parentBrandSlug, setParentBrandSlug] = useState("");
-
-  // Season
-  const [season, setSeason] = useState("All-Season");
+  const [galleryImages, setGalleryImages] = useState([]);
+  const galleryInputRef = useRef(null);
 
   const queryClient = useQueryClient();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
 
-  // Resolve top-level parent brands
   const parentBrands = brands.filter((b) => !b.parent);
-
-  // Resolve child brands based on selected parent brand
   const selectedParentObj = parentBrands.find(
     (pb) =>
       (pb.did && pb.did === parentBrandSlug) ||
@@ -114,9 +106,10 @@ const EditProductPage = () => {
   const childBrands = selectedParentObj
     ? brands.filter((b) => {
         if (!b.parent) return false;
-        const parentVal = typeof b.parent === 'object'
-          ? (b.parent?.did || b.parent?.slug || b.parent?._id)
-          : String(b.parent);
+        const parentVal =
+          typeof b.parent === "object"
+            ? b.parent?.did || b.parent?.slug || b.parent?._id
+            : String(b.parent);
         return (
           parentVal === selectedParentObj.did ||
           parentVal === selectedParentObj.slug ||
@@ -126,10 +119,9 @@ const EditProductPage = () => {
       })
     : [];
 
-  // Auto-resolve parentBrandSlug and normalize brand name when product brandSlug or brands array loads
   useEffect(() => {
     if (!brandSlug || brands.length === 0) return;
-    
+
     const currentBrandObj = brands.find(
       (b) =>
         (b.did && b.did === brandSlug) ||
@@ -137,7 +129,7 @@ const EditProductPage = () => {
         (b._id && String(b._id) === brandSlug) ||
         (b.id && String(b.id) === brandSlug)
     );
-    
+
     if (currentBrandObj) {
       const canonicalKey = currentBrandObj.did || currentBrandObj.slug;
       if (brandSlug !== canonicalKey) {
@@ -145,10 +137,13 @@ const EditProductPage = () => {
       }
 
       if (currentBrandObj.parent) {
-        const parentVal = typeof currentBrandObj.parent === 'object'
-          ? (currentBrandObj.parent.did || currentBrandObj.parent.slug || currentBrandObj.parent._id)
-          : String(currentBrandObj.parent);
-        
+        const parentVal =
+          typeof currentBrandObj.parent === "object"
+            ? currentBrandObj.parent.did ||
+              currentBrandObj.parent.slug ||
+              currentBrandObj.parent._id
+            : String(currentBrandObj.parent);
+
         const parentObj = brands.find(
           (b) =>
             (b.did && b.did === parentVal) ||
@@ -176,7 +171,10 @@ const EditProductPage = () => {
             ? [...g.values].sort((a, b) => {
                 const nameA = String(a.name || a.size || a || "");
                 const nameB = String(b.name || b.size || b || "");
-                return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
+                return nameA.localeCompare(nameB, undefined, {
+                  numeric: true,
+                  sensitivity: "base",
+                });
               })
             : [],
         }));
@@ -189,65 +187,89 @@ const EditProductPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!id || id === 'new') return;
-    
+    if (!id || id === "new") return;
+
     const fetchProduct = async () => {
       setIsLoading(true);
       try {
         const res = await apiClient.get(`/api/v1/products/${id}`);
         const product = res.data?.data || res.data;
-        
+
         if (product) {
           setName(product.name || "");
-          setSlug(product.slug || product.did || "");
+          setSlug(product.slug || "");
           setSlugManual(true);
+          setSku(product.sku || "");
           setDescription(product.description || "");
-          setProductType(product.type === "variant" ? "variant" : "simple");
-          setStockStatus(product.stockStatus || "instock");
+          setLongDescription(product.longDescription || "");
+          setChargeTax(Boolean(product.chargeTax));
+          setTaxRate(product.taxRate ? String(product.taxRate) : "");
+          setIsActive(product.isActive !== undefined ? Boolean(product.isActive) : true);
+          setProductType(product.type || "simple");
+          setUploadedImageUrl(product.imageUrl || "");
+          setImagePreview(product.imageUrl || "");
           setSeason(product.season || "All-Season");
-          
-          if (product.category) {
-            setCategorySlug(typeof product.category === 'string' ? product.category : product.category.slug || product.category.did || "");
+          setTags(Array.isArray(product.tags) ? product.tags : []);
+
+          if (product.metaData) {
+            setMetaTitle(product.metaData.metaTitle || "");
+            setMetaDescription(product.metaData.metaDescription || "");
+          }
+
+          if (product.categories && product.categories.length > 0) {
+            const firstCat = product.categories[0];
+            setCategorySlug(
+              firstCat.slug ||
+                firstCat.did ||
+                (typeof firstCat === "string" ? firstCat : "")
+            );
           }
           if (product.brand) {
-             const brandStr = Array.isArray(product.brand) ? product.brand[0] : product.brand;
-             setBrandSlug(brandStr || "");
-          }
-          
-          if (product.imageUrl) {
-            setImagePreview(product.imageUrl);
-            setUploadedImageUrl(product.imageUrl);
+            const br = product.brand;
+            setBrandSlug(
+              br.slug || br.did || (typeof br === "string" ? br : "")
+            );
           }
 
           if (product.type === "simple") {
-            setPrice(product.price?.toString() || "");
-            setOfferPrice(product.offerPrice?.toString() || "");
-            setSku(product.sku || "");
-          } else if (product.variants && product.variants.length > 0) {
-            const mappedVariants = product.variants.map((v) => ({
-              size: v.size || "",
-              price: v.price?.toString() || "",
-              offerPrice: v.offerPrice?.toString() || "",
-              sku: v.sku || "",
-              imageUrl: v.imageUrl || "",
-              imageFile: null,
-              imagePreview: v.imageUrl || "",
-              imageError: "",
-            }));
-            setVariants(mappedVariants);
-            
-            const modes = {};
-            mappedVariants.forEach((_, i) => modes[i] = "custom");
-            setVariantInputModes(modes);
+            setPrice(product.price ? String(product.price) : "");
+            setOfferPrice(product.offerPrice ? String(product.offerPrice) : "");
+          }
+
+          if (product.type === "variant" && Array.isArray(product.variants)) {
+            setVariants(
+              product.variants.map((v) => ({
+                size: v.size || "",
+                price: v.price ? String(v.price) : "",
+                offerPrice: v.offerPrice ? String(v.offerPrice) : "",
+                sku: v.sku || "",
+                imageUrl: v.imageUrl || "",
+                imagePreview: v.imageUrl || "",
+                imageFile: null,
+                imageError: "",
+              }))
+            );
+          }
+
+          if (Array.isArray(product.images)) {
+            setGalleryImages(
+              product.images.map((img, index) => ({
+                id: `loaded-${index}-${Date.now()}`,
+                file: null,
+                preview: img.url || img,
+                altText: img.altText || "",
+                isLoaded: true,
+              }))
+            );
           }
         }
       } catch (err) {
         toast.error("Failed to load product details.");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-    
     fetchProduct();
   }, [id]);
 
@@ -258,22 +280,22 @@ const EditProductPage = () => {
         setSlug(slugify(value));
       }
     },
-    [slugManual],
+    [slugManual]
   );
 
   const addVariant = () => {
     setVariants((prev) => [...prev, emptyVariant()]);
-    const nextIndex = variants.length;
-    setVariantInputModes((prev) => ({ ...prev, [nextIndex]: "preset" }));
   };
 
   const addAllPresets = () => {
-    const activeGroup = attributeGroups.find((g) => g.slug === selectedAttributeGroup);
+    const activeGroup = attributeGroups.find(
+      (g) => g.slug === selectedAttributeGroup
+    );
     if (!activeGroup) {
       toast.error("Please select a Variation Type first.");
       return;
     }
-    
+
     const newVariants = activeGroup.values.map((val) => ({
       size: val.name,
       price: "",
@@ -282,31 +304,21 @@ const EditProductPage = () => {
       imageUrl: "",
       imageFile: null,
       imagePreview: "",
-      imageError: "",
     }));
-    
+
     setVariants(newVariants);
-    
-    const modes = {};
-    newVariants.forEach((_, idx) => {
-      modes[idx] = "preset";
-    });
-    setVariantInputModes(modes);
-    toast.success(`Loaded all ${newVariants.length} presets from "${activeGroup.name}".`);
+    toast.success(
+      `Loaded all ${newVariants.length} presets from "${activeGroup.name}".`
+    );
   };
 
   const removeVariant = (index) => {
     setVariants((prev) => prev.filter((_, i) => i !== index));
-    setVariantInputModes((prev) => {
-      const copy = { ...prev };
-      delete copy[index];
-      return copy;
-    });
   };
 
   const updateVariant = (index, field, value) => {
     setVariants((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
+      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
     );
   };
 
@@ -316,7 +328,9 @@ const EditProductPage = () => {
 
     const file = files[0];
     if (file.size > MAX_IMAGE_SIZE) {
-      setMainImageError("Maximum size exceeded. Please upload a different image.");
+      setMainImageError(
+        "Maximum size exceeded. Please upload an image under 2MB."
+      );
       setImagePreview("");
       setMainImageFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -324,9 +338,65 @@ const EditProductPage = () => {
     }
 
     setMainImageError("");
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
+    setImagePreview(URL.createObjectURL(file));
     setMainImageFile(file);
+  };
+
+  const removeUploadedImage = () => {
+    setImagePreview("");
+    setUploadedImageUrl("");
+    setMainImageFile(null);
+    setMainImageError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleGalleryImageSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+    const oversizedFiles = fileList.filter((file) => file.size > MAX_IMAGE_SIZE);
+
+    if (oversizedFiles.length > 0) {
+      toast.error(
+        oversizedFiles.length === 1
+          ? `"${oversizedFiles[0].name}" exceeds 2MB limit. Please upload images under 2MB.`
+          : `${oversizedFiles.length} images exceed the 2MB limit and were skipped.`
+      );
+    }
+
+    const validFiles = fileList.filter((file) => file.size <= MAX_IMAGE_SIZE);
+    if (validFiles.length === 0) {
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
+      return;
+    }
+
+    if (galleryImages.length + validFiles.length > 5) {
+      toast.error("Maximum 5 gallery images allowed.");
+    }
+
+    const remainingSlots = Math.max(0, 5 - galleryImages.length);
+    const filesToAdd = validFiles.slice(0, remainingSlots);
+
+    const newImages = filesToAdd.map((file) => ({
+      id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file,
+      preview: URL.createObjectURL(file),
+      altText: "",
+    }));
+
+    setGalleryImages((prev) => [...prev, ...newImages]);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+  };
+
+  const removeGalleryImage = (id) => {
+    setGalleryImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
+  const updateGalleryAltText = (id, altText) => {
+    setGalleryImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, altText } : img))
+    );
   };
 
   const handleVariantImageSelect = (index, e) => {
@@ -335,7 +405,11 @@ const EditProductPage = () => {
 
     const file = files[0];
     if (file.size > MAX_IMAGE_SIZE) {
-      updateVariant(index, "imageError", "Maximum size exceeded. Please upload a different image.");
+      updateVariant(
+        index,
+        "imageError",
+        "Maximum size exceeded. Image must be under 2MB."
+      );
       updateVariant(index, "imageFile", null);
       updateVariant(index, "imagePreview", "");
       e.target.value = "";
@@ -343,23 +417,12 @@ const EditProductPage = () => {
     }
 
     updateVariant(index, "imageError", "");
-    const previewUrl = URL.createObjectURL(file);
     updateVariant(index, "imageFile", file);
-    updateVariant(index, "imagePreview", previewUrl);
-  };
-
-  const removeUploadedImage = () => {
-    setImagePreview("");
-    setUploadedImageUrl("");
-    setMainImageFile(null);
-    setMainImageError("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    updateVariant(index, "imagePreview", URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (!name.trim()) {
       toast.error("Product name is required.");
@@ -369,10 +432,19 @@ const EditProductPage = () => {
       toast.error("Product slug is required.");
       return;
     }
+    if (!description.trim()) {
+      toast.error("Product description is required.");
+      return;
+    }
+
+    if (!productType) {
+      toast.error("Please select a Product Type (Simple or Variable).");
+      return;
+    }
 
     if (productType === "simple") {
       if (!price || Number(price) <= 0) {
-        toast.error("Price must be greater than 0.");
+        toast.error("Base price must be greater than 0.");
         return;
       }
     } else {
@@ -383,15 +455,27 @@ const EditProductPage = () => {
       }
     }
 
-    // Image is required — existing or newly selected
     if (!mainImageFile && !uploadedImageUrl) {
-      toast.error("Product image is required. Please upload an image before saving.");
+      toast.error(
+        "Product featured image is required. Please upload an image."
+      );
       return;
     }
 
-    setIsCreating(true);
+    setIsUpdating(true);
+    let uploadToastId = null;
     try {
-      let finalMainImageUrl = uploadedImageUrl;
+      const hasFilesToUpload = Boolean(
+        mainImageFile ||
+        variants.some((v) => v.imageFile) ||
+        galleryImages.some((img) => img.file)
+      );
+
+      if (hasFilesToUpload) {
+        uploadToastId = toast.loading("Uploading product images...");
+      }
+
+      let finalMainImageUrl = uploadedImageUrl || "";
       let finalThumbnailUrl = "";
       if (mainImageFile) {
         const formData = new FormData();
@@ -399,10 +483,14 @@ const EditProductPage = () => {
         formData.append("type", "product");
         formData.append("productSlug", slug.trim());
         const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-        finalMainImageUrl = uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
-        finalThumbnailUrl = uploadRes.data?.data?.thumbnailUrl || uploadRes.data?.thumbnailUrl || "";
+        finalMainImageUrl =
+          uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+        finalThumbnailUrl =
+          uploadRes.data?.data?.thumbnailUrl ||
+          uploadRes.data?.thumbnailUrl ||
+          "";
       }
 
       const uploadedVariants = [];
@@ -420,10 +508,12 @@ const EditProductPage = () => {
           if (v.size.trim()) {
             formData.append("variantName", v.size.trim());
           }
-          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          varImageUrl = uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+          const uploadRes = await apiClient.post(
+            `/api/v1/images/upload`,
+            formData,
+            { headers: { "Content-Type": "multipart/form-data" } }
+          );
+          varImageUrl = uploadRes.data?.data?.imageUrl || "";
         }
 
         uploadedVariants.push({
@@ -436,27 +526,63 @@ const EditProductPage = () => {
         });
       }
 
+      const uploadedGalleryImages = [];
+      for (let i = 0; i < galleryImages.length; i++) {
+        const item = galleryImages[i];
+        if (item.file) {
+          const formData = new FormData();
+          formData.append("image", item.file);
+          formData.append("type", "product");
+          formData.append("productSlug", slug.trim());
+          const uploadRes = await apiClient.post(`/api/v1/images/upload`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const uploadedUrl =
+            uploadRes.data?.data?.imageUrl || uploadRes.data?.imageUrl || "";
+          if (uploadedUrl) {
+            uploadedGalleryImages.push(uploadedUrl);
+          }
+        } else if (item.isLoaded || item.preview || item.url) {
+          const existingUrl = item.url || item.preview;
+          if (typeof existingUrl === "string" && existingUrl.trim()) {
+            uploadedGalleryImages.push(existingUrl.trim());
+          }
+        }
+      }
+
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+        uploadToastId = null;
+      }
+
       const body = {
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || name.trim(),
+        sku: sku.trim(),
+        description: description.trim(),
+        longDescription: longDescription.trim(),
         type: productType,
         imageUrl: finalMainImageUrl || "",
+        thumbnailUrl: finalThumbnailUrl || finalMainImageUrl || "",
         season,
-        stockStatus,
+        chargeTax,
+        taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
+        isActive: Boolean(isActive),
+        tags: Array.isArray(tags) ? tags : [],
+        images: uploadedGalleryImages,
+        metaData: {
+          metaTitle: metaTitle.trim(),
+          metaDescription: metaDescription.trim(),
+        },
       };
 
-      if (finalThumbnailUrl) {
-        body.thumbnailUrl = finalThumbnailUrl;
-      }
-
       if (categorySlug) body.category = categorySlug;
-      if (brandSlug) body.brand = brandSlug;
+      const effectiveBrand = brandSlug || parentBrandSlug;
+      if (effectiveBrand) body.brand = effectiveBrand;
 
       if (productType === "simple") {
         body.price = parseFloat(price);
         body.offerPrice = offerPrice ? parseFloat(offerPrice) : null;
-        body.sku = sku.trim();
       } else {
         body.variants = uploadedVariants;
       }
@@ -466,604 +592,178 @@ const EditProductPage = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       navigate("/dashboard/products");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Failed to update product.'));
+      if (uploadToastId) {
+        toast.dismiss(uploadToastId);
+      }
+      toast.error(getApiErrorMessage(err, "Failed to update product."));
     } finally {
-      setIsCreating(false);
+      setIsUpdating(false);
     }
   };
 
   const getFullPreviewUrl = (url) => {
+    if (!url) return "";
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
     return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8 min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[300px]">
+        <div className="text-sm font-semibold text-muted-foreground animate-pulse">
+          Loading product details...
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between border-b pb-4">
-        <div className="space-y-1">
-          <Link
-            to="/dashboard/products"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to products
-          </Link>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">
-            Edit Product
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Update product details, pricing, and inventory.
-          </p>
-        </div>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6"
-      >
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-semibold border-b pb-2">
-              Basic Information
-            </h3>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold">Product Name</label>
-              <Input
-                required
-                placeholder="e.g. Oud Imperial Perfume"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold">Slug</label>
-                <button
-                  type="button"
-                  className="text-[10px] text-muted-foreground underline"
-                  onClick={() => setSlugManual(!slugManual)}
-                >
-                  {slugManual ? "Auto-generate" : "Edit manually"}
-                </button>
-              </div>
-              <Input
-                required
-                placeholder="oud-imperial-perfume"
-                value={slug}
-                onChange={(e) => {
-                  setSlugManual(true);
-                  setSlug(e.target.value);
-                }}
-                disabled={!slugManual}
-                className={!slugManual ? "opacity-60" : ""}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold">Description</label>
-              <RichTextEditor
-                placeholder="Write a description for this product..."
-                value={description}
-                onChange={(val) => setDescription(val)}
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Header Actions */}
+        <div className="flex items-center justify-between border-b pb-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/dashboard/products"
+              className="p-2 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+              title="Back to products"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
+              Edit Product
+            </h2>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="text-sm font-semibold">Inventory & Pricing</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Variant Mode
-                </span>
-                <Switch
-                  checked={productType === "variant"}
-                  onCheckedChange={(checked) =>
-                    setProductType(checked ? "variant" : "simple")
-                  }
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => navigate("/dashboard/products")}
+              className="text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+            >
+              Discard
+            </Button>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setIsActive(false);
+                toast.success("Draft status set (Inactive). Click Update to save.");
+              }}
+              className="text-xs font-semibold"
+            >
+              Save Draft
+            </Button>
+            <Button
+              type="submit"
+              disabled={isUpdating || isUploading}
+              className="text-xs font-semibold"
+            >
+              {isUpdating ? "Updating..." : "Update"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Content Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* Left Column: Form Details */}
+          <div className="space-y-6">
+            <ProductDetailsCard
+              name={name}
+              handleNameChange={handleNameChange}
+              slug={slug}
+              setSlug={setSlug}
+              slugManual={slugManual}
+              setSlugManual={setSlugManual}
+              sku={sku}
+              setSku={setSku}
+              description={description}
+              setDescription={setDescription}
+            />
+
+            <ProductDataCard
+              productType={productType}
+              setProductType={setProductType}
+              price={price}
+              setPrice={setPrice}
+              offerPrice={offerPrice}
+              setOfferPrice={setOfferPrice}
+              chargeTax={chargeTax}
+              setChargeTax={setChargeTax}
+              taxRate={taxRate}
+              setTaxRate={setTaxRate}
+              variants={variants}
+              attributeGroups={attributeGroups}
+              selectedAttributeGroup={selectedAttributeGroup}
+              setSelectedAttributeGroup={setSelectedAttributeGroup}
+              addAllPresets={addAllPresets}
+              addVariant={addVariant}
+              removeVariant={removeVariant}
+              updateVariant={updateVariant}
+              handleVariantImageSelect={handleVariantImageSelect}
+              getFullPreviewUrl={getFullPreviewUrl}
+              clientConfig={clientConfig}
+            />
+
+            {/* Long Description Card */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+              <div className="space-y-2.5">
+                <label className="text-xs font-semibold text-foreground block">
+                  Long Description (Optional)
+                </label>
+                <RichTextEditor
+                  placeholder="Write a detailed long description for this product..."
+                  value={longDescription}
+                  onChange={(val) => setLongDescription(val)}
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-4 pb-4 border-b">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Stock Status *</label>
-                <Select value={stockStatus} onValueChange={(val) => setStockStatus(val || "instock")}>
-                  <SelectTrigger className="h-9 w-full cursor-pointer">
-                    <SelectValue placeholder="Select stock status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-md">
-                    <SelectItem value="instock">In Stock</SelectItem>
-                    <SelectItem value="outofstock">Out of Stock</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {productType === "simple" && (
-              <div className="space-y-4 pt-1">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold">Price (৳) *</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold">
-                      Offer Price (৳)
-                    </label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={offerPrice}
-                      onChange={(e) => setOfferPrice(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold">SKU</label>
-                    <Input
-                      placeholder="SKU"
-                      value={sku}
-                      onChange={(e) => setSku(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {productType === "variant" && (
-              <div className="space-y-4 pt-1">
-                <div className="grid grid-cols-2 gap-4 items-end">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold">Variation Type (Attribute Group)</label>
-                    <Select
-                      value={selectedAttributeGroup}
-                      onValueChange={(val) => {
-                        setSelectedAttributeGroup(val || "");
-                        const modes = {};
-                        variants.forEach((_, idx) => {
-                          modes[idx] = "preset";
-                        });
-                        setVariantInputModes(modes);
-                      }}
-                    >
-                      <SelectTrigger className="h-9 w-full cursor-pointer">
-                        <SelectValue placeholder="Select type (e.g. Size, Volume)" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border shadow-md" side="bottom">
-                        {attributeGroups.map((group) => (
-                          <SelectItem key={group.slug} value={group.slug}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    {selectedAttributeGroup && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="h-9 text-xs gap-1"
-                        onClick={addAllPresets}
-                      >
-                        Add All Presets
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-9 text-xs gap-1"
-                      onClick={addVariant}
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Add Variation Row
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {variants.map((v, i) => {
-                    const activeGroup = attributeGroups.find(g => g.slug === selectedAttributeGroup);
-                    const presetValues = activeGroup ? activeGroup.values : [];
-
-                    return (
-                      <div
-                        key={i}
-                        className="grid grid-cols-[auto_1.8fr_1.2fr_1.2fr_1.5fr_auto] gap-3 items-end rounded-lg border border-border/80 p-3 bg-muted/20"
-                      >
-                        <div className="flex flex-col items-center gap-1.5 self-center pb-0.5">
-                          <span className="text-[10px] font-semibold text-muted-foreground">Image</span>
-                          <div className={`relative w-9 h-9 border rounded flex items-center justify-center cursor-pointer overflow-hidden group ${
-                            v.imageError ? "border-destructive bg-destructive/10 text-destructive" : "hover:border-primary"
-                          }`}>
-                            {v.imagePreview ? (
-                              <>
-                                <img src={v.imagePreview} alt="variant" className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    updateVariant(i, "imageFile", null);
-                                    updateVariant(i, "imagePreview", "");
-                                    updateVariant(i, "imageError", "");
-                                  }}
-                                  className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <X className="w-3 h-3 text-white" />
-                                </button>
-                              </>
-                            ) : (
-                              <label htmlFor={`variant-image-${i}`} className="cursor-pointer p-2 text-muted-foreground hover:text-primary flex items-center justify-center w-full h-full">
-                                <UploadCloud className={`w-4 h-4 ${v.imageError ? "text-destructive" : ""}`} />
-                              </label>
-                            )}
-                            <input
-                              type="file"
-                              id={`variant-image-${i}`}
-                              className="hidden"
-                              accept="image/*"
-                              onChange={(e) => handleVariantImageSelect(i, e)}
-                            />
-                          </div>
-                          {v.imageError && (
-                            <p className="text-[10px] font-semibold text-destructive col-span-full mt-1 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              {v.imageError}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-semibold text-muted-foreground">
-                            {activeGroup?.name || "Variation Value"}
-                          </label>
-                          {variantInputModes[i] !== "custom" && presetValues.length > 0 ? (
-                            <Select
-                              value={v.size}
-                              onValueChange={(val) => {
-                                if (val === "[custom]") {
-                                  setVariantInputModes((prev) => ({ ...prev, [i]: "custom" }));
-                                  updateVariant(i, "size", "");
-                                } else {
-                                  updateVariant(i, "size", val || "");
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Select value" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {presetValues.map((pv) => (
-                                  <SelectItem key={pv.slug} value={pv.name}>
-                                    {pv.name}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="[custom]">
-                                  + Custom / Type value...
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <div className="flex gap-1 items-center">
-                              <Input
-                                required
-                                placeholder="e.g. 50ml"
-                                value={v.size}
-                                onChange={(e) =>
-                                  updateVariant(i, "size", e.target.value)
-                                }
-                                className="h-9"
-                              />
-                              {presetValues.length > 0 && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-9 px-1 text-[10px] text-primary"
-                                  onClick={() => {
-                                    setVariantInputModes((prev) => ({ ...prev, [i]: "preset" }));
-                                    updateVariant(i, "size", "");
-                                  }}
-                                >
-                                  Presets
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-semibold text-muted-foreground">
-                            Price (৳) *
-                          </label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            required
-                            value={v.price}
-                            onChange={(e) =>
-                              updateVariant(i, "price", e.target.value)
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-semibold text-muted-foreground">
-                            Offer Price
-                          </label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={v.offerPrice}
-                            onChange={(e) =>
-                              updateVariant(i, "offerPrice", e.target.value)
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-semibold text-muted-foreground">
-                            SKU
-                          </label>
-                          <Input
-                            placeholder="SKU"
-                            value={v.sku}
-                            onChange={(e) =>
-                              updateVariant(i, "sku", e.target.value)
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive self-end"
-                          onClick={() => removeVariant(i)}
-                          disabled={variants.length <= 1}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-semibold border-b pb-2">
-              Product Image
-            </h3>
-
-            <div className="space-y-3">
-              {!imagePreview ? (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
-                    mainImageError
-                      ? "border-destructive bg-destructive/5 text-destructive"
-                      : "border-border/80 hover:border-primary/50 hover:bg-muted/10"
-                  }`}
-                >
-                  <UploadCloud className={`h-10 w-10 mb-2 ${mainImageError ? "text-destructive" : "text-muted-foreground"}`} />
-                  <span className="text-xs font-medium block">
-                    Upload Image
-                  </span>
-                  <span className="text-[10px] text-muted-foreground block mt-1">
-                    PNG, JPG, WEBP up to 2MB
-                  </span>
-                  {mainImageError && (
-                    <p className="text-xs font-semibold text-destructive mt-2.5 flex items-center justify-center gap-1.5 animate-in fade-in">
-                      <AlertCircle className="h-4 w-4" />
-                      {mainImageError}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="relative rounded-xl border overflow-hidden bg-muted/10 group min-h-[160px] flex items-center justify-center">
-                  <img
-                    src={
-                      imagePreview.startsWith("blob:")
-                        ? imagePreview
-                        : getFullPreviewUrl(imagePreview)
-                    }
-                    alt="Uploaded Product Preview"
-                    className="object-contain max-h-[180px] w-full"
-                  />
-                  {isUploading && (
-                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                      <span className="text-xs font-semibold">
-                        Uploading...
-                      </span>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={removeUploadedImage}
-                    className="absolute top-2 right-2 bg-background/90 border rounded-full p-1.5 shadow-sm opacity-90 hover:opacity-100 hover:text-destructive transition-all"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              )}
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-semibold border-b pb-2">
-              Organization
-            </h3>
+          {/* Right Column: Sidebar Cards & SEO */}
+          <div className="space-y-6">
+            <SidebarCards
+              isActive={isActive}
+              setIsActive={setIsActive}
+              imagePreview={imagePreview}
+              mainImageError={mainImageError}
+              fileInputRef={fileInputRef}
+              handleImageSelect={handleImageSelect}
+              removeUploadedImage={removeUploadedImage}
+              galleryImages={galleryImages}
+              galleryInputRef={galleryInputRef}
+              handleGalleryImageSelect={handleGalleryImageSelect}
+              removeGalleryImage={removeGalleryImage}
+              categorySlug={categorySlug}
+              setCategorySlug={setCategorySlug}
+              categories={categories}
+              parentBrandSlug={parentBrandSlug}
+              setParentBrandSlug={setParentBrandSlug}
+              brandSlug={brandSlug}
+              setBrandSlug={setBrandSlug}
+              parentBrands={parentBrands}
+              childBrands={childBrands}
+              brands={brands}
+              season={season}
+              setSeason={setSeason}
+              tags={tags}
+              setTags={setTags}
+              clientConfig={clientConfig}
+              getFullPreviewUrl={getFullPreviewUrl}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Category
-              </label>
-              <Select
-                value={categorySlug || "__none__"}
-                onValueChange={(val) =>
-                  setCategorySlug(val === "__none__" || !val ? "" : val)
-                }
-              >
-                <SelectTrigger className="w-full cursor-pointer">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="__none__">None</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.did} value={cat.slug}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-muted-foreground">
-                    Brand
-                  </label>
-                  {parentBrandSlug && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setParentBrandSlug("");
-                        setBrandSlug("");
-                      }}
-                      className="text-[11px] text-destructive hover:underline flex items-center gap-1 cursor-pointer"
-                      title="Clear brand selection"
-                    >
-                      <X className="h-3 w-3" /> Clear
-                    </button>
-                  )}
-                </div>
-                <Select
-                  value={parentBrandSlug || "__none__"}
-                  onValueChange={(val) => {
-                    const newParent = val === "__none__" || !val ? "" : val;
-                    setParentBrandSlug(newParent);
-                    setBrandSlug("");
-                  }}
-                >
-                  <SelectTrigger className="w-full cursor-pointer">
-                    <SelectValue placeholder="Select Brand (Niche, Designer...)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-md" side="bottom">
-                    <SelectItem value="__none__">None</SelectItem>
-                    {parentBrands.map((pb) => (
-                      <SelectItem key={pb.did || pb.slug} value={pb.slug || pb.did}>
-                        {pb.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {parentBrandSlug && (
-                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1">
-                  <label className="text-xs font-semibold text-muted-foreground">
-                    Sub Brand
-                  </label>
-                  <Select
-                    value={brandSlug || "__none__"}
-                    onValueChange={(val) =>
-                      setBrandSlug(val === "__none__" || !val ? "" : val)
-                    }
-                  >
-                    <SelectTrigger className="w-full cursor-pointer">
-                      <SelectValue placeholder="Select Sub Brand" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-md" side="bottom">
-                      <SelectItem value="__none__">None</SelectItem>
-                      {childBrands.length > 0
-                        ? childBrands.map((cb) => (
-                            <SelectItem key={cb.did || cb.slug} value={cb.slug || cb.did}>
-                              {cb.name}
-                            </SelectItem>
-                          ))
-                        : parentBrands
-                            .filter((pb) => pb.slug === parentBrandSlug || pb.did === parentBrandSlug)
-                            .map((pb) => (
-                              <SelectItem key={pb.did || pb.slug} value={pb.slug || pb.did}>
-                                {pb.name}
-                              </SelectItem>
-                            ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Season
-              </label>
-              <Select
-                value={season}
-                onValueChange={(val) => setSeason(val ?? "All-Season")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Season" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All-Season">All Season</SelectItem>
-                  <SelectItem value="Summer">Summer</SelectItem>
-                  <SelectItem value="Winter">Winter</SelectItem>
-                  <SelectItem value="Spring">Spring</SelectItem>
-                  <SelectItem value="Autumn">Autumn</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 pt-2">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isCreating || isUploading}
-            >
-              {isCreating ? "Updating Product..." : "Update Product"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => { window.location.href = "/dashboard/products"; }}
-            >
-              Cancel
-            </Button>
+            <SEOOverviewCard
+              metaTitle={metaTitle}
+              setMetaTitle={setMetaTitle}
+              metaDescription={metaDescription}
+              setMetaDescription={setMetaDescription}
+            />
           </div>
         </div>
       </form>
     </div>
   );
-}
+};
 
 export default EditProductPage;

@@ -48,7 +48,7 @@ export const createProduct = async (req, res, next) => {
       return;
     }
 
-    // Resolve Categories: convert array of IDs or slugs to ObjectIds
+    // Resolve Categories: convert array of IDs, DIDs, or slugs to ObjectIds
     let categoryIds = [];
     if (body.categories || body.category) {
       const catInput = body.categories || body.category;
@@ -58,13 +58,15 @@ export const createProduct = async (req, res, next) => {
         if (Types.ObjectId.isValid(cat)) {
           categoryIds.push(cat);
         } else {
-          const found = await CategoryModel.findOne({ slug: cat }).lean();
+          const found = await CategoryModel.findOne({
+            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+          }).lean();
           if (found) categoryIds.push(found._id);
         }
       }
     }
 
-    // Resolve Brand: convert array of slugs or IDs to brand DIDs
+    // Resolve Brand: convert array of slugs, ObjectIds, or DIDs to brand DIDs
     let brandDids = [];
     if (body.brand || body.brands) {
       const brandInput = body.brand || body.brands;
@@ -74,7 +76,10 @@ export const createProduct = async (req, res, next) => {
         if (/^[0-9a-fA-F]{16}$/.test(br)) {
           brandDids.push(br);
         } else {
-          const found = await BrandModel.findOne({ slug: br }).lean();
+          const query = Types.ObjectId.isValid(br)
+            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
+            : { $or: [{ slug: br }, { did: br }] };
+          const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
       }
@@ -89,19 +94,37 @@ export const createProduct = async (req, res, next) => {
       });
     }
     const imageUrl = rawImageUrl.trim();
+    const rawGallery = body.images || body.galleryImages || body.gallery || [];
+    const images = Array.isArray(rawGallery)
+      ? rawGallery
+          .map((item) => {
+            if (typeof item === "string" && item.trim()) return item.trim();
+            if (typeof item === "object" && item !== null) {
+              const url = item.url || item.imageUrl || item.preview || "";
+              return typeof url === "string" && url.trim() ? url.trim() : null;
+            }
+            return null;
+          })
+          .filter(Boolean)
+      : [];
 
     const productData = {
       name: body.name,
       slug: body.slug,
       description: body.description || body.name, // default description to name
+      longDescription: body.longDescription || "",
+      chargeTax: Boolean(body.chargeTax),
+      taxRate: body.taxRate !== undefined && body.taxRate !== null && body.taxRate !== "" ? Number(body.taxRate) : null,
+      isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
       type: body.type || "simple",
       imageUrl,
       thumbnailUrl: body.thumbnailUrl || body.thumbnail_url || imageUrl,
-      season: body.season || "All-Season",
+      season: body.season || "",
       tags: Array.isArray(body.tags) ? body.tags : [],
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
       brand: brandDids,
+      images,
       stockStatus: body.stockStatus || "instock",
       createdBy: userId,
     };
@@ -110,16 +133,16 @@ export const createProduct = async (req, res, next) => {
     if (body.type === "variant") {
       productData.variants = Array.isArray(body.variants)
         ? body.variants.map((v, i) => ({
-            size: v.size,
-            price: Number(v.price),
-            offerPrice:
-              v.offerPrice !== undefined && v.offerPrice !== null
-                ? Number(v.offerPrice)
-                : null,
-            sku: v.sku || "",
-            sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
-            imageUrl: v.imageUrl || null,
-          }))
+          size: v.size,
+          price: Number(v.price),
+          offerPrice:
+            v.offerPrice !== undefined && v.offerPrice !== null
+              ? Number(v.offerPrice)
+              : null,
+          sku: v.sku || "",
+          sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
+          imageUrl: v.imageUrl || null,
+        }))
         : [];
     } else {
       productData.price = Number(body.price || 0);
@@ -158,59 +181,31 @@ export const listProducts = async (req, res, next) => {
   try {
     const method = (req.method || "GET").toUpperCase();
 
-    // Pagination and sorting configuration
-    const paginationSource =
-      method === "POST" ? req.body || {} : req.query || {};
-    const { skip, limit } = parsePagination(paginationSource);
-    
-    // For sorting, if using `sort=price_low_to_high` or `sortby`, parse it
-    const sortByParam = paginationSource.sort || paginationSource.sortBy || paginationSource.sortby;
-    let parsedSortBy = sortByParam;
-    let parsedOrder = paginationSource.order;
+    const queryOptions = method === "POST" ? req.body : req.query;
+    const filter = await buildProductFilter(queryOptions);
+    const sort = buildProductSort(queryOptions);
+    const { limit, skip } = parsePagination(queryOptions);
 
-    if (sortByParam === 'price_low_to_high') {
-      parsedSortBy = 'price';
-      parsedOrder = 'asc';
-    } else if (sortByParam === 'price_high_to_low') {
-      parsedSortBy = 'price';
-      parsedOrder = 'desc';
-    } else if (sortByParam === 'newest') {
-      parsedSortBy = 'createdAt';
-      parsedOrder = 'desc';
-    }
+    const products = await ProductModel.find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .populate("categories")
+      .lean();
 
-    const sort = buildProductSort(parsedSortBy, parsedOrder);
-
-    // Build query filter
-    // Use the combined source from POST body or GET query
-    const filterInput = method === "POST" ? req.body || {} : req.query || {};
-    const filter = await buildProductFilter(filterInput);
-
-    const [total, rows] = await Promise.all([
-      ProductModel.countDocuments(filter),
-      ProductModel.find(filter)
-        .populate('categories', 'did name slug')
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-    ]);
-
-    const totalPages = Math.ceil(total / limit) || 1;
-    const currentPage = Math.floor(skip / limit) + 1;
+    const count = await ProductModel.countDocuments(filter);
 
     res.json({
-      success: true,
-      message: "Products retrieved successfully",
-      meta: {
-        total_products: total,
-        current_page: currentPage,
+      status: "success",
+      data: products.map(serializeProduct),
+      // CRITICAL: NEVER CHANGE ANY FIELD NAME in this pagination object.
+      // Frontends and Dashboard strictly rely on `pagination.total`, `pagination.limit`, and `pagination.skip`.
+      // You may add new fields if needed, but existing field names must NEVER be modified or renamed.
+      pagination: {
+        total: count,
         limit,
-        total_pages: totalPages,
-        has_next_page: currentPage < totalPages,
-        has_prev_page: currentPage > 1
+        skip,
       },
-      data: rows.map(serializeProduct),
     });
   } catch (err) {
     next(err);
@@ -218,15 +213,15 @@ export const listProducts = async (req, res, next) => {
 };
 
 /**
- * READ (SINGLE): Retrieves a single product by either ID or slug.
+ * READ (SINGLE): Retrieves a single product details by MongoDB ID or slug.
  * Path: GET /api/products/:identifier
  */
 export const getSingleProduct = async (req, res, next) => {
   try {
     const identifier = req.params.identifier;
     const filter = Types.ObjectId.isValid(identifier)
-      ? { $or: [{ _id: identifier }, { slug: identifier }] }
-      : { slug: identifier };
+      ? { $or: [{ _id: identifier }, { slug: identifier }, { did: identifier }] }
+      : { $or: [{ slug: identifier }, { did: identifier }] };
 
     const product = await ProductModel.findOne(filter).lean();
 
@@ -250,7 +245,9 @@ export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
     const body = req.body || {};
 
-    const filter = Types.ObjectId.isValid(id) ? { _id: id } : { slug: id };
+    const filter = Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
     const product = await ProductModel.findOne(filter);
     if (!product) {
       res.status(404).json({ status: "error", message: "Product not found" });
@@ -279,6 +276,18 @@ export const updateProduct = async (req, res, next) => {
     if (body.name !== undefined) product.name = body.name;
     if (body.slug !== undefined) product.slug = body.slug;
     if (body.description !== undefined) product.description = body.description;
+    if (body.longDescription !== undefined) product.longDescription = body.longDescription;
+    if (body.chargeTax !== undefined) product.chargeTax = Boolean(body.chargeTax);
+    if (body.taxRate !== undefined) product.taxRate = body.taxRate ? Number(body.taxRate) : null;
+    if (body.isActive !== undefined) product.isActive = Boolean(body.isActive);
+    if (body.metaData !== undefined) {
+      product.metaData = {
+        metaTitle: body.metaData.metaTitle || "",
+        metaDescription: body.metaData.metaDescription || "",
+        keywords: Array.isArray(body.metaData.keywords) ? body.metaData.keywords : [],
+        ogImage: body.metaData.ogImage || "",
+      };
+    }
     if (body.type !== undefined) product.type = body.type;
     if (incomingImageUrl && incomingImageUrl.trim()) product.imageUrl = incomingImageUrl.trim();
     if (body.thumbnailUrl && body.thumbnailUrl.trim())
@@ -289,6 +298,29 @@ export const updateProduct = async (req, res, next) => {
     if (body.tags !== undefined) product.tags = body.tags;
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
+
+    // Update gallery images
+    const rawGallery =
+      body.images !== undefined
+        ? body.images
+        : body.galleryImages !== undefined
+        ? body.galleryImages
+        : body.gallery;
+
+    if (rawGallery !== undefined) {
+      product.images = Array.isArray(rawGallery)
+        ? rawGallery
+            .map((item) => {
+              if (typeof item === "string" && item.trim()) return item.trim();
+              if (typeof item === "object" && item !== null) {
+                const url = item.url || item.imageUrl || item.preview || "";
+                return typeof url === "string" && url.trim() ? url.trim() : null;
+              }
+              return null;
+            })
+            .filter(Boolean)
+        : [];
+    }
 
     if (userId) {
       product.updatedBy = userId;
@@ -305,7 +337,9 @@ export const updateProduct = async (req, res, next) => {
         if (Types.ObjectId.isValid(cat)) {
           categoryIds.push(cat);
         } else {
-          const found = await CategoryModel.findOne({ slug: cat }).lean();
+          const found = await CategoryModel.findOne({
+            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+          }).lean();
           if (found) categoryIds.push(found._id);
         }
       }
@@ -322,7 +356,10 @@ export const updateProduct = async (req, res, next) => {
         if (/^[0-9a-fA-F]{16}$/.test(br)) {
           brandDids.push(br);
         } else {
-          const found = await BrandModel.findOne({ slug: br }).lean();
+          const query = Types.ObjectId.isValid(br)
+            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
+            : { $or: [{ slug: br }, { did: br }] };
+          const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
       }
@@ -334,16 +371,16 @@ export const updateProduct = async (req, res, next) => {
       if (body.variants !== undefined) {
         product.variants = Array.isArray(body.variants)
           ? body.variants.map((v, i) => ({
-              size: v.size,
-              price: Number(v.price),
-              offerPrice:
-                v.offerPrice !== undefined && v.offerPrice !== null
-                  ? Number(v.offerPrice)
-                  : null,
-              sku: v.sku || "",
-              sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
-              imageUrl: v.imageUrl || null,
-            }))
+            size: v.size,
+            price: Number(v.price),
+            offerPrice:
+              v.offerPrice !== undefined && v.offerPrice !== null
+                ? Number(v.offerPrice)
+                : null,
+            sku: v.sku || "",
+            sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
+            imageUrl: v.imageUrl || null,
+          }))
           : [];
       }
       product.price = undefined;

@@ -15,9 +15,8 @@ const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
 const getClientFromHostname = () => {
   if (typeof window === 'undefined') return 'decantre';
   const hostname = window.location.hostname.toLowerCase();
-  if (hostname.includes('engulfic')) return 'engulfic';
-  if (hostname.includes('toyoland')) return 'toyoland';
-  return 'decantre';
+  const matchedKey = Object.keys(clientConfigs).find((key) => hostname.includes(key));
+  return matchedKey || 'decantre';
 };
 
 const activeKey = envClient || getClientFromHostname();
