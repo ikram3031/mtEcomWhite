@@ -12,6 +12,34 @@ import {
 import { Plus, UploadCloud, X, Tag, Check, Layers, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
+const COMMON_TAG_SUGGESTIONS = [
+  "featured",
+  "new-arrival",
+  "best-seller",
+  "popular",
+  "sale",
+  "trending",
+  "luxury",
+  "exclusive",
+  "summer",
+  "winter",
+  "spring",
+  "autumn",
+  "oud",
+  "woody",
+  "floral",
+  "fresh",
+  "sweet",
+  "oriental",
+  "citrus",
+  "amber",
+  "gourmand",
+  "spicy",
+  "leather",
+  "vanilla",
+  "musk",
+];
+
 export const SidebarCards = ({
   isActive,
   setIsActive,
@@ -79,9 +107,59 @@ export const SidebarCards = ({
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
   const brandDropdownRef = useRef(null);
 
+  const [tagInput, setTagInput] = useState("");
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+  const tagDropdownRef = useRef(null);
+
+  const handleAddTag = (rawText) => {
+    if (!rawText || !rawText.trim()) return;
+
+    // Split by comma so multi-tags or pasted strings become individual tags
+    const incoming = rawText
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter((t) => t.length > 0);
+
+    const current = Array.isArray(tags) ? [...tags] : [];
+    let added = false;
+
+    incoming.forEach((t) => {
+      if (!current.includes(t)) {
+        current.push(t);
+        added = true;
+      }
+    });
+
+    if (added) {
+      setTags(current);
+    }
+    setTagInput("");
+    setIsTagDropdownOpen(false);
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    const current = Array.isArray(tags) ? tags : [];
+    setTags(current.filter((t) => t !== tagToRemove));
+  };
+
+  const filteredTagSuggestions = useMemo(() => {
+    const search = tagInput.trim().toLowerCase();
+    if (!search) return [];
+    const current = Array.isArray(tags) ? tags : [];
+    return COMMON_TAG_SUGGESTIONS.filter(
+      (item) => item.toLowerCase().includes(search) && !current.includes(item)
+    );
+  }, [tagInput, tags]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (
+        tagDropdownRef.current &&
+        !tagDropdownRef.current.contains(e.target)
+      ) {
+        setIsTagDropdownOpen(false);
+      }
       if (
         categoryDropdownRef.current &&
         !categoryDropdownRef.current.contains(e.target)
@@ -720,42 +798,110 @@ export const SidebarCards = ({
         </div>
       )}
 
-      {/* 7. Tags Card (Simple Comma-Separated Input) */}
+      {/* 7. Tags Card (Chip UI + Search & Add Dropdown) */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
         <div className="flex items-center justify-between border-b pb-2">
           <div className="flex items-center gap-1.5">
             <Tag className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-bold text-foreground">Tags</h3>
           </div>
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            {Array.isArray(tags) ? tags.length : 0} tags
+          </span>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground block">
-            Tags (comma separated)
-          </label>
-          <Input
-            placeholder="e.g. luxury, oud, summer, signature"
-            value={
-              typeof tags === "string"
-                ? tags
-                : Array.isArray(tags)
-                ? tags.join(", ")
-                : ""
-            }
-            onChange={(e) => {
-              const val = e.target.value;
-              const parsed = val
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean);
-              setTags(parsed);
-            }}
-            className="h-9"
-          />
-          <p className="text-[11px] text-muted-foreground">
-            Separate multiple tags with a comma (,).
-          </p>
+        {/* Tag Input & Search Dropdown */}
+        <div className="relative" ref={tagDropdownRef}>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground block">
+              Search or Add Tag
+            </label>
+            <Input
+              placeholder="Search or type tag and press Enter / comma..."
+              value={tagInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.includes(",")) {
+                  handleAddTag(val);
+                } else {
+                  setTagInput(val);
+                  setIsTagDropdownOpen(true);
+                }
+              }}
+              onFocus={() => {
+                if (tagInput.trim()) setIsTagDropdownOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  handleAddTag(tagInput);
+                }
+              }}
+              className="h-9"
+            />
+          </div>
+
+          {/* Autocomplete / Add dropdown */}
+          {isTagDropdownOpen && tagInput.trim() && (
+            <div className="absolute top-full mt-1 left-0 right-0 z-50 rounded-lg border border-border bg-popover shadow-lg py-1 max-h-52 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+              {/* Option 1: Add what user typed */}
+              <button
+                type="button"
+                onClick={() => handleAddTag(tagInput)}
+                className="w-full px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-muted/50 flex items-center gap-2 cursor-pointer transition-colors border-b"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add "{tagInput.trim()}"
+              </button>
+
+              {/* Suggestions */}
+              {filteredTagSuggestions.length > 0 && (
+                <div className="py-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground px-3 py-1 block">
+                    Matching Tags
+                  </span>
+                  {filteredTagSuggestions.map((sug) => (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => handleAddTag(sug)}
+                      className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:bg-muted/50 flex items-center justify-between cursor-pointer transition-colors"
+                    >
+                      <span>#{sug}</span>
+                      <Plus className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Selected Tags Chips */}
+        {Array.isArray(tags) && tags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border shadow-xs animate-in fade-in"
+              >
+                #{t}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(t)}
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                  title={`Remove ${t}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground italic">
+            No tags added yet. Type a tag and press Enter or comma.
+          </p>
+        )}
       </div>
     </div>
   );

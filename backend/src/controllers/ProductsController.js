@@ -122,7 +122,14 @@ export const createProduct = async (req, res, next) => {
         : typeof body.season === "string" && body.season.trim()
         ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
         : ["All-Season"],
-      tags: Array.isArray(body.tags) ? body.tags : [],
+      tags: Array.isArray(body.tags)
+        ? body.tags
+            .flatMap((t) => (typeof t === "string" ? t.split(",") : t))
+            .map((t) => String(t).trim())
+            .filter(Boolean)
+        : typeof body.tags === "string"
+        ? body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [],
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
       brand: brandDids,
@@ -309,7 +316,16 @@ export const updateProduct = async (req, res, next) => {
         ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
         : ["All-Season"];
     }
-    if (body.tags !== undefined) product.tags = body.tags;
+    if (body.tags !== undefined) {
+      product.tags = Array.isArray(body.tags)
+        ? body.tags
+            .flatMap((t) => (typeof t === "string" ? t.split(",") : t))
+            .map((t) => String(t).trim())
+            .filter(Boolean)
+        : typeof body.tags === "string"
+        ? body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+    }
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
     if (body.stockAmount !== undefined) {
