@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useProducts } from "@/hooks/use-products";
 import { useCategories, useBrands } from "@/lib/category-cache";
 import { apiClient } from "@/lib/api-client";
+import { logActivity } from "@/lib/activity-logger";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -408,9 +409,14 @@ const OrderDetailsPage = () => {
       });
 
       await apiClient.put(`/api/v1/orders/${id}`, orderPayload);
+      logActivity({
+        type: 'updated',
+        description: `Order #${order.orderNumber || id} updated (status: "${orderStatus}") by "${user?.name || 'Admin'}"`,
+      });
       toast.success("Order updated successfully");
       queryClient.invalidateQueries(["order", id]);
       queryClient.invalidateQueries(["orders"]);
+      queryClient.invalidateQueries(["activity-logs"]);
       setIsEditMode(false);
     } catch (err) {
       console.error(err);

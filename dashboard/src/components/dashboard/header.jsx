@@ -1,7 +1,8 @@
 import { Input } from '@/components/ui/input';
-import { Search, Bell, LogOut, Settings, HelpCircle } from 'lucide-react';
+import { Search, LogOut, Settings, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NotificationBell } from './NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,11 +41,7 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger

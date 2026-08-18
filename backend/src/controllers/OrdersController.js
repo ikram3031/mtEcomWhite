@@ -12,6 +12,7 @@ import { buildAllowedOrderUpdates,
   updateMemberTotals,
 } from '../helper/orderControllerHelper.js';
 import { getClientInvoiceHtml } from '../templates/invoices/index.js';
+import { LogModel } from '../models/log.model.js';
 
 const { Types } = mongoose;
 
@@ -67,6 +68,26 @@ export const createOrder = async (req, res, next) => {
 
     // Safely trigger non-blocking email notifications for Customer and Admin
     sendOrderEmailsAsynchronously(createdOrder);
+
+    // Automatically record newOrder activity log
+    try {
+      const customerName =
+        createdOrder.billingInfo?.fullName ||
+        createdOrder.shippingInfo?.fullName ||
+        "Customer";
+      const actorDid = req.user?.did || "storefront";
+      await LogModel.create({
+        type: "newOrder",
+        typeDid: "111",
+        description: `${customerName} placed a new order #${createdOrder.orderNumber}`,
+        readStatus: false,
+        active: true,
+        createdBy: actorDid,
+        updatedBy: actorDid,
+      });
+    } catch (logErr) {
+      console.error("Non-blocking order log creation error:", logErr);
+    }
 
     return res.status(201).json({
       status: 'success',

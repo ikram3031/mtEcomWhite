@@ -34,8 +34,11 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activity-logger';
+import { useAuth } from '@/lib/auth-context';
 
 const OrdersPage = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [paymentFilter, setPaymentFilter] = useState('All');
@@ -72,8 +75,13 @@ const OrdersPage = () => {
     setIsBulkDeleting(true);
     try {
       await apiClient.post('/api/v1/orders/bulk-delete', { ids: selectedIds });
+      logActivity({
+        type: 'deleted',
+        description: `${selectedIds.length} order(s) deleted by "${user?.name || 'Admin'}"`,
+      });
       toast.success('Selected orders deleted successfully.');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
       setBulkDeleteOpen(false);
     } catch {
@@ -87,8 +95,13 @@ const OrdersPage = () => {
     if (!status || status === 'placeholder') return;
     try {
       await apiClient.post('/api/v1/orders/bulk-update', { ids: selectedIds, status });
+      logActivity({
+        type: 'updated',
+        description: `${selectedIds.length} order(s) status updated to "${status}" by "${user?.name || 'Admin'}"`,
+      });
       toast.success(`Selected orders updated to status "${status}".`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
     } catch {
       toast.error('Failed to update orders.');
@@ -99,8 +112,13 @@ const OrdersPage = () => {
     if (!paymentStatus || paymentStatus === 'placeholder') return;
     try {
       await apiClient.post('/api/v1/orders/bulk-update', { ids: selectedIds, paymentStatus });
+      logActivity({
+        type: 'updated',
+        description: `${selectedIds.length} order(s) payment status updated to "${paymentStatus}" by "${user?.name || 'Admin'}"`,
+      });
       toast.success(`Selected orders updated to payment status "${paymentStatus}".`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
     } catch {
       toast.error('Failed to update orders.');
