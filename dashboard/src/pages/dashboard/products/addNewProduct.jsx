@@ -84,7 +84,7 @@ const AddNewProduct = () => {
   const [brandSlugs, setBrandSlugs] = useState([]);
   const [parentBrandSlug, setParentBrandSlug] = useState("");
   const [brandSlug, setBrandSlug] = useState("");
-  const [season, setSeason] = useState("All-Season");
+  const [season, setSeason] = useState(["All-Season"]);
 
   // 6. Media / Upload states
   const [isUploading, setIsUploading] = useState(false);
@@ -136,7 +136,15 @@ const AddNewProduct = () => {
     if (p.description) setDescription(p.description);
     if (p.longDescription) setLongDescription(p.longDescription);
     if (p.type) setProductType(p.type);
-    if (p.season) setSeason(p.season);
+    if (p.season) {
+      setSeason(
+        Array.isArray(p.season)
+          ? p.season
+          : typeof p.season === "string"
+          ? p.season.split(",").map((s) => s.trim()).filter(Boolean)
+          : ["All-Season"]
+      );
+    }
     if (typeof p.isActive === "boolean") setIsActive(p.isActive);
     if (p.stockStatus) setStockStatus(p.stockStatus);
     if (p.stockAmount !== undefined) setStockAmount(String(p.stockAmount));

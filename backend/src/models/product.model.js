@@ -57,12 +57,10 @@ const productSchema = new Schema(
     ],
 
     // Filtering, Season & Notes
-    season: {
+    season: [{
       type: String,
       enum: ["Summer", "Winter", "Spring", "Autumn", "All-Season"],
-      default: "All-Season",
-      index: true
-    },
+    }],
     tags: [{ type: String, trim: true, lowercase: true }],
     notes: [{ type: String, trim: true }],
 

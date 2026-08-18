@@ -81,7 +81,7 @@ const EditProductPage = () => {
   const [brandSlugs, setBrandSlugs] = useState([]);
   const [parentBrandSlug, setParentBrandSlug] = useState("");
   const [brandSlug, setBrandSlug] = useState("");
-  const [season, setSeason] = useState("All-Season");
+  const [season, setSeason] = useState(["All-Season"]);
 
   // 6. Media / Upload states
   const [isUploading, setIsUploading] = useState(false);
@@ -219,8 +219,18 @@ const EditProductPage = () => {
           );
           setUploadedImageUrl(product.imageUrl || "");
           setImagePreview(product.imageUrl || "");
-          setSeason(product.season || "All-Season");
           setTags(Array.isArray(product.tags) ? product.tags : []);
+          if (product.season) {
+            setSeason(
+              Array.isArray(product.season)
+                ? product.season
+                : typeof product.season === "string"
+                ? product.season.split(",").map((s) => s.trim()).filter(Boolean)
+                : ["All-Season"]
+            );
+          } else {
+            setSeason(["All-Season"]);
+          }
 
           if (product.metaData) {
             setMetaTitle(product.metaData.metaTitle || "");

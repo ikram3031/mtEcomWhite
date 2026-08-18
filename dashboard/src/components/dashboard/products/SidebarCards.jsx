@@ -12,21 +12,6 @@ import {
 import { Plus, UploadCloud, X, Tag, Check, Layers, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
-const COMMON_TAG_SUGGESTIONS = [
-  "featured",
-  "new-arrival",
-  "best-seller",
-  "popular",
-  "sale",
-  "trending",
-  "premium",
-  "limited-edition",
-  "organic",
-  "handmade",
-  "luxury",
-  "exclusive",
-];
-
 export const SidebarCards = ({
   isActive,
   setIsActive,
@@ -94,19 +79,9 @@ export const SidebarCards = ({
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
   const brandDropdownRef = useRef(null);
 
-  const [tagInput, setTagInput] = useState("");
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const tagDropdownRef = useRef(null);
-
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        tagDropdownRef.current &&
-        !tagDropdownRef.current.contains(e.target)
-      ) {
-        setIsTagDropdownOpen(false);
-      }
       if (
         categoryDropdownRef.current &&
         !categoryDropdownRef.current.contains(e.target)
@@ -312,51 +287,6 @@ export const SidebarCards = ({
 
     return result;
   }, [brands, parentBrands, childBrands, brandSearch]);
-
-  const handleAddTag = (rawTag) => {
-    const formatted = rawTag
-      .trim()
-      .toLowerCase()
-      .replace(/[\s,]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    if (!formatted) return;
-
-    if (tags.includes(formatted)) {
-      toast.info(`Tag "${formatted}" is already added.`);
-      setTagInput("");
-      setIsTagDropdownOpen(false);
-      return;
-    }
-
-    if (tags.length >= 10) {
-      toast.error("Maximum 10 tags limit reached per product.");
-      setTagInput("");
-      setIsTagDropdownOpen(false);
-      return;
-    }
-
-    setTags([...tags, formatted]);
-    setTagInput("");
-    setIsTagDropdownOpen(false);
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
-  };
-
-  const handleTagKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      handleAddTag(tagInput);
-    }
-  };
-
-  const filteredSuggestions = COMMON_TAG_SUGGESTIONS.filter(
-    (item) =>
-      item.toLowerCase().includes(tagInput.trim().toLowerCase()) &&
-      !tags.includes(item)
-  );
 
   return (
     <div className="space-y-6">
@@ -724,131 +654,111 @@ export const SidebarCards = ({
         </div>
       )}
 
-      {/* 6. Season Card (Conditionally rendered) */}
+      {/* 6. Season Card (Multi-Select) */}
       {clientConfig?.features?.season !== false && (
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
-          <h3 className="text-sm font-bold border-b pb-2 text-foreground">
-            Season
-          </h3>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-bold text-foreground">Season</h3>
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              {(() => {
+                const list = Array.isArray(season)
+                  ? season
+                  : typeof season === "string" && season.trim()
+                  ? season.split(",").map((s) => s.trim()).filter(Boolean)
+                  : ["All-Season"];
+                return `${list.length} selected`;
+              })()}
+            </span>
+          </div>
           <div className="space-y-2">
-            <Select
-              value={season}
-              onValueChange={(val) => setSeason(val ?? "All-Season")}
-            >
-              <SelectTrigger className="w-full h-9 cursor-pointer">
-                <SelectValue placeholder="Season" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-md">
-                <SelectItem value="All-Season">All Season</SelectItem>
-                <SelectItem value="Summer">Summer</SelectItem>
-                <SelectItem value="Winter">Winter</SelectItem>
-                <SelectItem value="Spring">Spring</SelectItem>
-                <SelectItem value="Autumn">Autumn</SelectItem>
-              </SelectContent>
-            </Select>
+            <label className="text-xs font-semibold text-muted-foreground block">
+              Select Seasons
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {["All-Season", "Summer", "Winter", "Spring", "Autumn"].map((s) => {
+                const currentList = Array.isArray(season)
+                  ? season
+                  : typeof season === "string" && season.trim()
+                  ? season.split(",").map((item) => item.trim()).filter(Boolean)
+                  : ["All-Season"];
+                const isSelected = currentList.includes(s);
+
+                const toggleSeason = () => {
+                  let updated;
+                  if (s === "All-Season") {
+                    updated = ["All-Season"];
+                  } else {
+                    const withoutAll = currentList.filter((item) => item !== "All-Season");
+                    if (withoutAll.includes(s)) {
+                      updated = withoutAll.filter((item) => item !== s);
+                      if (updated.length === 0) updated = ["All-Season"];
+                    } else {
+                      updated = [...withoutAll, s];
+                    }
+                  }
+                  setSeason(updated);
+                };
+
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={toggleSeason}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/30 text-muted-foreground border-border hover:bg-muted/60 hover:text-foreground"
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3 w-3" />}
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
-      {/* 7. Tags Card (Chip UI + Search & Add) */}
+      {/* 7. Tags Card (Simple Comma-Separated Input) */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
         <div className="flex items-center justify-between border-b pb-2">
           <div className="flex items-center gap-1.5">
             <Tag className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-bold text-foreground">Tags</h3>
           </div>
-          <span className="text-[10px] font-semibold text-muted-foreground">
-            {tags.length}/10
-          </span>
         </div>
 
-        {/* Tag Input & Search Dropdown */}
-        <div className="relative" ref={tagDropdownRef}>
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground block">
-              Add or Search Tags
-            </label>
-            <Input
-              placeholder={
-                tags.length >= 10
-                  ? "Max 10 tags reached"
-                  : "e.g. nice, luxury, oud..."
-              }
-              value={tagInput}
-              disabled={tags.length >= 10}
-              onChange={(e) => {
-                setTagInput(e.target.value);
-                setIsTagDropdownOpen(true);
-              }}
-              onFocus={() => setIsTagDropdownOpen(true)}
-              onKeyDown={handleTagKeyDown}
-              className="h-9"
-            />
-          </div>
-
-          {/* Autocomplete / Create dropdown */}
-          {isTagDropdownOpen && tagInput.trim() && (
-            <div className="absolute top-full mt-1 left-0 right-0 z-50 rounded-lg border border-border bg-popover shadow-lg py-1 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1">
-              {/* Option 1: Add custom tag */}
-              <button
-                type="button"
-                onClick={() => handleAddTag(tagInput)}
-                className="w-full px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-muted/50 flex items-center gap-2 cursor-pointer transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add tag "{tagInput.trim()}"
-              </button>
-
-              {/* Suggestions */}
-              {filteredSuggestions.length > 0 && (
-                <div className="border-t mt-1 pt-1">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground px-3 py-1 block">
-                    Suggestions
-                  </span>
-                  {filteredSuggestions.map((sug) => (
-                    <button
-                      key={sug}
-                      type="button"
-                      onClick={() => handleAddTag(sug)}
-                      className="w-full px-3 py-1.5 text-left text-xs text-foreground hover:bg-muted/50 flex items-center justify-between cursor-pointer transition-colors"
-                    >
-                      <span>{sug}</span>
-                      <Plus className="h-3 w-3 text-muted-foreground" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Selected Tags Chips */}
-        {tags.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border shadow-xs animate-in fade-in"
-              >
-                #{t}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(t)}
-                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
-                  title={`Remove ${t}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground italic">
-            No tags added yet. Type a name and press Enter.
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-muted-foreground block">
+            Tags (comma separated)
+          </label>
+          <Input
+            placeholder="e.g. luxury, oud, summer, signature"
+            value={
+              typeof tags === "string"
+                ? tags
+                : Array.isArray(tags)
+                ? tags.join(", ")
+                : ""
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              const parsed = val
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean);
+              setTags(parsed);
+            }}
+            className="h-9"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Separate multiple tags with a comma (,).
           </p>
-        )}
+        </div>
       </div>
     </div>
   );
 };
+
 

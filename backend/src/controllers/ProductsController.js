@@ -117,9 +117,11 @@ export const createProduct = async (req, res, next) => {
       taxRate: body.taxRate !== undefined && body.taxRate !== null && body.taxRate !== "" ? Number(body.taxRate) : null,
       isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
       type: body.type || "simple",
-      imageUrl,
-      thumbnailUrl: body.thumbnailUrl || body.thumbnail_url || imageUrl,
-      season: body.season || "",
+      season: Array.isArray(body.season)
+        ? body.season
+        : typeof body.season === "string" && body.season.trim()
+        ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
+        : ["All-Season"],
       tags: Array.isArray(body.tags) ? body.tags : [],
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
@@ -300,7 +302,13 @@ export const updateProduct = async (req, res, next) => {
       product.thumbnailUrl = body.thumbnailUrl.trim();
     if (body.thumbnail_url && body.thumbnail_url.trim())
       product.thumbnailUrl = body.thumbnail_url.trim();
-    if (body.season !== undefined) product.season = body.season;
+    if (body.season !== undefined) {
+      product.season = Array.isArray(body.season)
+        ? body.season
+        : typeof body.season === "string" && body.season.trim()
+        ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
+        : ["All-Season"];
+    }
     if (body.tags !== undefined) product.tags = body.tags;
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
