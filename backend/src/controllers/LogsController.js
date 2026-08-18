@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { LogModel, LOG_TYPE_DIDS } from "../models/log.model.js";
 
 /**
@@ -124,7 +125,14 @@ export const markLogsRead = async (req, res, next) => {
 
     let filter = { active: true };
     if (Array.isArray(ids) && ids.length > 0) {
-      filter._id = { $in: ids };
+      const objIds = ids.filter((id) => Types.ObjectId.isValid(id));
+      const dids = ids.filter((id) => !Types.ObjectId.isValid(id));
+      filter = {
+        active: true,
+        $or: [{ _id: { $in: objIds } }, { did: { $in: dids } }].filter(
+          (c) => Object.values(c)[0].$in.length > 0
+        ),
+      };
     } else {
       filter.type = "newOrder";
       filter.readStatus = false;
@@ -159,10 +167,18 @@ export const markLogsUnread = async (req, res, next) => {
       });
     }
 
-    await LogModel.updateMany(
-      { _id: { $in: ids }, active: true },
-      { $set: { readStatus: false, updatedBy: userDid } }
-    );
+    const objIds = ids.filter((id) => Types.ObjectId.isValid(id));
+    const dids = ids.filter((id) => !Types.ObjectId.isValid(id));
+    const filter = {
+      active: true,
+      $or: [{ _id: { $in: objIds } }, { did: { $in: dids } }].filter(
+        (c) => Object.values(c)[0].$in.length > 0
+      ),
+    };
+
+    await LogModel.updateMany(filter, {
+      $set: { readStatus: false, updatedBy: userDid },
+    });
 
     return res.json({
       status: true,
@@ -182,8 +198,12 @@ export const deleteLog = async (req, res, next) => {
     const { id } = req.params;
     const userDid = req.user?.did || "system";
 
+    const filter = Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { did: id }] }
+      : { did: id };
+
     const log = await LogModel.findOneAndUpdate(
-      { $or: [{ _id: id }, { did: id }] },
+      filter,
       { $set: { active: false, updatedBy: userDid } },
       { new: true }
     );
@@ -220,10 +240,17 @@ export const bulkDeleteLogs = async (req, res, next) => {
       });
     }
 
-    await LogModel.updateMany(
-      { _id: { $in: ids } },
-      { $set: { active: false, updatedBy: userDid } }
-    );
+    const objIds = ids.filter((id) => Types.ObjectId.isValid(id));
+    const dids = ids.filter((id) => !Types.ObjectId.isValid(id));
+    const filter = {
+      $or: [{ _id: { $in: objIds } }, { did: { $in: dids } }].filter(
+        (c) => Object.values(c)[0].$in.length > 0
+      ),
+    };
+
+    await LogModel.updateMany(filter, {
+      $set: { active: false, updatedBy: userDid },
+    });
 
     return res.json({
       status: true,
