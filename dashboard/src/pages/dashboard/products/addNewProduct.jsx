@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { apiClient, baseURL } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { useCategories, useBrands } from "@/lib/category-cache";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { clientConfig } from "@/clientConfig";
 import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
+import { useDashboardStore } from "@/store/use-dashboard-store";
 import {
   ProductDetailsCard,
   ProductDataCard,
@@ -44,6 +45,11 @@ const API_BASE = (baseURL || "").replace(/\/$/, "");
 const AddNewProduct = () => {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
+
+  // Draft source info (duplicate banner)
+  const [draftSourceName, setDraftSourceName] = useState("");
+
+  const { duplicateDraft, clearDuplicateDraft } = useDashboardStore();
 
   // 1. Basic details
   const [name, setName] = useState("");
@@ -115,6 +121,90 @@ const AddNewProduct = () => {
         );
       })
     : [];
+
+  // Draft pre-fill: mount-এ একবার চেক করে সব field set করা হয়
+  useEffect(() => {
+    if (!duplicateDraft) return;
+
+    const p = duplicateDraft;
+    const suffix = `-${String(Date.now()).slice(-2)}`;
+
+    setDraftSourceName(p.name || "");
+    setName(p.name ? `${p.name} (Copy)` : "");
+    setSlug(p.slug ? `${p.slug}${suffix}` : "");
+    setSlugManual(true);
+    setSku(p.sku || "");
+    setDescription(p.description || "");
+    setLongDescription(p.longDescription || "");
+    setChargeTax(Boolean(p.chargeTax));
+    setTaxRate(p.taxRate ? String(p.taxRate) : "");
+    setIsActive(false); // draft সবসময় inactive
+    setProductType(p.type || "simple");
+    setSeason(p.season || "All-Season");
+    setTags(Array.isArray(p.tags) ? p.tags : []);
+
+    if (p.metaData) {
+      setMetaTitle(p.metaData.metaTitle || "");
+      setMetaDescription(p.metaData.metaDescription || "");
+    }
+
+    // Image (existing URL reuse, no re-upload)
+    if (p.imageUrl) {
+      setUploadedImageUrl(p.imageUrl);
+      setImagePreview(p.imageUrl);
+    }
+
+    // Gallery images
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      setGalleryImages(
+        p.images.map((img, index) => ({
+          id: `dup-${index}-${Date.now()}`,
+          file: null,
+          preview: typeof img === "string" ? img : img?.url || img?.imageUrl || "",
+          altText: "",
+          isLoaded: true,
+        }))
+      );
+    }
+
+    // Category (first one)
+    if (Array.isArray(p.categories) && p.categories.length > 0) {
+      const firstCat = p.categories[0];
+      setCategorySlug(
+        firstCat?.slug || firstCat?.did || (typeof firstCat === "string" ? firstCat : "")
+      );
+    }
+
+    // Brand
+    if (Array.isArray(p.brand) && p.brand.length > 0) {
+      setBrandSlug(p.brand[0] || "");
+    } else if (p.brand && typeof p.brand === "string") {
+      setBrandSlug(p.brand);
+    }
+
+    // Simple product fields
+    if (p.type === "simple") {
+      setPrice(p.price ? String(p.price) : "");
+      setOfferPrice(p.offerPrice ? String(p.offerPrice) : "");
+    }
+
+    // Variant fields
+    if (p.type === "variant" && Array.isArray(p.variants) && p.variants.length > 0) {
+      setVariants(
+        p.variants.map((v) => ({
+          size: v.size || "",
+          price: v.price ? String(v.price) : "",
+          offerPrice: v.offerPrice ? String(v.offerPrice) : "",
+          sku: v.sku || "",
+          imageUrl: v.imageUrl || "",
+          imagePreview: v.imageUrl || "",
+          imageFile: null,
+          imageError: "",
+        }))
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // শুধু mount-এ একবার
 
   useEffect(() => {
     const fetchAttributes = async () => {
@@ -461,6 +551,7 @@ const AddNewProduct = () => {
       await apiClient.post("/api/v1/products", body);
       toast.success("Product published successfully!");
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      clearDuplicateDraft();
       navigate("/dashboard/products");
     } catch (err) {
       if (uploadToastId) {
@@ -492,7 +583,7 @@ const AddNewProduct = () => {
               <ChevronLeft className="h-4 w-4" />
             </Link>
             <h2 className="text-xl font-bold tracking-tight text-foreground">
-              Add New Product
+              {draftSourceName ? 'Duplicate Product' : 'Add New Product'}
             </h2>
           </div>
 
@@ -500,7 +591,10 @@ const AddNewProduct = () => {
             <Button
               variant="ghost"
               type="button"
-              onClick={() => navigate("/dashboard/products")}
+              onClick={() => {
+                clearDuplicateDraft();
+                navigate("/dashboard/products");
+              }}
               className="text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
             >
               Discard
@@ -525,6 +619,25 @@ const AddNewProduct = () => {
             </Button>
           </div>
         </div>
+
+        {/* Content Layout Grid */}
+        {draftSourceName && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-2.5 text-sm">
+            <span className="text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">Duplicated from:</span>{' '}
+              <span className="opacity-80">&ldquo;{draftSourceName}&rdquo;</span>
+              {' '}— Review and update before publishing.
+            </span>
+            <button
+              type="button"
+              onClick={clearDuplicateDraft}
+              className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors flex-shrink-0"
+              title="Clear draft"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">

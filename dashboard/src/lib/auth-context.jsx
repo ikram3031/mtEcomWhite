@@ -1,25 +1,95 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import { getGenericErrorMessage } from '@/lib/error-handler';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, baseURL } from '@/lib/api-client';
 
 const AuthContext = createContext(undefined);
+
+// Helper to check if a JWT token is expired (with 10-second safety buffer)
+function isJwtExpired(token) {
+  if (!token || typeof token !== 'string') return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    if (!parsed.exp) return false;
+    return Date.now() >= parsed.exp * 1000 - 10000;
+  } catch {
+    return true;
+  }
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      const storedToken = localStorage.getItem('accessToken');
-      if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
+    const initAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('accessToken');
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+
+        if (!storedUser || (!storedToken && !storedRefreshToken)) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setUser(null);
+          return;
+        }
+
+        // 1. If accessToken is still valid, authorize immediately
+        if (storedToken && !isJwtExpired(storedToken)) {
+          setUser(JSON.parse(storedUser));
+          return;
+        }
+
+        // 2. If accessToken is expired, try to refresh BEFORE showing any dashboard content
+        if (storedRefreshToken) {
+          try {
+            const res = await axios.post(`${baseURL}/api/v1/auth/refresh-token`, {
+              refreshToken: storedRefreshToken,
+            });
+
+            const { accessToken, refreshToken: newRefreshToken } = res.data?.data || {};
+            if (accessToken) {
+              localStorage.setItem('accessToken', accessToken);
+              if (newRefreshToken) {
+                localStorage.setItem('refreshToken', newRefreshToken);
+              }
+              setUser(JSON.parse(storedUser));
+              return;
+            }
+          } catch {
+            // Refresh failed or refresh token expired
+          }
+        }
+
+        // 3. If both accessToken and refreshToken are expired/invalid, clear session
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setUser(null);
+      } catch (e) {
+        console.error('Failed to initialize auth session:', e);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      console.error('Failed to parse cached auth state:', e);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email, password) => {

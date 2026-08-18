@@ -21,7 +21,7 @@ const createSampleProductSvg = (name, iconType, primaryColor, secondaryColor, de
         <rect x="40" y="110" width="140" height="200" rx="18" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.4" />
         <rect x="55" y="170" width="110" height="80" rx="8" fill="#ffffff" />
         <text x="110" y="205" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#111827">EAU DE PARFUM</text>
-        <text x="110" y="225" font-family="system-ui, sans-serif" font-size="10" letter-spacing="2" text-anchor="middle" fill="#6b7280">PARIS • 100 ML</text>
+        <text x="110" y="225" font-family="system-ui, sans-serif" font-size="10" letter-spacing="2" text-anchor="middle" fill="#6b7280">PARIS - 100 ML</text>
         <path d="M 45 130 Q 110 140 175 130" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5" fill="none" />
       </g>
     `;
@@ -82,7 +82,11 @@ const createSampleProductSvg = (name, iconType, primaryColor, secondaryColor, de
     <text x="250" y="450" font-family="system-ui, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="#64748b">${detailText}</text>
   </svg>`;
 
-  return 'data:image/svg+xml;base64,' + btoa(rawSvg);
+  const base64 = typeof window !== 'undefined' && window.btoa
+    ? window.btoa(unescape(encodeURIComponent(rawSvg)))
+    : Buffer.from(rawSvg).toString('base64');
+
+  return 'data:image/svg+xml;base64,' + base64;
 };
 
 export const SAMPLE_PRODUCTS = [
