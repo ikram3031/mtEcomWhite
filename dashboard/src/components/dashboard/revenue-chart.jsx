@@ -90,10 +90,10 @@ export function RevenueChart() {
               <Line
                 type="monotone"
                 dataKey="count"
-                stroke={isDark ? '#e78a53' : '#d87943'}
+                stroke="#c5a059"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: isDark ? '#e78a53' : '#d87943' }}
-                activeDot={{ r: 6, fill: isDark ? '#e78a53' : '#d87943' }}
+                dot={{ r: 3, fill: '#c5a059' }}
+                activeDot={{ r: 6, fill: '#c5a059' }}
               />
             </LineChart>
           </ResponsiveContainer>
