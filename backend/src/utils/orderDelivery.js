@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
-import { buildOrderInvoiceEmailHtml } from "../templates/orderInvoiceEmailTemplate.js";
+import { getClientInvoiceHtml } from "../templates/invoices/index.js";
 import { buildAdminOrderEmailHtml } from "../templates/adminOrderEmailTemplate.js";
 import { env } from "../config/env.js";
 
@@ -136,7 +136,10 @@ export function sendOrderEmailsAsynchronously(order) {
       // 1. Send Customer Order Confirmation Email (to customer email)
       if (customerEmail) {
         try {
-          const customerHtml = buildOrderInvoiceEmailHtml({ order: formattedOrderData });
+          const customerHtml = getClientInvoiceHtml({
+            order: formattedOrderData,
+            client: order.client || "decantre",
+          });
           await activeTransport.sendMail({
             from: fromAddress,
             to: customerEmail,

@@ -11,7 +11,7 @@ import { buildAllowedOrderUpdates,
   updateMemberOrderReference,
   updateMemberTotals,
 } from '../helper/orderControllerHelper.js';
-import { buildOrderInvoiceEmailHtml } from '../templates/orderInvoiceEmailTemplate.js';
+import { getClientInvoiceHtml } from '../templates/invoices/index.js';
 
 const { Types } = mongoose;
 
@@ -498,7 +498,11 @@ export const getOrderInvoiceView = async (req, res, next) => {
       paymentMethod: order.paymentMethod || "Cash on Delivery"
     };
 
-    const invoiceHtml = buildOrderInvoiceEmailHtml({ order: formattedOrderData, isPrintView: true });
+    const invoiceHtml = getClientInvoiceHtml({
+      order: formattedOrderData,
+      isPrintView: true,
+      client: order.client || 'decantre',
+    });
     res.setHeader("Content-Type", "text/html");
     res.setHeader("Content-Disposition", `inline; filename="Invoice-${formattedOrderData.orderId}.pdf"`);
     return res.send(invoiceHtml);
