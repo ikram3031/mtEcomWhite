@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, UploadCloud, X, Tag, Check } from "lucide-react";
+import { Plus, UploadCloud, X, Tag, Check, Layers, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 const COMMON_TAG_SUGGESTIONS = [
@@ -39,9 +39,13 @@ export const SidebarCards = ({
   galleryInputRef,
   handleGalleryImageSelect,
   removeGalleryImage,
+  categorySlugs = [],
+  setCategorySlugs,
   categorySlug,
   setCategorySlug,
   categories = [],
+  brandSlugs = [],
+  setBrandSlugs,
   parentBrandSlug,
   setParentBrandSlug,
   brandSlug,
@@ -56,6 +60,40 @@ export const SidebarCards = ({
   clientConfig,
   getFullPreviewUrl,
 }) => {
+  // Normalize Category & Brand Multi-select state
+  const selectedCategorySlugs = useMemo(() => {
+    if (Array.isArray(categorySlugs) && categorySlugs.length > 0) {
+      return categorySlugs;
+    }
+    if (categorySlug && typeof categorySlug === "string" && categorySlug !== "__none__") {
+      return [categorySlug];
+    }
+    return [];
+  }, [categorySlugs, categorySlug]);
+
+  const selectedBrandSlugs = useMemo(() => {
+    if (Array.isArray(brandSlugs) && brandSlugs.length > 0) {
+      return brandSlugs;
+    }
+    const list = [];
+    if (brandSlug && typeof brandSlug === "string" && brandSlug !== "__none__") {
+      list.push(brandSlug);
+    }
+    if (parentBrandSlug && typeof parentBrandSlug === "string" && parentBrandSlug !== "__none__" && !list.includes(parentBrandSlug)) {
+      list.push(parentBrandSlug);
+    }
+    return list;
+  }, [brandSlugs, brandSlug, parentBrandSlug]);
+
+  // Dropdown & Search state
+  const [categorySearch, setCategorySearch] = useState("");
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef(null);
+
+  const [brandSearch, setBrandSearch] = useState("");
+  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
+  const brandDropdownRef = useRef(null);
+
   const [tagInput, setTagInput] = useState("");
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const tagDropdownRef = useRef(null);
@@ -69,10 +107,211 @@ export const SidebarCards = ({
       ) {
         setIsTagDropdownOpen(false);
       }
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(e.target)
+      ) {
+        setIsCategoryDropdownOpen(false);
+      }
+      if (
+        brandDropdownRef.current &&
+        !brandDropdownRef.current.contains(e.target)
+      ) {
+        setIsBrandDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const getCategoryLabel = (catIdentifier) => {
+    const found = categories.find(
+      (c) =>
+        c.did === catIdentifier ||
+        c.slug === catIdentifier ||
+        c._id === catIdentifier ||
+        String(c._id) === String(catIdentifier) ||
+        c.id === catIdentifier
+    );
+    if (!found) return catIdentifier;
+    if (found.parent) {
+      const pName =
+        typeof found.parent === "object"
+          ? found.parent.name
+          : categories.find(
+              (c) =>
+                c.did === found.parent ||
+                c.id === found.parent ||
+                c._id === found.parent ||
+                String(c._id) === String(found.parent)
+            )?.name;
+      return pName ? `${pName} › ${found.name}` : found.name;
+    }
+    return found.name;
+  };
+
+  const getBrandLabel = (brandIdentifier) => {
+    const allBrandList = brands.length > 0 ? brands : [...parentBrands, ...childBrands];
+    const found = allBrandList.find(
+      (b) =>
+        b.did === brandIdentifier ||
+        b.slug === brandIdentifier ||
+        b._id === brandIdentifier ||
+        String(b._id) === String(brandIdentifier) ||
+        (b.slug && b.slug.toLowerCase() === String(brandIdentifier).toLowerCase()) ||
+        b.id === brandIdentifier
+    );
+    if (!found) return brandIdentifier;
+    if (found.parent) {
+      const pName =
+        typeof found.parent === "object"
+          ? found.parent.name
+          : allBrandList.find(
+              (b) =>
+                b.did === found.parent ||
+                b.id === found.parent ||
+                b._id === found.parent ||
+                String(b._id) === String(found.parent)
+            )?.name;
+      return pName ? `${pName} › ${found.name}` : found.name;
+    }
+    return found.name;
+  };
+
+  const handleToggleCategory = (catIdentifier) => {
+    if (!catIdentifier || catIdentifier === "__none__") return;
+    const current = selectedCategorySlugs;
+    if (current.includes(catIdentifier)) {
+      const updated = current.filter((c) => c !== catIdentifier);
+      if (setCategorySlugs) setCategorySlugs(updated);
+      else if (setCategorySlug) setCategorySlug(updated[0] || "");
+    } else {
+      const updated = [...current, catIdentifier];
+      if (setCategorySlugs) setCategorySlugs(updated);
+      else if (setCategorySlug) setCategorySlug(updated[0] || "");
+    }
+  };
+
+  const handleRemoveCategory = (catIdentifier) => {
+    const updated = selectedCategorySlugs.filter((c) => c !== catIdentifier);
+    if (setCategorySlugs) setCategorySlugs(updated);
+    else if (setCategorySlug) setCategorySlug(updated[0] || "");
+  };
+
+  const handleToggleBrand = (brandIdentifier) => {
+    if (!brandIdentifier || brandIdentifier === "__none__") return;
+    const current = selectedBrandSlugs;
+    if (current.includes(brandIdentifier)) {
+      const updated = current.filter((b) => b !== brandIdentifier);
+      if (setBrandSlugs) setBrandSlugs(updated);
+      else if (setBrandSlug) setBrandSlug(updated[0] || "");
+    } else {
+      const updated = [...current, brandIdentifier];
+      if (setBrandSlugs) setBrandSlugs(updated);
+      else if (setBrandSlug) setBrandSlug(updated[0] || "");
+    }
+  };
+
+  const handleRemoveBrand = (brandIdentifier) => {
+    const updated = selectedBrandSlugs.filter((b) => b !== brandIdentifier);
+    if (setBrandSlugs) setBrandSlugs(updated);
+    else if (setBrandSlug) setBrandSlug(updated[0] || "");
+  };
+
+  // Filtered categories tree for search/dropdown
+  const filteredCategoriesList = useMemo(() => {
+    const rootCats = categories.filter((c) => !c.parent);
+    const subCats = categories.filter((c) => !!c.parent);
+    const result = [];
+    const search = categorySearch.trim().toLowerCase();
+
+    rootCats.forEach((root) => {
+      const rootVal = root.did || root.slug || String(root._id);
+      const children = subCats.filter((sub) => {
+        const p = sub.parent;
+        const pId = typeof p === "object" && p !== null ? p.did || p._id || p.id : p;
+        return (
+          pId === root.did ||
+          pId === root.id ||
+          pId === root._id ||
+          pId === root.slug ||
+          String(pId) === String(root._id)
+        );
+      });
+
+      const rootMatches = !search || root.name.toLowerCase().includes(search);
+      const matchingChildren = children.filter((c) => !search || c.name.toLowerCase().includes(search));
+
+      if (rootMatches || matchingChildren.length > 0) {
+        result.push({ ...root, isChild: false, val: rootVal });
+        (search && !rootMatches ? matchingChildren : children).forEach((child) => {
+          result.push({
+            ...child,
+            isChild: true,
+            val: child.did || child.slug || String(child._id),
+          });
+        });
+      }
+    });
+
+    const renderedVals = new Set(result.map((r) => r.val));
+    categories.forEach((cat) => {
+      const val = cat.did || cat.slug || String(cat._id);
+      if (!renderedVals.has(val) && (!search || cat.name.toLowerCase().includes(search))) {
+        result.push({ ...cat, isChild: !!cat.parent, val });
+      }
+    });
+
+    return result;
+  }, [categories, categorySearch]);
+
+  // Filtered brands tree for search/dropdown
+  const filteredBrandsList = useMemo(() => {
+    const allBrandList = brands.length > 0 ? brands : [...parentBrands, ...childBrands];
+    const rootBrands = allBrandList.filter((b) => !b.parent);
+    const subBrands = allBrandList.filter((b) => !!b.parent);
+    const result = [];
+    const search = brandSearch.trim().toLowerCase();
+
+    rootBrands.forEach((root) => {
+      const rootVal = root.did || root.slug || String(root._id);
+      const children = subBrands.filter((sub) => {
+        const p = sub.parent;
+        const pId = typeof p === "object" && p !== null ? p.did || p._id || p.id : p;
+        return (
+          pId === root.did ||
+          pId === root.id ||
+          pId === root._id ||
+          pId === root.slug ||
+          String(pId) === String(root._id)
+        );
+      });
+
+      const rootMatches = !search || root.name.toLowerCase().includes(search);
+      const matchingChildren = children.filter((c) => !search || c.name.toLowerCase().includes(search));
+
+      if (rootMatches || matchingChildren.length > 0) {
+        result.push({ ...root, isChild: false, val: rootVal });
+        (search && !rootMatches ? matchingChildren : children).forEach((child) => {
+          result.push({
+            ...child,
+            isChild: true,
+            val: child.did || child.slug || String(child._id),
+          });
+        });
+      }
+    });
+
+    const renderedVals = new Set(result.map((r) => r.val));
+    allBrandList.forEach((brand) => {
+      const val = brand.did || brand.slug || String(brand._id);
+      if (!renderedVals.has(val) && (!search || brand.name.toLowerCase().includes(search))) {
+        result.push({ ...brand, isChild: !!brand.parent, val });
+      }
+    });
+
+    return result;
+  }, [brands, parentBrands, childBrands, brandSearch]);
 
   const handleAddTag = (rawTag) => {
     const formatted = rawTag
@@ -275,241 +514,223 @@ export const SidebarCards = ({
         />
       </div>
 
-      {/* 4. Categories Card */}
+      {/* 4. Categories Card (Multi-Select + Search) */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
-        <h3 className="text-sm font-bold border-b pb-2 text-foreground">
-          Categories
-        </h3>
-
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground block">
-            Category
-          </label>
-          <div className="flex gap-2">
-            <Select
-              value={categorySlug || "__none__"}
-              onValueChange={(val) =>
-                setCategorySlug(val === "__none__" ? "" : val)
-              }
-            >
-              <SelectTrigger className="flex-1 cursor-pointer h-9">
-                <SelectValue placeholder="Select a category">
-                  {categorySlug && categorySlug !== "__none__" ? (() => {
-                    const found = categories.find(
-                      (c) =>
-                        c.slug === categorySlug ||
-                        c.did === categorySlug ||
-                        c._id === categorySlug ||
-                        String(c._id) === String(categorySlug) ||
-                        c.id === categorySlug
-                    );
-                    if (!found) return categorySlug;
-                    if (found.parent) {
-                      const pName =
-                        typeof found.parent === "object"
-                          ? found.parent.name
-                          : categories.find(
-                              (c) =>
-                                c.did === found.parent ||
-                                c.id === found.parent ||
-                                c._id === found.parent ||
-                                String(c._id) === String(found.parent)
-                            )?.name;
-                      return pName ? `${pName} › ${found.name}` : found.name;
-                    }
-                    return found.name;
-                  })() : undefined}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-md max-h-72">
-                <SelectItem value="__none__">None</SelectItem>
-                {(() => {
-                  const rootCats = categories.filter((c) => !c.parent);
-                  const subCats = categories.filter((c) => !!c.parent);
-
-                  const renderedDids = new Set();
-
-                  const trees = rootCats.map((root) => {
-                    const rootVal = root.did || root.slug || String(root._id);
-                    renderedDids.add(root.did || String(root._id));
-                    const children = subCats.filter((sub) => {
-                      const p = sub.parent;
-                      const pId =
-                        typeof p === "object" && p !== null
-                          ? p.did || p._id || p.id
-                          : p;
-                      const matches =
-                        pId === root.did ||
-                        pId === root.id ||
-                        pId === root._id ||
-                        pId === root.slug ||
-                        String(pId) === String(root._id);
-                      if (matches) {
-                        renderedDids.add(sub.did || String(sub._id));
-                      }
-                      return matches;
-                    });
-
-                    return (
-                      <div key={root.did || root.slug || root._id}>
-                        {/* Parent Category Option */}
-                        <SelectItem
-                          value={rootVal}
-                          className="font-semibold text-foreground"
-                        >
-                          📁 {root.name}
-                        </SelectItem>
-
-                        {/* Child Categories indented with arrow */}
-                        {children.map((child) => {
-                          const childVal = child.did || child.slug || String(child._id);
-                          renderedDids.add(child.did || String(child._id));
-                          return (
-                            <SelectItem
-                              key={child.did || child.slug || child._id}
-                              value={childVal}
-                              className="pl-6 text-xs text-muted-foreground font-normal"
-                            >
-                              └─ {child.name}
-                            </SelectItem>
-                          );
-                        })}
-                      </div>
-                    );
-                  });
-
-                  // Handle any categories that were not rendered as part of a tree
-                  const remainingCats = categories.filter(
-                    (c) => !renderedDids.has(c.did || String(c._id))
-                  );
-                  const remainingElements = remainingCats.map((cat) => (
-                    <SelectItem
-                      key={cat.did || cat.slug || cat._id}
-                      value={cat.did || cat.slug || String(cat._id)}
-                      className="font-semibold text-foreground"
-                    >
-                      📁 {cat.name}
-                    </SelectItem>
-                  ));
-
-                  return [...trees, ...remainingElements];
-                })()}
-              </SelectContent>
-            </Select>
+        <div className="flex items-center justify-between border-b pb-2">
+          <div className="flex items-center gap-1.5">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-bold text-foreground">Categories</h3>
           </div>
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            {selectedCategorySlugs.length} selected
+          </span>
         </div>
 
-        {/* 5. Brands Section (Conditionally rendered) */}
-        {clientConfig?.features?.brand !== false && (
-          <div className="space-y-3 pt-2.5 border-t">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground block">
-                Brand
-              </label>
-              <Select
-                value={parentBrandSlug || "__none__"}
-                onValueChange={(val) => {
-                  setParentBrandSlug(val === "__none__" ? "" : val);
-                  setBrandSlug("");
+        {/* Category Search & Dropdown Picker */}
+        <div className="relative" ref={categoryDropdownRef}>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground block">
+              Search & Add Categories
+            </label>
+            <div className="relative">
+              <Input
+                placeholder="Search or click to select categories..."
+                value={categorySearch}
+                onChange={(e) => {
+                  setCategorySearch(e.target.value);
+                  setIsCategoryDropdownOpen(true);
                 }}
+                onFocus={() => setIsCategoryDropdownOpen(true)}
+                className="h-9 pr-8"
+              />
+              <button
+                type="button"
+                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <SelectTrigger className="w-full cursor-pointer h-9">
-                  <SelectValue placeholder="Select Brand">
-                    {parentBrandSlug && parentBrandSlug !== "__none__" ? (() => {
-                      const allBrandList = brands.length > 0 ? brands : parentBrands;
-                      const found = allBrandList.find(
-                        (b) =>
-                          b.did === parentBrandSlug ||
-                          b.slug === parentBrandSlug ||
-                          b._id === parentBrandSlug ||
-                          String(b._id) === String(parentBrandSlug) ||
-                          (b.slug && b.slug.toLowerCase() === parentBrandSlug.toLowerCase())
-                      );
-                      return found ? found.name : parentBrandSlug;
-                    })() : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-md">
-                  <SelectItem value="__none__">None</SelectItem>
-                  {parentBrands.map((pb) => (
-                    <SelectItem
-                      key={pb.did || pb.slug || pb._id}
-                      value={pb.did || pb.slug || String(pb._id)}
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Dropdown Options */}
+          {isCategoryDropdownOpen && (
+            <div className="absolute top-full mt-1 left-0 right-0 z-50 rounded-lg border border-border bg-popover shadow-lg py-1.5 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+              {filteredCategoriesList.length > 0 ? (
+                filteredCategoriesList.map((cat) => {
+                  const val = cat.did || cat.slug || String(cat._id);
+                  const isSelected = selectedCategorySlugs.includes(val);
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => handleToggleCategory(val)}
+                      className={`w-full px-3 py-1.5 text-left text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-foreground hover:bg-muted/50"
+                      } ${cat.isChild ? "pl-7 text-[11px]" : "font-medium"}`}
                     >
-                      {pb.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      <span className="truncate">
+                        {cat.isChild ? `└─ ${cat.name}` : `📁 ${cat.name}`}
+                      </span>
+                      {isSelected ? (
+                        <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                      ) : (
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-40 hover:opacity-100" />
+                      )}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                  No matching categories found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Selected Category Chips */}
+        {selectedCategorySlugs.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {selectedCategorySlugs.map((slug) => (
+              <span
+                key={slug}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 shadow-xs animate-in fade-in"
+              >
+                📁 {getCategoryLabel(slug)}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCategory(slug)}
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                  title="Remove category"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground italic">
+            No categories selected yet. Click above to select multiple categories.
+          </p>
+        )}
+      </div>
+
+      {/* 5. Brands Card (Multi-Select + Search) */}
+      {clientConfig?.features?.brand !== false && (
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
+          <div className="flex items-center justify-between border-b pb-2">
+            <div className="flex items-center gap-1.5">
+              <Tag className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-bold text-foreground">Brands</h3>
+            </div>
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              {selectedBrandSlugs.length} selected
+            </span>
+          </div>
+
+          {/* Brand Search & Dropdown Picker */}
+          <div className="relative" ref={brandDropdownRef}>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground block">
+                Search & Add Brands
+              </label>
+              <div className="relative">
+                <Input
+                  placeholder="Search or click to select brands..."
+                  value={brandSearch}
+                  onChange={(e) => {
+                    setBrandSearch(e.target.value);
+                    setIsBrandDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsBrandDropdownOpen(true)}
+                  className="h-9 pr-8"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsBrandDropdownOpen(!isBrandDropdownOpen)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
-            {parentBrandSlug && (
-              <div className="space-y-2 animate-in fade-in">
-                <label className="text-xs font-semibold text-muted-foreground block">
-                  Sub Brand
-                </label>
-                <Select
-                  value={brandSlug || "__none__"}
-                  onValueChange={(val) =>
-                    setBrandSlug(val === "__none__" ? "" : val)
-                  }
-                >
-                  <SelectTrigger className="w-full cursor-pointer h-9">
-                    <SelectValue placeholder="Select Sub Brand">
-                      {brandSlug && brandSlug !== "__none__" ? (() => {
-                        const allBrandList = brands.length > 0 ? brands : [...childBrands, ...parentBrands];
-                        const found = allBrandList.find(
-                          (b) =>
-                            b.did === brandSlug ||
-                            b.slug === brandSlug ||
-                            b._id === brandSlug ||
-                            String(b._id) === String(brandSlug) ||
-                            (b.slug && b.slug.toLowerCase() === brandSlug.toLowerCase())
-                        );
-                        return found ? found.name : brandSlug;
-                      })() : undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-md">
-                    <SelectItem value="__none__">None</SelectItem>
-                    {childBrands.length > 0
-                      ? childBrands.map((cb) => (
-                          <SelectItem
-                            key={cb.did || cb.slug || cb._id}
-                            value={cb.did || cb.slug || String(cb._id)}
-                          >
-                            {cb.name}
-                          </SelectItem>
-                        ))
-                      : parentBrands
-                          .filter(
-                            (pb) =>
-                              pb.slug === parentBrandSlug ||
-                              pb.did === parentBrandSlug ||
-                              pb._id === parentBrandSlug ||
-                              String(pb._id) === String(parentBrandSlug)
-                          )
-                          .map((pb) => (
-                            <SelectItem
-                              key={pb.did || pb.slug || pb._id}
-                              value={pb.did || pb.slug || String(pb._id)}
-                            >
-                              {pb.name}
-                            </SelectItem>
-                          ))}
-                  </SelectContent>
-                </Select>
+            {/* Dropdown Options */}
+            {isBrandDropdownOpen && (
+              <div className="absolute top-full mt-1 left-0 right-0 z-50 rounded-lg border border-border bg-popover shadow-lg py-1.5 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                {filteredBrandsList.length > 0 ? (
+                  filteredBrandsList.map((b) => {
+                    const val = b.did || b.slug || String(b._id);
+                    const isSelected = selectedBrandSlugs.includes(val);
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleToggleBrand(val)}
+                        className={`w-full px-3 py-1.5 text-left text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-secondary text-secondary-foreground font-semibold"
+                            : "text-foreground hover:bg-muted/50"
+                        } ${b.isChild ? "pl-7 text-[11px]" : "font-medium"}`}
+                      >
+                        <span className="truncate">
+                          {b.isChild ? `└─ ${b.name}` : `🏷️ ${b.name}`}
+                        </span>
+                        {isSelected ? (
+                          <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-40 hover:opacity-100" />
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                    No matching brands found
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
 
-        {/* 6. Season Section (Conditionally rendered) */}
-        {clientConfig?.features?.season !== false && (
-          <div className="space-y-2 pt-2.5 border-t">
-            <label className="text-xs font-semibold text-muted-foreground block">
-              Season
-            </label>
+          {/* Selected Brand Chips */}
+          {selectedBrandSlugs.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {selectedBrandSlugs.map((slug) => (
+                <span
+                  key={slug}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border shadow-xs animate-in fade-in"
+                >
+                  🏷️ {getBrandLabel(slug)}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBrand(slug)}
+                    className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                    title="Remove brand"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">
+              No brands selected yet. Click above to select multiple brands.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 6. Season Card (Conditionally rendered) */}
+      {clientConfig?.features?.season !== false && (
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
+          <h3 className="text-sm font-bold border-b pb-2 text-foreground">
+            Season
+          </h3>
+          <div className="space-y-2">
             <Select
               value={season}
               onValueChange={(val) => setSeason(val ?? "All-Season")}
@@ -526,8 +747,8 @@ export const SidebarCards = ({
               </SelectContent>
             </Select>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 7. Tags Card (Chip UI + Search & Add) */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3.5">
@@ -613,7 +834,7 @@ export const SidebarCards = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(t)}
-                  className="hover:text-destructive transition-colors p-0.5 rounded-full"
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
                   title={`Remove ${t}`}
                 >
                   <X className="h-3 w-3" />
@@ -630,3 +851,4 @@ export const SidebarCards = ({
     </div>
   );
 };
+

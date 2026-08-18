@@ -77,9 +77,10 @@ const EditProductPage = () => {
   // 5. Sidebar & Organization (isActive boolean & Tags)
   const [isActive, setIsActive] = useState(true);
   const [tags, setTags] = useState([]);
-  const [categorySlug, setCategorySlug] = useState("");
-  const [brandSlug, setBrandSlug] = useState("");
+  const [categorySlugs, setCategorySlugs] = useState([]);
+  const [brandSlugs, setBrandSlugs] = useState([]);
   const [parentBrandSlug, setParentBrandSlug] = useState("");
+  const [brandSlug, setBrandSlug] = useState("");
   const [season, setSeason] = useState("All-Season");
 
   // 6. Media / Upload states
@@ -226,19 +227,32 @@ const EditProductPage = () => {
             setMetaDescription(product.metaData.metaDescription || "");
           }
 
-          if (product.categories && product.categories.length > 0) {
-            const firstCat = product.categories[0];
-            setCategorySlug(
-              firstCat.slug ||
-                firstCat.did ||
-                (typeof firstCat === "string" ? firstCat : "")
+          if (Array.isArray(product.categories) && product.categories.length > 0) {
+            setCategorySlugs(
+              product.categories
+                .map((c) =>
+                  typeof c === "object" && c !== null ? c.slug || c.did || c._id : String(c)
+                )
+                .filter(Boolean)
             );
+          } else if (product.category) {
+            setCategorySlugs([
+              typeof product.category === "object"
+                ? product.category.slug || product.category.did || product.category._id
+                : String(product.category),
+            ]);
           }
-          if (product.brand) {
-            const br = product.brand;
-            setBrandSlug(
-              br.slug || br.did || (typeof br === "string" ? br : "")
+
+          if (Array.isArray(product.brand) && product.brand.length > 0) {
+            setBrandSlugs(
+              product.brand
+                .map((b) =>
+                  typeof b === "object" && b !== null ? b.slug || b.did || b._id : String(b)
+                )
+                .filter(Boolean)
             );
+          } else if (product.brand && typeof product.brand === "string") {
+            setBrandSlugs([product.brand]);
           }
 
           if (product.type === "simple") {
@@ -603,9 +617,19 @@ const EditProductPage = () => {
         },
       };
 
-      if (categorySlug) body.category = categorySlug;
-      const effectiveBrand = brandSlug || parentBrandSlug;
-      if (effectiveBrand) body.brand = effectiveBrand;
+      if (categorySlugs.length > 0) {
+        body.categories = categorySlugs;
+        body.category = categorySlugs[0];
+      } else {
+        body.categories = [];
+      }
+
+      if (brandSlugs.length > 0) {
+        body.brand = brandSlugs;
+        body.brands = brandSlugs;
+      } else {
+        body.brand = [];
+      }
 
       if (productType === "simple") {
         body.price = parseFloat(price);
@@ -766,13 +790,11 @@ const EditProductPage = () => {
               galleryInputRef={galleryInputRef}
               handleGalleryImageSelect={handleGalleryImageSelect}
               removeGalleryImage={removeGalleryImage}
-              categorySlug={categorySlug}
-              setCategorySlug={setCategorySlug}
+              categorySlugs={categorySlugs}
+              setCategorySlugs={setCategorySlugs}
               categories={categories}
-              parentBrandSlug={parentBrandSlug}
-              setParentBrandSlug={setParentBrandSlug}
-              brandSlug={brandSlug}
-              setBrandSlug={setBrandSlug}
+              brandSlugs={brandSlugs}
+              setBrandSlugs={setBrandSlugs}
               parentBrands={parentBrands}
               childBrands={childBrands}
               brands={brands}

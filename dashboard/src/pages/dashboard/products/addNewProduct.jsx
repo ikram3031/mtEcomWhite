@@ -80,9 +80,10 @@ const AddNewProduct = () => {
   // 5. Sidebar & Organization (isActive boolean & Tags)
   const [isActive, setIsActive] = useState(true);
   const [tags, setTags] = useState([]);
-  const [categorySlug, setCategorySlug] = useState("");
-  const [brandSlug, setBrandSlug] = useState("");
+  const [categorySlugs, setCategorySlugs] = useState([]);
+  const [brandSlugs, setBrandSlugs] = useState([]);
   const [parentBrandSlug, setParentBrandSlug] = useState("");
+  const [brandSlug, setBrandSlug] = useState("");
   const [season, setSeason] = useState("All-Season");
 
   // 6. Media / Upload states
@@ -129,39 +130,27 @@ const AddNewProduct = () => {
     if (!duplicateDraft) return;
 
     const p = duplicateDraft;
-    const suffix = `-${String(Date.now()).slice(-2)}`;
+    if (p.name) setName(p.name);
+    if (p.slug) setSlug(p.slug);
+    if (p.sku) setSku(p.sku);
+    if (p.description) setDescription(p.description);
+    if (p.longDescription) setLongDescription(p.longDescription);
+    if (p.type) setProductType(p.type);
+    if (p.season) setSeason(p.season);
+    if (typeof p.isActive === "boolean") setIsActive(p.isActive);
+    if (p.stockStatus) setStockStatus(p.stockStatus);
+    if (p.stockAmount !== undefined) setStockAmount(String(p.stockAmount));
 
-    setDraftSourceName(p.name || "");
-    setName(p.name ? `${p.name} (Copy)` : "");
-    setSlug(p.slug ? `${p.slug}${suffix}` : "");
-    setSlugManual(true);
-    setSku(p.sku || "");
-    setDescription(p.description || "");
-    setLongDescription(p.longDescription || "");
-    setChargeTax(Boolean(p.chargeTax));
-    setTaxRate(p.taxRate ? String(p.taxRate) : "");
-    setIsActive(false); // draft সবসময় inactive
-    setProductType(p.type || "simple");
-    setStockStatus(p.stockStatus || "instock");
-    setStockAmount(
-      p.stockAmount !== undefined && p.stockAmount !== null
-        ? String(p.stockAmount)
-        : p.stock !== undefined && p.stock !== null
-        ? String(p.stock)
-        : ""
-    );
-    setSeason(p.season || "All-Season");
-    setTags(Array.isArray(p.tags) ? p.tags : []);
-
-    if (p.metaData) {
-      setMetaTitle(p.metaData.metaTitle || "");
-      setMetaDescription(p.metaData.metaDescription || "");
+    // Tags
+    if (Array.isArray(p.tags) && p.tags.length > 0) {
+      setTags(p.tags);
     }
 
-    // Image (existing URL reuse, no re-upload)
-    if (p.imageUrl) {
-      setUploadedImageUrl(p.imageUrl);
-      setImagePreview(p.imageUrl);
+    // Main Image
+    const mainImg = p.imageUrl || p.thumbnailUrl;
+    if (mainImg) {
+      setImagePreview(mainImg);
+      setUploadedImageUrl(mainImg);
     }
 
     // Gallery images
@@ -177,19 +166,34 @@ const AddNewProduct = () => {
       );
     }
 
-    // Category (first one)
+    // Categories (all)
     if (Array.isArray(p.categories) && p.categories.length > 0) {
-      const firstCat = p.categories[0];
-      setCategorySlug(
-        firstCat?.slug || firstCat?.did || (typeof firstCat === "string" ? firstCat : "")
+      setCategorySlugs(
+        p.categories
+          .map((c) =>
+            typeof c === "object" && c !== null ? c.slug || c.did || c._id : String(c)
+          )
+          .filter(Boolean)
       );
+    } else if (p.category) {
+      setCategorySlugs([
+        typeof p.category === "object"
+          ? p.category.slug || p.category.did || p.category._id
+          : String(p.category),
+      ]);
     }
 
-    // Brand
+    // Brands (all)
     if (Array.isArray(p.brand) && p.brand.length > 0) {
-      setBrandSlug(p.brand[0] || "");
+      setBrandSlugs(
+        p.brand
+          .map((b) =>
+            typeof b === "object" && b !== null ? b.slug || b.did || b._id : String(b)
+          )
+          .filter(Boolean)
+      );
     } else if (p.brand && typeof p.brand === "string") {
-      setBrandSlug(p.brand);
+      setBrandSlugs([p.brand]);
     }
 
     // Simple product fields
@@ -564,9 +568,19 @@ const AddNewProduct = () => {
         },
       };
 
-      if (categorySlug) body.category = categorySlug;
-      const effectiveBrand = brandSlug || parentBrandSlug;
-      if (effectiveBrand) body.brand = effectiveBrand;
+      if (categorySlugs.length > 0) {
+        body.categories = categorySlugs;
+        body.category = categorySlugs[0];
+      } else {
+        body.categories = [];
+      }
+
+      if (brandSlugs.length > 0) {
+        body.brand = brandSlugs;
+        body.brands = brandSlugs;
+      } else {
+        body.brand = [];
+      }
 
       if (productType === "simple") {
         body.price = parseFloat(price);
@@ -740,13 +754,11 @@ const AddNewProduct = () => {
               galleryInputRef={galleryInputRef}
               handleGalleryImageSelect={handleGalleryImageSelect}
               removeGalleryImage={removeGalleryImage}
-              categorySlug={categorySlug}
-              setCategorySlug={setCategorySlug}
+              categorySlugs={categorySlugs}
+              setCategorySlugs={setCategorySlugs}
               categories={categories}
-              parentBrandSlug={parentBrandSlug}
-              setParentBrandSlug={setParentBrandSlug}
-              brandSlug={brandSlug}
-              setBrandSlug={setBrandSlug}
+              brandSlugs={brandSlugs}
+              setBrandSlugs={setBrandSlugs}
               parentBrands={parentBrands}
               childBrands={childBrands}
               brands={brands}
