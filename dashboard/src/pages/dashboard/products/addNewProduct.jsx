@@ -69,6 +69,8 @@ const AddNewProduct = () => {
   const [offerPrice, setOfferPrice] = useState("");
   const [chargeTax, setChargeTax] = useState(false);
   const [taxRate, setTaxRate] = useState("");
+  const [stockStatus, setStockStatus] = useState("instock");
+  const [stockAmount, setStockAmount] = useState("");
 
   // 4. Variant product fields
   const [variants, setVariants] = useState([emptyVariant()]);
@@ -140,6 +142,14 @@ const AddNewProduct = () => {
     setTaxRate(p.taxRate ? String(p.taxRate) : "");
     setIsActive(false); // draft সবসময় inactive
     setProductType(p.type || "simple");
+    setStockStatus(p.stockStatus || "instock");
+    setStockAmount(
+      p.stockAmount !== undefined && p.stockAmount !== null
+        ? String(p.stockAmount)
+        : p.stock !== undefined && p.stock !== null
+        ? String(p.stock)
+        : ""
+    );
     setSeason(p.season || "All-Season");
     setTags(Array.isArray(p.tags) ? p.tags : []);
 
@@ -408,6 +418,18 @@ const AddNewProduct = () => {
         toast.error("Base price must be greater than 0.");
         return;
       }
+      if (stockStatus === "instock") {
+        if (
+          stockAmount === "" ||
+          stockAmount === null ||
+          stockAmount === undefined ||
+          isNaN(Number(stockAmount)) ||
+          Number(stockAmount) <= 0
+        ) {
+          toast.error("Stock quantity is mandatory for in-stock simple product (must be at least 1).");
+          return;
+        }
+      }
     } else {
       const validVariants = variants.filter((v) => v.size.trim() && v.price);
       if (validVariants.length === 0) {
@@ -529,6 +551,11 @@ const AddNewProduct = () => {
         chargeTax,
         taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
         isActive: Boolean(isActive),
+        stockStatus: stockStatus || "instock",
+        stockAmount:
+          productType === "simple" && stockStatus === "instock"
+            ? Math.max(0, parseInt(stockAmount, 10))
+            : 0,
         tags: Array.isArray(tags) ? tags : [],
         images: uploadedGalleryImages,
         metaData: {
@@ -667,6 +694,10 @@ const AddNewProduct = () => {
               setChargeTax={setChargeTax}
               taxRate={taxRate}
               setTaxRate={setTaxRate}
+              stockStatus={stockStatus}
+              setStockStatus={setStockStatus}
+              stockAmount={stockAmount}
+              setStockAmount={setStockAmount}
               variants={variants}
               attributeGroups={attributeGroups}
               selectedAttributeGroup={selectedAttributeGroup}

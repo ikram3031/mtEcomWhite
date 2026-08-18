@@ -126,6 +126,12 @@ export const createProduct = async (req, res, next) => {
       brand: brandDids,
       images,
       stockStatus: body.stockStatus || "instock",
+      stockAmount:
+        body.stockAmount !== undefined &&
+        body.stockAmount !== null &&
+        body.stockAmount !== ""
+          ? Math.max(0, Number(body.stockAmount))
+          : 0,
       createdBy: userId,
     };
 
@@ -298,6 +304,12 @@ export const updateProduct = async (req, res, next) => {
     if (body.tags !== undefined) product.tags = body.tags;
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
+    if (body.stockAmount !== undefined) {
+      product.stockAmount =
+        body.stockAmount !== null && body.stockAmount !== ""
+          ? Math.max(0, Number(body.stockAmount))
+          : 0;
+    }
 
     // Update gallery images
     const rawGallery =

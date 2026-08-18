@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, UploadCloud, X, Layers, Lock } from "lucide-react";
+import { Plus, UploadCloud, X, Layers, Lock, Package, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 export const ProductDataCard = ({
   productType,
@@ -21,6 +22,10 @@ export const ProductDataCard = ({
   setChargeTax,
   taxRate,
   setTaxRate,
+  stockStatus = "instock",
+  setStockStatus,
+  stockAmount = "",
+  setStockAmount,
   variants,
   attributeGroups,
   selectedAttributeGroup,
@@ -107,24 +112,51 @@ export const ProductDataCard = ({
         </div>
       </div>
 
-      {/* Empty State / Unselected Placeholder */}
+      {/* Empty State / Unselected Placeholder with Disabled Stock Controls */}
       {(!productType || productType === "__none__") && (
-        <div className="border-2 border-dashed border-border/80 rounded-xl p-8 text-center flex flex-col items-center justify-center min-h-[140px] bg-muted/10">
-          <Layers className="h-8 w-8 text-muted-foreground/60 mb-2" />
-          <span className="text-xs font-semibold text-foreground block">
-            No Product Type Selected
-          </span>
-          <span className="text-[11px] text-muted-foreground block mt-1 max-w-sm">
-            Please choose <strong>Simple Product</strong> or{" "}
-            <strong>Variable Product</strong> from the dropdown above to setup
-            prices and inventory.
-          </span>
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-border/80 rounded-xl p-8 text-center flex flex-col items-center justify-center min-h-[140px] bg-muted/10">
+            <Layers className="h-8 w-8 text-muted-foreground/60 mb-2" />
+            <span className="text-xs font-semibold text-foreground block">
+              No Product Type Selected
+            </span>
+            <span className="text-[11px] text-muted-foreground block mt-1 max-w-sm">
+              Please choose <strong>Simple Product</strong> or{" "}
+              <strong>Variable Product</strong> from the dropdown above to setup
+              prices and inventory.
+            </span>
+          </div>
+
+          {/* Disabled Stock Controls */}
+          <div className="pt-4 border-t border-border/60 opacity-40 pointer-events-none select-none space-y-3">
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <h4 className="text-xs font-bold text-muted-foreground">Inventory & Stock (Disabled)</h4>
+              </div>
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                Disabled
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground block">
+                  Stock Status
+                </label>
+                <Input
+                  disabled
+                  placeholder="Select Product Type to enable stock"
+                  className="h-9 bg-muted/30 cursor-not-allowed"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Accordion Content: Simple Product */}
       {productType === "simple" && (
-        <div className="space-y-4 pt-1 animate-in fade-in slide-in-from-top-1">
+        <div className="space-y-5 pt-1 animate-in fade-in slide-in-from-top-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2.5">
               <label className="text-xs font-semibold text-muted-foreground block">
@@ -184,6 +216,98 @@ export const ProductDataCard = ({
                 />
               </div>
             )}
+          </div>
+
+          {/* Inventory & Stock Section for Simple Product */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                <h4 className="text-xs font-bold text-foreground">Inventory & Stock</h4>
+              </div>
+              <Badge
+                variant="outline"
+                className={
+                  stockStatus === "instock"
+                    ? "text-emerald-600 border-emerald-500/30 bg-emerald-500/10 text-[10px]"
+                    : "text-destructive border-destructive/30 bg-destructive/10 text-[10px]"
+                }
+              >
+                {stockStatus === "instock" ? (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> In Stock
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3 text-destructive" /> Out of Stock
+                  </span>
+                )}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground block">
+                  Stock Status *
+                </label>
+                <Select
+                  value={stockStatus || "instock"}
+                  onValueChange={(val) => setStockStatus?.(val || "instock")}
+                >
+                  <SelectTrigger className="h-9 w-full cursor-pointer bg-background">
+                    <SelectValue placeholder="Select Stock Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-md">
+                    <SelectItem value="instock">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                        In Stock (স্টকে আছে)
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="outofstock">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
+                        Out of Stock (স্টক আউট)
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  {stockStatus === "instock"
+                    ? "Product is active and available for purchase."
+                    : "Product will be marked as Sold Out / Out of Stock."}
+                </p>
+              </div>
+
+              {stockStatus === "instock" ? (
+                <div className="space-y-2 animate-in fade-in">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1 block">
+                    <span>Stock Quantity (কয়টা স্টক আছে)</span>
+                    <span className="text-destructive font-bold">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    placeholder="e.g. 50"
+                    value={stockAmount}
+                    onChange={(e) => setStockAmount?.(e.target.value)}
+                    className="h-9 bg-background"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Mandatory: Enter the number of available items in stock.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 p-3 rounded-lg border border-destructive/20 bg-destructive/5 flex items-center gap-2.5 text-destructive text-xs">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="text-[11px] leading-tight">
+                    Stock quantity is not required for Out of Stock simple products.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -474,6 +598,67 @@ export const ProductDataCard = ({
               >
                 <Plus className="h-4 w-4" /> Add New Variation
               </Button>
+            </div>
+          </div>
+
+          {/* Inventory & Stock Section for Variable Product */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                <h4 className="text-xs font-bold text-foreground">Inventory & Stock</h4>
+              </div>
+              <Badge
+                variant="outline"
+                className={
+                  stockStatus === "instock"
+                    ? "text-emerald-600 border-emerald-500/30 bg-emerald-500/10 text-[10px]"
+                    : "text-destructive border-destructive/30 bg-destructive/10 text-[10px]"
+                }
+              >
+                {stockStatus === "instock" ? (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> In Stock
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3 text-destructive" /> Out of Stock
+                  </span>
+                )}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground block">
+                  Stock Status *
+                </label>
+                <Select
+                  value={stockStatus || "instock"}
+                  onValueChange={(val) => setStockStatus?.(val || "instock")}
+                >
+                  <SelectTrigger className="h-9 w-full cursor-pointer bg-background">
+                    <SelectValue placeholder="Select Stock Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-md">
+                    <SelectItem value="instock">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                        In Stock (স্টকে আছে)
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="outofstock">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
+                        Out of Stock (স্টক আউট)
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Controls overall storefront availability for this variable product.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -46,7 +46,8 @@ export const serializeProduct = (product) => {
   return {
 		...rest,
 		id,
-		stockStatus: source?.stockStatus ?? null,
+		stockStatus: source?.stockStatus ?? "instock",
+		stockAmount: typeof source?.stockAmount === "number" ? source.stockAmount : Number(source?.stockAmount || 0),
 		created_at: source?.createdAt ?? null,
 		updated_at: source?.updatedAt ?? null,
 		image_url: source?.imageUrl ?? null,

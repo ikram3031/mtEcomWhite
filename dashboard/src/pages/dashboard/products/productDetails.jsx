@@ -66,6 +66,8 @@ const EditProductPage = () => {
   const [offerPrice, setOfferPrice] = useState("");
   const [chargeTax, setChargeTax] = useState(false);
   const [taxRate, setTaxRate] = useState("");
+  const [stockStatus, setStockStatus] = useState("instock");
+  const [stockAmount, setStockAmount] = useState("");
 
   // 4. Variant product fields
   const [variants, setVariants] = useState([emptyVariant()]);
@@ -206,6 +208,14 @@ const EditProductPage = () => {
           setTaxRate(product.taxRate ? String(product.taxRate) : "");
           setIsActive(product.isActive !== undefined ? Boolean(product.isActive) : true);
           setProductType(product.type || "simple");
+          setStockStatus(product.stockStatus || "instock");
+          setStockAmount(
+            product.stockAmount !== undefined && product.stockAmount !== null
+              ? String(product.stockAmount)
+              : product.stock !== undefined && product.stock !== null
+              ? String(product.stock)
+              : ""
+          );
           setUploadedImageUrl(product.imageUrl || "");
           setImagePreview(product.imageUrl || "");
           setSeason(product.season || "All-Season");
@@ -447,6 +457,18 @@ const EditProductPage = () => {
         toast.error("Base price must be greater than 0.");
         return;
       }
+      if (stockStatus === "instock") {
+        if (
+          stockAmount === "" ||
+          stockAmount === null ||
+          stockAmount === undefined ||
+          isNaN(Number(stockAmount)) ||
+          Number(stockAmount) <= 0
+        ) {
+          toast.error("Stock quantity is mandatory for in-stock simple product (must be at least 1).");
+          return;
+        }
+      }
     } else {
       const validVariants = variants.filter((v) => v.size.trim() && v.price);
       if (validVariants.length === 0) {
@@ -568,6 +590,11 @@ const EditProductPage = () => {
         chargeTax,
         taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
         isActive: Boolean(isActive),
+        stockStatus: stockStatus || "instock",
+        stockAmount:
+          productType === "simple" && stockStatus === "instock"
+            ? Math.max(0, parseInt(stockAmount, 10))
+            : 0,
         tags: Array.isArray(tags) ? tags : [],
         images: uploadedGalleryImages,
         metaData: {
@@ -693,6 +720,10 @@ const EditProductPage = () => {
               setChargeTax={setChargeTax}
               taxRate={taxRate}
               setTaxRate={setTaxRate}
+              stockStatus={stockStatus}
+              setStockStatus={setStockStatus}
+              stockAmount={stockAmount}
+              setStockAmount={setStockAmount}
               variants={variants}
               attributeGroups={attributeGroups}
               selectedAttributeGroup={selectedAttributeGroup}
