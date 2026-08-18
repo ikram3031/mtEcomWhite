@@ -261,13 +261,13 @@ export const ProductDataCard = ({
                     <SelectItem value="instock">
                       <span className="flex items-center gap-1.5 font-medium">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
-                        In Stock (স্টকে আছে)
+                        In Stock
                       </span>
                     </SelectItem>
                     <SelectItem value="outofstock">
                       <span className="flex items-center gap-1.5 font-medium">
                         <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
-                        Out of Stock (স্টক আউট)
+                        Out of Stock
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -282,7 +282,7 @@ export const ProductDataCard = ({
               {stockStatus === "instock" ? (
                 <div className="space-y-2 animate-in fade-in">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1 block">
-                    <span>Stock Quantity (কয়টা স্টক আছে)</span>
+                    <span>Stock Quantity</span>
                     <span className="text-destructive font-bold">*</span>
                   </label>
                   <Input
@@ -644,13 +644,13 @@ export const ProductDataCard = ({
                     <SelectItem value="instock">
                       <span className="flex items-center gap-1.5 font-medium">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
-                        In Stock (স্টকে আছে)
+                        In Stock
                       </span>
                     </SelectItem>
                     <SelectItem value="outofstock">
                       <span className="flex items-center gap-1.5 font-medium">
                         <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
-                        Out of Stock (স্টক আউট)
+                        Out of Stock
                       </span>
                     </SelectItem>
                   </SelectContent>

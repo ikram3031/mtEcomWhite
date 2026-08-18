@@ -81,9 +81,12 @@ export const createOrder = async (req, res, next) => {
 // List orders with pagination and optional filtering by status, paymentStatus, or customer email.
 export const listOrders = async (req, res, next) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const filter = { active: true };
+    const filter = {};
+    if (req.query.active !== undefined) {
+      filter.active = req.query.active === 'false' || req.query.active === false ? false : true;
+    } else {
+      filter.active = true;
+    }
 
     if (req.query.status) {
       filter.status = req.query.status;

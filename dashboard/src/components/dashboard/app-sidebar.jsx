@@ -18,6 +18,9 @@ import {
   Terminal,
   Database,
   Sparkles,
+  ShieldCheck,
+  Activity,
+  Trash2,
 } from "lucide-react"
 
 import {
@@ -236,7 +239,7 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuItem>
           )}
 
-          {/* AI Photo Studio */}
+          {/* AI Photo Studio - Commented out as requested
           {isAllowed("studio") && (
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -262,20 +265,7 @@ export function AppSidebar({ ...props }) {
               </SidebarMenuSub>
             </SidebarMenuItem>
           )}
-
-          {/* Members */}
-          {isAllowed("members") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname === "/dashboard/members"}
-                tooltip="Members"
-                render={<Link to="/dashboard/members" />}
-              >
-                <Users className="h-4 w-4" />
-                <span>Members</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
+          */}
 
           {/* Billing & Payment */}
           {isAllowed("billing") && (
@@ -315,31 +305,75 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuItem>
           )}
 
-          {/* Reports */}
-          {isAllowed("reports") && (
+          {/* Admin Menu */}
+          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("trash")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname === "/dashboard/reports"}
-                tooltip="Reports"
-                render={<Link to="/dashboard/reports" />}
+                isActive={
+                  pathname.startsWith("/dashboard/members") ||
+                  pathname.startsWith("/dashboard/reports") ||
+                  pathname.startsWith("/dashboard/activity-logs") ||
+                  pathname.startsWith("/dashboard/users") ||
+                  pathname.startsWith("/dashboard/trash")
+                }
+                tooltip="Admin"
               >
-                <BarChart3 className="h-4 w-4" />
-                <span>Reports</span>
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admin</span>
               </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-
-          {/* System Users */}
-          {isAllowed("users") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname === "/dashboard/users"}
-                tooltip="System Users"
-                render={<Link to="/dashboard/users" />}
-              >
-                <ShieldAlert className="h-4 w-4" />
-                <span>System Users</span>
-              </SidebarMenuButton>
+              <SidebarMenuSub>
+                {isAllowed("members") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname.startsWith("/dashboard/members")}
+                      render={<Link to="/dashboard/members" />}
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      <span>Members</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
+                {isAllowed("reports") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname.startsWith("/dashboard/reports")}
+                      render={<Link to="/dashboard/reports" />}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      <span>Reports</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    isActive={pathname.startsWith("/dashboard/activity-logs")}
+                    render={<Link to="/dashboard/activity-logs" />}
+                  >
+                    <Activity className="h-3.5 w-3.5" />
+                    <span>Activity Logs</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                {isAllowed("users") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname.startsWith("/dashboard/users")}
+                      render={<Link to="/dashboard/users" />}
+                    >
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      <span>System Users</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    isActive={pathname.startsWith("/dashboard/trash")}
+                    render={<Link to="/dashboard/trash" />}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    <span className="text-destructive font-medium">Trash</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
           )}
 

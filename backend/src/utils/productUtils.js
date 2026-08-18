@@ -84,7 +84,8 @@ export const buildProductFilter = async (input = {}) => {
       return;
     }
 
-    if (value === "" || value === null || value === undefined) {
+    if (key === "isActive") {
+      filter.isActive = value === "false" || value === false ? false : true;
       return;
     }
 

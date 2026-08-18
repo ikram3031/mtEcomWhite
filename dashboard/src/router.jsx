@@ -11,6 +11,8 @@ import Overview from './pages/dashboard/overview';
 import Users from './pages/dashboard/users';
 import Reports from './pages/dashboard/reports';
 import Members from './pages/dashboard/members';
+import Trash from './pages/dashboard/trash';
+import ActivityLogs from './pages/dashboard/activityLogs';
 
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
@@ -61,6 +63,8 @@ export const router = createBrowserRouter([
       { path: 'users', element: <Users /> },
       { path: 'reports', element: <Reports /> },
       { path: 'members', element: <Members /> },
+      { path: 'trash', element: <Trash /> },
+      { path: 'activity-logs', element: <ActivityLogs /> },
       {
         path: 'developer',
         children: [
