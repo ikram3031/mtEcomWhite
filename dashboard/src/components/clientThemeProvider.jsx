@@ -4,6 +4,25 @@ import { clientConfig } from '@/clientConfig';
 export const ClientThemeProvider = ({ children }) => {
   useEffect(() => {
     const applyTheme = () => {
+      // 1. Dynamic Page Title
+      if (typeof document !== 'undefined') {
+        const brandName = clientConfig?.brandName || 'Decantre';
+        document.title = `Dashboard - ${brandName}`;
+
+        // 2. Dynamic Favicon
+        const faviconUrl = clientConfig?.siteIconUrl || clientConfig?.logoUrl;
+        if (faviconUrl) {
+          let link = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = faviconUrl;
+        }
+      }
+
+      // 3. Dynamic Theme CSS variables
       const themeConfig = clientConfig.theme || {};
       
       let cssText = ':root {\n';
