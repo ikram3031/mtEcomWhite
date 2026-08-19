@@ -221,6 +221,17 @@ export function AppSidebar({ ...props }) {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 )}
+                {isAllowed("products.reviews") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname === "/dashboard/products/reviews"}
+                      render={<Link to="/dashboard/products/reviews" />}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Reviews</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
               </SidebarMenuSub>
             </SidebarMenuItem>
           )}

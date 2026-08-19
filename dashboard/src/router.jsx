@@ -20,6 +20,7 @@ import ProductDetails from './pages/dashboard/products/productDetails';
 import AddNewProduct from './pages/dashboard/products/addNewProduct';
 import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
+import Reviews from './pages/dashboard/products/reviews';
 import Categories from './pages/dashboard/products/categories';
 import Brands from './pages/dashboard/products/brands';
 import Attributes from './pages/dashboard/products/attributes';
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
           { path: 'new', element: <AddNewProduct /> },
           { path: 'stock', element: <Stock /> },
           { path: 'coupons', element: <Coupons /> },
+          { path: 'reviews', element: <Reviews /> },
           { path: 'categories', element: <Categories /> },
           { path: 'brands', element: <Brands /> },
           { path: 'attributes', element: <Attributes /> },
