@@ -1,5 +1,6 @@
 import { Router } from "express";
 import productsRouter from "./routes/ProductsRoute.js";
+import reviewRouter from "./routes/ReviewRoute.js";
 import imagesRouter from "./routes/ImagesRoute.js";
 import authRouter from "./routes/AuthRoute.js";
 import usersRouter from "./routes/UsersRoute.js";
@@ -23,6 +24,7 @@ import { searchProducts } from "./controllers/SearchController.js";
 const coreRouter = Router();
 
 coreRouter.use("/products", productsRouter);
+coreRouter.use("/reviews", reviewRouter);
 coreRouter.use("/images", imagesRouter);
 coreRouter.use("/auth", authRouter);
 coreRouter.use("/users", usersRouter);
