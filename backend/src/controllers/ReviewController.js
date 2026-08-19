@@ -145,7 +145,7 @@ export const listReviews = async (req, res) => {
     const reviews = await ReviewModel.find(query)
       .populate("memberId", "name email phone did")
       .populate("productId", "name slug imageUrl")
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -200,10 +200,9 @@ export const updateReview = async (req, res) => {
       if (req.user.did !== review.memberDid) {
         return res.status(403).json({ status: "error", message: "Forbidden: You can only edit your own reviews" });
       }
-      
-      // Member cannot edit if already approved
+      // If member edits, reset approval status to false for safety
       if (review.isApproved) {
-        return res.status(403).json({ status: "error", message: "You cannot edit a review that has already been approved" });
+        review.isApproved = false;
       }
     }
 
