@@ -21,6 +21,7 @@
     "products.brands",
     "products.attributes",
     "products.coupons",
+    "products.reviews",
     "members",
     "reports",
     "studio",

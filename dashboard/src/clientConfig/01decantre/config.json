@@ -22,6 +22,7 @@
     "products.brands",
     "products.attributes",
     "products.coupons",
+    "products.reviews",
     "members",
     "billing",
     "billing.billings",

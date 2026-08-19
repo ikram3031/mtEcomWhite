@@ -20,6 +20,7 @@
     "products.categories",
     "products.attributes",
     "products.coupons",
+    "products.reviews",
     "studio",
     "studio.batch-images"
   ],
