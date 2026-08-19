@@ -25,7 +25,10 @@
     "members",
     "reports",
     "studio",
-    "studio.batch-images"
+    "studio.batch-images",
+    "activity-logs",
+    "users",
+    "trash"
   ],
   "theme": {
     "light": {

@@ -22,7 +22,13 @@
     "products.coupons",
     "products.reviews",
     "studio",
-    "studio.batch-images"
+    "studio.batch-images",
+    "products.brands",
+    "members",
+    "reports",
+    "activity-logs",
+    "users",
+    "trash"
   ],
   "theme": {
     "light": {

@@ -31,7 +31,9 @@
     "users",
     "developer",
     "studio",
-    "studio.batch-images"
+    "studio.batch-images",
+    "activity-logs",
+    "trash"
   ],
   "theme": {
     "light": {
