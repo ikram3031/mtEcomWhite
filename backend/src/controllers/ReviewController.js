@@ -70,18 +70,18 @@ export const getProductReviews = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
 
     // Fetch approved reviews
-    const reviews = await ReviewModel.find({ productDid, isApproved: true })
+    const reviews = await ReviewModel.find({ productDid, isApproved: true, active: true })
       .populate("memberId", "name did email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    const total = await ReviewModel.countDocuments({ productDid, isApproved: true });
+    const total = await ReviewModel.countDocuments({ productDid, isApproved: true, active: true });
 
     // Aggregate statistics
     const statsResult = await ReviewModel.aggregate([
-      { $match: { productDid, isApproved: true } },
+      { $match: { productDid, isApproved: true, active: true } },
       {
         $group: {
           _id: null,
@@ -137,7 +137,7 @@ export const listReviews = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 20;
     const { isApproved, productDid, memberDid } = req.query;
 
-    let query = {};
+    let query = { active: true };
     if (isApproved !== undefined) query.isApproved = isApproved === "true";
     if (productDid) query.productDid = productDid;
     if (memberDid) query.memberDid = memberDid;
@@ -166,7 +166,7 @@ export const listReviews = async (req, res) => {
 export const getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
-    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }] })
+    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }], active: true })
       .populate("memberId", "name email did")
       .populate("productId", "name slug")
       .lean();
@@ -189,7 +189,7 @@ export const updateReview = async (req, res) => {
     const { id } = req.params;
     const { rating, description, isApproved } = req.body;
     
-    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }] });
+    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }], active: true });
     if (!review) return res.status(404).json({ status: "error", message: "Review not found" });
 
     const userRole = typeof req.user.role === "string" ? req.user.role.toLowerCase() : "";
@@ -241,7 +241,7 @@ export const updateReviewStatus = async (req, res) => {
       return res.status(400).json({ status: "error", message: "isApproved is required" });
     }
 
-    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }] });
+    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }], active: true });
     if (!review) return res.status(404).json({ status: "error", message: "Review not found" });
 
     review.isApproved = Boolean(isApproved);
@@ -264,7 +264,7 @@ export const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }] });
+    const review = await ReviewModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { did: id }], active: true });
     if (!review) return res.status(404).json({ status: "error", message: "Review not found" });
 
     const userRole = typeof req.user.role === "string" ? req.user.role.toLowerCase() : "";
@@ -275,7 +275,11 @@ export const deleteReview = async (req, res) => {
       return res.status(403).json({ status: "error", message: "Forbidden: You can only delete your own reviews" });
     }
 
-    await ReviewModel.deleteOne({ _id: review._id });
+    review.active = false;
+    review.updatedBy = req.user._id || req.user.id;
+    review.updatedByType = isAdmin ? "User" : "Member";
+    await review.save();
+    
     return res.json({ status: "success", message: "Review deleted successfully" });
   } catch (err) {
     logger.error({ err }, "Failed to delete review");

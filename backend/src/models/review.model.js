@@ -11,6 +11,7 @@ const reviewSchema = new Schema(
     description: { type: String, required: true, trim: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     isApproved: { type: Boolean, default: false, index: true },
+    active: { type: Boolean, default: true, index: true },
     createdBy: { type: Schema.Types.ObjectId, default: null },
     createdByType: { type: String, enum: ["Member", "User"], default: "Member" },
     updatedBy: { type: Schema.Types.ObjectId, default: null },
