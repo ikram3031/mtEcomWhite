@@ -23,10 +23,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/error-handler';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function ReviewsTable({
   searchQuery = '',
   statusFilter = 'All',
+  selectedIds = [],
+  onSelectedIdsChange,
 }) {
   const queryClient = useQueryClient();
   const { data: reviews = [], isLoading, isError } = useReviews();
@@ -100,6 +103,19 @@ export function ReviewsTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[40px]">
+              <Checkbox
+                checked={filteredReviews.length > 0 && selectedIds.length === filteredReviews.length}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onSelectedIdsChange(filteredReviews.map((r) => r.id));
+                  } else {
+                    onSelectedIdsChange([]);
+                  }
+                }}
+                aria-label="Select all"
+              />
+            </TableHead>
             <TableHead>Product</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Rating</TableHead>
@@ -111,13 +127,26 @@ export function ReviewsTable({
         <TableBody>
           {filteredReviews.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 No reviews found.
               </TableCell>
             </TableRow>
           ) : (
             filteredReviews.map((review) => (
-              <TableRow key={review.id}>
+              <TableRow key={review.id} data-state={selectedIds.includes(review.id) ? "selected" : undefined}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.includes(review.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        onSelectedIdsChange([...selectedIds, review.id]);
+                      } else {
+                        onSelectedIdsChange(selectedIds.filter((id) => id !== review.id));
+                      }
+                    }}
+                    aria-label="Select row"
+                  />
+                </TableCell>
                 <TableCell className="font-medium">
                   {review.productId?.name || review.productDid || 'N/A'}
                 </TableCell>

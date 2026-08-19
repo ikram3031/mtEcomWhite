@@ -7,6 +7,8 @@ import {
   updateReview,
   updateReviewStatus,
   deleteReview,
+  bulkUpdateReviews,
+  bulkDeleteReviews,
 } from "../controllers/ReviewController.js";
 import {
   authenticateToken,
@@ -14,6 +16,10 @@ import {
 } from "../middlewares/auth.middleware.js";
 
 const reviewRouter = Router();
+
+// Bulk admin operations
+reviewRouter.post("/bulk-update", authenticateToken, authorizeRoles("Owner", "Admin", "Manager", "Super Admin"), bulkUpdateReviews);
+reviewRouter.post("/bulk-delete", authenticateToken, authorizeRoles("Owner", "Admin", "Manager", "Super Admin"), bulkDeleteReviews);
 
 // Public route to get approved reviews for a single product details page
 reviewRouter.get("/product/:productDid", getProductReviews);

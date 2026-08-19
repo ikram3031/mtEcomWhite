@@ -286,3 +286,57 @@ export const deleteReview = async (req, res) => {
     return res.status(500).json({ status: "error", message: "Unable to delete review" });
   }
 };
+
+/**
+ * POST /api/reviews/bulk-update
+ * Bulk update reviews (e.g. approval status)
+ */
+export const bulkUpdateReviews = async (req, res) => {
+  try {
+    const { ids, isApproved } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ status: "error", message: "Review IDs are required" });
+    }
+    
+    if (isApproved === undefined) {
+      return res.status(400).json({ status: "error", message: "isApproved is required for bulk update" });
+    }
+
+    const validIds = ids.map(id => id.match(/^[0-9a-fA-F]{24}$/) ? id : null).filter(Boolean);
+    
+    await ReviewModel.updateMany(
+      { _id: { $in: validIds } },
+      { $set: { isApproved: Boolean(isApproved), updatedBy: req.user._id || req.user.id, updatedByType: "User" } }
+    );
+
+    return res.json({ status: "success", message: `Successfully updated ${validIds.length} reviews` });
+  } catch (err) {
+    logger.error({ err }, "Failed to bulk update reviews");
+    return res.status(500).json({ status: "error", message: "Unable to bulk update reviews" });
+  }
+};
+
+/**
+ * POST /api/reviews/bulk-delete
+ * Bulk soft delete reviews
+ */
+export const bulkDeleteReviews = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ status: "error", message: "Review IDs are required" });
+    }
+
+    const validIds = ids.map(id => id.match(/^[0-9a-fA-F]{24}$/) ? id : null).filter(Boolean);
+    
+    await ReviewModel.updateMany(
+      { _id: { $in: validIds } },
+      { $set: { active: false, updatedBy: req.user._id || req.user.id, updatedByType: "User" } }
+    );
+
+    return res.json({ status: "success", message: `Successfully deleted ${validIds.length} reviews` });
+  } catch (err) {
+    logger.error({ err }, "Failed to bulk delete reviews");
+    return res.status(500).json({ status: "error", message: "Unable to bulk delete reviews" });
+  }
+};
