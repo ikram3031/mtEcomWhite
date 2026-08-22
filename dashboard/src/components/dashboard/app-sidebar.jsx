@@ -21,6 +21,9 @@ import {
   ShieldCheck,
   Activity,
   Trash2,
+  Star,
+  Wrench,
+  ImageDown,
 } from "lucide-react"
 
 import {
@@ -221,17 +224,6 @@ export function AppSidebar({ ...props }) {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 )}
-                {isAllowed("products.reviews") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/reviews"}
-                      render={<Link to="/dashboard/products/reviews" />}
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span>Reviews</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
               </SidebarMenuSub>
             </SidebarMenuItem>
           )}
@@ -317,7 +309,7 @@ export function AppSidebar({ ...props }) {
           )}
 
           {/* Admin Menu */}
-          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("trash")) && (
+          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("reviews") || isAllowed("trash")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
@@ -325,6 +317,7 @@ export function AppSidebar({ ...props }) {
                   pathname.startsWith("/dashboard/reports") ||
                   pathname.startsWith("/dashboard/activity-logs") ||
                   pathname.startsWith("/dashboard/users") ||
+                  pathname.startsWith("/dashboard/reviews") ||
                   pathname.startsWith("/dashboard/trash")
                 }
                 tooltip="Admin"
@@ -375,6 +368,17 @@ export function AppSidebar({ ...props }) {
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 )}
+                {isAllowed("reviews") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname.startsWith("/dashboard/reviews")}
+                      render={<Link to="/dashboard/reviews" />}
+                    >
+                      <Star className="h-3.5 w-3.5" />
+                      <span>Reviews</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
                 <SidebarMenuSubItem>
                   <SidebarMenuSubButton
                     isActive={pathname.startsWith("/dashboard/trash")}
@@ -388,34 +392,34 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuItem>
           )}
 
-          {/* Developer Tools */}
-          {isAllowed("developer") && user?.email?.toLowerCase().trim() === "ikramul.web@gmail.com" && (
+          {/* Tools */}
+          {(isAllowed("tools") || isAllowed("developer")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/developer")}
-                tooltip="Developer Tools"
-                render={<Link to="/dashboard/developer/logs" />}
+                isActive={pathname.startsWith("/dashboard/tools") || pathname.startsWith("/dashboard/developer")}
+                tooltip="Tools"
+                render={<Link to="/dashboard/tools/bulk-image-resize" />}
               >
-                <Terminal className="h-4 w-4" />
-                <span>Developer Tools</span>
+                <Wrench className="h-4 w-4" />
+                <span>Tools</span>
               </SidebarMenuButton>
               <SidebarMenuSub>
                 <SidebarMenuSubItem>
                   <SidebarMenuSubButton
-                    isActive={pathname === "/dashboard/developer/logs"}
-                    render={<Link to="/dashboard/developer/logs" />}
+                    isActive={pathname === "/dashboard/tools/bulk-image-resize" || pathname === "/dashboard/developer/bulk-image-resize"}
+                    render={<Link to="/dashboard/tools/bulk-image-resize" />}
                   >
-                    <Terminal className="h-3.5 w-3.5" />
-                    <span>System Logs</span>
+                    <ImageDown className="h-3.5 w-3.5" />
+                    <span>Bulk Image Resize</span>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
                 <SidebarMenuSubItem>
                   <SidebarMenuSubButton
-                    isActive={pathname === "/dashboard/developer/v1/doc.html"}
-                    render={<Link to="/dashboard/developer/v1/doc.html" />}
+                    isActive={pathname === "/dashboard/tools/logs" || pathname === "/dashboard/developer/logs"}
+                    render={<Link to="/dashboard/tools/logs" />}
                   >
-                    <Sliders className="h-3.5 w-3.5" />
-                    <span>API Docs</span>
+                    <Terminal className="h-3.5 w-3.5" />
+                    <span>System Logs</span>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
               </SidebarMenuSub>

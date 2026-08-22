@@ -20,7 +20,7 @@
     "products.categories",
     "products.attributes",
     "products.coupons",
-    "products.reviews",
+    "reviews",
     "studio",
     "studio.batch-images",
     "products.brands",
@@ -28,6 +28,7 @@
     "reports",
     "activity-logs",
     "users",
+    "tools",
     "trash"
   ],
   "theme": {

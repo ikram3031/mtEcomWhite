@@ -21,13 +21,14 @@
     "products.brands",
     "products.attributes",
     "products.coupons",
-    "products.reviews",
+    "reviews",
     "members",
     "reports",
     "studio",
     "studio.batch-images",
     "activity-logs",
     "users",
+    "tools",
     "trash"
   ],
   "theme": {

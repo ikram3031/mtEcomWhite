@@ -13,6 +13,7 @@ import Reports from './pages/dashboard/reports';
 import Members from './pages/dashboard/members';
 import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
+import Reviews from './pages/dashboard/reviews';
 
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
@@ -20,7 +21,6 @@ import ProductDetails from './pages/dashboard/products/productDetails';
 import AddNewProduct from './pages/dashboard/products/addNewProduct';
 import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
-import Reviews from './pages/dashboard/products/reviews';
 import Categories from './pages/dashboard/products/categories';
 import Brands from './pages/dashboard/products/brands';
 import Attributes from './pages/dashboard/products/attributes';
@@ -35,9 +35,9 @@ import BillingOverview from './pages/dashboard/billing/billingOverview';
 import Payments from './pages/dashboard/billing/payments';
 import Billings from './pages/dashboard/billing/billings';
 
-// Developer Options
-import ApiDocs from './pages/dashboard/developer/apiDocs';
-import SystemLogs from './pages/dashboard/developer/systemLogs';
+// Tools
+import BulkImageResize from './pages/dashboard/tools/bulkImageResize';
+import SystemLogs from './pages/dashboard/tools/systemLogs';
 
 // AI Studio
 import Studio from './pages/dashboard/studio/index';
@@ -64,12 +64,21 @@ export const router = createBrowserRouter([
       { path: 'users', element: <Users /> },
       { path: 'reports', element: <Reports /> },
       { path: 'members', element: <Members /> },
+      { path: 'reviews', element: <Reviews /> },
       { path: 'trash', element: <Trash /> },
       { path: 'activity-logs', element: <ActivityLogs /> },
       {
+        path: 'tools',
+        children: [
+          { path: '', element: <Navigate to="bulk-image-resize" replace /> },
+          { path: 'bulk-image-resize', element: <BulkImageResize /> },
+          { path: 'logs', element: <SystemLogs /> },
+        ],
+      },
+      {
         path: 'developer',
         children: [
-          { path: 'v1/doc.html', element: <ApiDocs /> },
+          { path: 'bulk-image-resize', element: <BulkImageResize /> },
           { path: 'logs', element: <SystemLogs /> },
         ],
       },
@@ -80,7 +89,7 @@ export const router = createBrowserRouter([
           { path: 'new', element: <AddNewProduct /> },
           { path: 'stock', element: <Stock /> },
           { path: 'coupons', element: <Coupons /> },
-          { path: 'reviews', element: <Reviews /> },
+          { path: 'reviews', element: <Navigate to="/dashboard/reviews" replace /> },
           { path: 'categories', element: <Categories /> },
           { path: 'brands', element: <Brands /> },
           { path: 'attributes', element: <Attributes /> },
