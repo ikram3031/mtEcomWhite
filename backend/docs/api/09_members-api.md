@@ -12,6 +12,9 @@ The following public endpoints do not require a JWT token:
 
 - `POST /api/v1/members/register`
 - `POST /api/v1/members/login`
+- `POST /api/v1/members/check-email`
+- `POST /api/v1/members/refresh-token`
+- `POST /api/v1/members/logout`
 - `POST /api/v1/members/verify-otp`
 - `POST /api/v1/members/resend-otp`
 - `POST /api/v1/members/forgot-password`
@@ -127,8 +130,33 @@ If the email is already verified:
 }
 ```
 
-If the email is not yet verified:
+### Check Member Email
 
+Checks if an email exists and is verified. If the email is registered but unverified, a verification OTP is automatically generated and sent via email.
+
+**Method:** POST
+
+**URL:** `/api/v1/members/check-email`
+
+**Request Body:**
+```json
+{
+  "email": "member@example.com"
+}
+```
+
+**Success Response (Verified):**
+```json
+{
+  "status": "success",
+  "isEmailVerified": true,
+  "data": {
+    "email": "member@example.com"
+  }
+}
+```
+
+**Success Response (Unverified):**
 ```json
 {
   "status": "success",
@@ -141,6 +169,63 @@ If the email is not yet verified:
   }
 }
 ```
+
+---
+
+### Refresh Member Token
+
+Rotates the member refresh token and returns a new access token and refresh token pair.
+
+**Method:** POST
+
+**URL:** `/api/v1/members/refresh-token`
+
+**Request Body:**
+```json
+{
+  "refreshToken": "member-refresh-token-string"
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "accessTokenExpiresIn": "20m",
+    "refreshToken": "new-rotated-refresh-token",
+    "refreshTokenExpiresAt": "2026-08-25T12:34:56.789Z"
+  }
+}
+```
+
+---
+
+### Logout Member
+
+Invalidates the member refresh token.
+
+**Method:** POST
+
+**URL:** `/api/v1/members/logout`
+
+**Request Body:**
+```json
+{
+  "refreshToken": "member-refresh-token-string"
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Logged out successfully"
+}
+```
+
+---
 
 ### Verify OTP
 

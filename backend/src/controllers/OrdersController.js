@@ -13,6 +13,7 @@ import { buildAllowedOrderUpdates,
 } from '../helper/orderControllerHelper.js';
 import { getClientInvoiceHtml } from '../templates/invoices/index.js';
 import { LogModel } from '../models/log.model.js';
+import { broadcastLiveNotification } from '../websocket.js';
 
 const { Types } = mongoose;
 
@@ -76,7 +77,7 @@ export const createOrder = async (req, res, next) => {
         createdOrder.shippingInfo?.fullName ||
         "Customer";
       const actorDid = req.user?.did || "storefront";
-      await LogModel.create({
+      const log = await LogModel.create({
         type: "newOrder",
         typeDid: "111",
         description: `${customerName} placed a new order #${createdOrder.orderNumber}`,
@@ -84,6 +85,10 @@ export const createOrder = async (req, res, next) => {
         active: true,
         createdBy: actorDid,
         updatedBy: actorDid,
+      });
+
+      broadcastLiveNotification(log).catch((err) => {
+        console.error("Non-blocking WS live notification error on order:", err);
       });
     } catch (logErr) {
       console.error("Non-blocking order log creation error:", logErr);

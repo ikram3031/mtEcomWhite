@@ -1,6 +1,6 @@
-# Decantre API Endpoints Reference
+# Decantre BD API Endpoints Reference
 
-Base API Address in Dev Environment: `https://server.decantrebd.com`
+Base API Address: `https://server.decantrebd.com`
 
 ---
 
@@ -8,97 +8,156 @@ Base API Address in Dev Environment: `https://server.decantrebd.com`
 
 **Base Prefix:** `/api/v1/products`
 
-- **GET `/`** - List all products with filtering (`q`), sorting (`sortBy`, `order`), and pagination (`page`, `limit`).
-- **GET `/search`** - Autocomplete / live-search endpoint that returns minimal fields (`id`, `name`, `category`, `image`) for query `q`.
-- **GET `/:identifier`** - Fetch details of a single product using its Mongo ID or slug.
+- **GET `/`** - List products with rich query filtering (`q`, `category`, `brand`, `stockStatus`, `type`, `season`, `minPrice`, `maxPrice`, `sortBy`, `order`, `limit`, `skip`).
+- **POST `/search`** - List/search products using JSON payload filters.
+- **GET `/:identifier`** - Fetch details of a single product using MongoDB `_id`, `slug`, or `did`.
+- **POST `/`** - Create a new product _(Requires JWT: Owner, Admin)_.
+- **PUT `/:id`** - Update an existing product _(Requires JWT: Owner, Admin, Manager)_.
+- **DELETE `/:id`** - Delete a product _(Requires JWT: Owner, Admin, Manager)_.
+- **GET `/api/v1/search-products`** - Root alias for autocomplete and live search.
 
 ---
 
-## 2. Search Endpoints
+## 2. Search & Recommendations
 
 **Base Prefix:** `/api/v1/search`
 
-- **GET `/`** - Search products with keyword (`q`), returning matching products and tracking search analytics.
-- **GET `/popular`** - Fetch top popular search terms sorted by frequency.
-- **GET `/recent`** - Fetch user's recent search terms _(Requires JWT Authorization Header)_.
-- **DELETE `/recent`** - Clear user's recent search history or specific term using `?q=term` _(Requires JWT Authorization Header)_.
-
+- **GET `/`** - Search products with autocomplete preview (`q`, `limit`).
+- **GET `/popular`** - Fetch top globally trending search keywords.
+- **GET `/recent`** - Fetch authenticated user's recent search queries _(Requires JWT)_.
+- **DELETE `/recent`** & **GET `/recent/clear`** - Clear user's search history _(Requires JWT)_.
 
 ---
 
-## 3. Auth Endpoints
+## 3. Dashboard User Authentication
 
 **Base Prefix:** `/api/v1/auth`
 
-- **POST `/login`** - Authenticate admin/user credentials and return access and refresh tokens.
-- **POST `/refresh-token`** - Renew expired access tokens using the refresh token.
+- **POST `/login`** - Authenticate user credentials (returns tokens or prompts 2FA).
+- **POST `/2fa/send-qr`** - Generate and email QR Code for Google Authenticator TOTP setup.
+- **POST `/2fa/verify`** - Verify 6-digit TOTP code, activate 2FA, and complete login.
+- **POST `/google`** - Authenticate administrator via Google OAuth 2.0.
+- **POST `/refresh-token`** - Rotate refresh token and issue a fresh access token.
 - **POST `/logout`** - Invalidate active session tokens.
 
 ---
 
-## 4. Users Endpoints
+## 4. Customer & Member Accounts
 
-**Base Prefix:** `/api/v1/users` _(Requires JWT Authorization Header)_
+**Base Prefix:** `/api/v1/members`
 
-- **GET `/`** - List all registered users.
-- **GET `/:userId`** - Fetch details of a specific user.
-- **POST `/`** - Create a new user.
-- **PUT `/:userId`** - Update an existing user.
-- **DELETE `/:userId`** - Delete a user.
+- **POST `/register`** - Register customer account and send 6-digit OTP verification code.
+- **POST `/login`** - Member login (authenticates or requests OTP if unverified).
+- **POST `/check-email`** - Check email existence and dispatch verification OTP if needed.
+- **POST `/verify-otp`** - Verify registration or login OTP code.
+- **POST `/resend-otp`** - Resend verification code.
+- **POST `/forgot-password`** - Request password reset code via email.
+- **POST `/reset-password`** - Reset password using verified OTP code.
+- **POST `/refresh-token`** - Rotate customer session tokens.
+- **POST `/logout`** - Logout customer session.
+- **GET `/`** - List members with pagination, segment, and keyword search _(Requires JWT)_.
+- **GET `/:memberId`** - Get member profile details _(Requires JWT)_.
+- **POST `/`** - Admin manual member creation _(Requires JWT)_.
+- **PUT `/:memberId`** - Update member profile _(Requires JWT)_.
+- **POST `/:memberId/change-password`** - Change member password _(Requires JWT)_.
+- **DELETE `/:memberId`** - Delete member _(Requires JWT: Owner, Admin, Manager)_.
 
 ---
 
-## 5. Orders Endpoints
+## 5. Orders Management
 
 **Base Prefix:** `/api/v1/orders`
 
-- **POST `/new-order`** - Create a new order _(Public Endpoint)_.
-- **GET `/`** - List all orders _(Owner/Admin/Manager only)_.
-- **GET `/:orderId`** - Fetch a specific order details _(Owner/Admin/Manager only)_.
-- **PUT `/:orderId`** - Update an order _(Owner/Admin/Manager only)_.
-- **DELETE `/:orderId`** - Delete an order _(Owner/Admin only)_.
+- **POST `/new-order`** - Create new customer checkout order _(Public storefront)_.
+- **GET `/:orderId/invoice`** - Printable/web responsive HTML invoice view _(Public)_.
+- **GET `/`** - List orders with pagination and filtering _(Requires JWT: Owner, Admin, Manager)_.
+- **GET `/:orderId`** - Get order details _(Requires JWT: Owner, Admin, Manager)_.
+- **PUT `/:orderId`** - Update order status or shipping details _(Requires JWT: Owner, Admin, Manager)_.
+- **DELETE `/:orderId`** - Soft delete order and clean linked payment/member totals _(Requires JWT: Owner, Admin)_.
+- **POST `/bulk-update`** - Batch update status and paymentStatus for multiple orders _(Requires JWT: Owner, Admin, Manager)_.
+- **POST `/bulk-delete`** - Batch soft delete orders _(Requires JWT: Owner, Admin)_.
 
 ---
 
-## 6. Public Read/Search Endpoints
+## 6. Payments Management
 
-The following resources expose public read and search endpoints:
+**Base Prefix:** `/api/v1/payments` _(Requires JWT)_
 
-- **Products:** `GET /api/v1/products`, `GET /api/v1/products/:identifier`, `GET /api/v1/products/check-slug/:slug`
-- **Categories:** `GET /api/v1/categories`, `GET /api/v1/categories/:id`
-- **Brands:** `GET /api/v1/brands`, `GET /api/v1/brands/:id`
-- **Coupons:** `GET /api/v1/coupons`, `GET /api/v1/coupons/:id`
-
-### Role Summary
-
-- **Owner/Admin:** can manage products, categories, brands, coupons, and orders.
-- **Manager:** can view and manage products, coupons, and orders; can view/edit orders but cannot delete them.
-- **Admin:** cannot delete Owner/Admin users.
+- **GET `/`** - List payment records with pagination and filters.
+- **GET `/:paymentId`** - Get payment details by ID.
+- **POST `/`** - Create a payment record.
+- **PUT `/:paymentId`** - Update payment status, amounts, or phone.
+- **DELETE `/:paymentId`** - Delete payment record.
+- **POST `/bulk-update`** - Batch update payment status and recalculate amounts.
+- **POST `/bulk-delete`** - Batch delete payment records.
 
 ---
 
-## 7. Email Endpoints
+## 7. Product Variation Attributes
 
-**Base Prefix:** `/api/v1/sendEmail`
+**Base Prefix:** `/api/v1/dashboard/attributes`
 
-- **GET `/`** & **POST `/`** - Send a test email (`?email=user@example.com`).
-- **POST `/invoice`** - Send structured HTML Invoice email containing transaction details to target client.
-
----
-
-## 7. Export Endpoints
-
-**Base Prefix:** `/api/v1/export`
-
-- **GET `/products/mysql`** - Query the external WordPress/MySQL database for products and write them to a local JSON file in `data/products_from_mysql.json`.
+- **GET `/`** - List all attribute groups (e.g. bottle size, concentration) with natural numerical sorting.
+- **POST `/`** - Create an attribute group.
+- **PUT `/:id`** - Update an attribute group.
+- **DELETE `/:id`** - Delete an attribute group.
 
 ---
 
-## 8. WordPress Sync Endpoints
+## 8. Categories, Brands & Coupons
 
-**Base Prefix:** `/api/wp`
+- **Categories:** `GET /api/v1/categories`, `GET /api/v1/categories/:id`, `POST /api/v1/categories`, `PUT /api/v1/categories/:id`, `DELETE /api/v1/categories/:id`
+- **Brands:** `GET /api/v1/brands`, `POST /api/v1/brands`, `PUT /api/v1/brands/:id`, `DELETE /api/v1/brands/:id`
+- **Coupons:** `GET /api/v1/coupons`, `GET /api/v1/coupons/:id`, `POST /api/v1/coupons`, `PUT /api/v1/coupons/:id`, `DELETE /api/v1/coupons/:id`
 
-- **GET `/products`** - List WordPress products.
-- **GET `/products/:identifier`** - Fetch a single WordPress product by ID or slug.
-- **GET `/taxonomies/categories`** - List categories retrieved from the WordPress database.
-- **GET `/taxonomies/brands`** - List brands/taxonomies retrieved from the WordPress database.
+---
+
+## 9. Product Reviews
+
+**Base Prefix:** `/api/v1/reviews`
+
+- **GET `/product/:productDid`** - Public fetch of approved reviews and aggregated rating statistics.
+- **GET `/`** - List all reviews with filters _(Requires JWT: Owner, Admin, Manager, Super Admin)_.
+- **GET `/:id`** - Get single review details.
+- **POST `/`** - Create a product review _(Requires JWT: Member)_.
+- **PUT `/:id`** - Update a review _(Requires JWT)_.
+- **PATCH `/:id/status`** - Approve / reject review _(Requires JWT: Owner, Admin, Manager, Super Admin)_.
+- **DELETE `/:id`** - Delete review _(Requires JWT)_.
+- **POST `/bulk-update`** - Bulk update review approval status _(Requires JWT: Owner, Admin, Manager, Super Admin)_.
+- **POST `/bulk-delete`** - Bulk delete reviews _(Requires JWT: Owner, Admin, Manager, Super Admin)_.
+
+---
+
+## 10. Dashboard Analytics
+
+**Base Prefix:** `/api/v1/dashboard`
+
+- **GET `/orders/daily`** - Daily order counts for custom day ranges (default 30 days, BD Time).
+- **GET `/kpi`** - KPI metrics (Sales, Completed Orders, AOV, Members) with trend comparisons.
+- **GET `/orders/status-distribution`** - Order distribution counts by status.
+
+---
+
+## 11. AI Product Image Studio
+
+**Base Prefix:** `/api/v1/studio` _(Requires JWT, payload up to 60MB)_
+
+- **GET `/health`** - Check Gemini API key status and supported models.
+- **POST `/transform`** - Composite product into generated studio scenes across multiple aspect ratios.
+- **POST `/generate-bulk`** - Generate fresh product images from prompt descriptions.
+- **POST `/enhance-prompt`** - Expand raw idea into commercial photoshoot prompt using Gemini 3.7 Flash.
+- **POST `/analyze-product`** - Multimodal vision analysis for colors, scene suggestions, and framing.
+
+---
+
+## 12. Email, Subscribers, Contact & System
+
+- **Email:** `GET|POST /api/v1/sendEmail`, `POST /api/v1/sendEmail/invoice`
+- **Subscribers:** `POST /api/v1/subscribers`
+- **Contact:** `POST /api/v1/contact`
+- **Images:** `GET /api/v1/images/resize`, `POST /api/v1/images/upload` _(Requires JWT: Owner, Admin)_
+- **System Metadata:** `GET /api/v1/system/metadata`, `GET /api/v1/system/info` _(Requires JWT)_
+- **Version:** `GET /api/v1/version` _(Requires JWT: Owner, Admin)_
+- **Logs:** `GET /api/v1/logs`, `GET /api/v1/logs/notifications`, `POST /api/v1/logs`, `PUT /api/v1/logs/mark-read`, `PUT /api/v1/logs/mark-unread`, `DELETE /api/v1/logs/:id`, `POST /api/v1/logs/bulk-delete`
+- **Developer Tools:** `GET /api/v1/developer/logs`, `GET /api/v1/developer/logs/stream` (SSE), `GET /api/v1/developer/docs` (Scalar UI), `GET /api/v1/developer/db-backup` (Gzip backup)
+

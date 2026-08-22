@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { LogModel, LOG_TYPE_DIDS } from "../models/log.model.js";
+import { broadcastLiveNotification, broadcastNotificationReadState } from "../websocket.js";
 
 /**
  * List active logs with pagination and search
@@ -104,6 +105,11 @@ export const createLog = async (req, res, next) => {
       updatedBy: userDid,
     });
 
+    // Broadcast live notification via WebSocket if active
+    broadcastLiveNotification(log).catch((err) => {
+      console.error("Non-blocking WS live notification error:", err);
+    });
+
     return res.status(201).json({
       status: true,
       data: log,
@@ -140,6 +146,11 @@ export const markLogsRead = async (req, res, next) => {
 
     await LogModel.updateMany(filter, {
       $set: { readStatus: true, updatedBy: userDid },
+    });
+
+    const unreadCount = await LogModel.countDocuments({ active: true, type: "newOrder", readStatus: false });
+    broadcastNotificationReadState(unreadCount).catch((err) => {
+      console.error("Non-blocking WS read state broadcast error:", err);
     });
 
     return res.json({

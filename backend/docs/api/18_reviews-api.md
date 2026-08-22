@@ -264,3 +264,69 @@ Deletes a review.
   "message": "Review deleted successfully"
 }
 ```
+
+---
+
+### 8. Bulk Update Reviews
+
+Batch updates review approval status (`isApproved`).
+
+**Method:** POST
+
+**URL:** `/api/v1/reviews/bulk-update`
+
+**Authentication:** Required (`Owner`, `Admin`, `Manager`, `Super Admin`)
+
+**Headers:**
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Request Body:**
+```json
+{
+  "ids": ["60d0fe4f5311236168a109ca", "60d0fe4f5311236168a109cb"],
+  "isApproved": true
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Successfully updated 2 reviews"
+}
+```
+
+---
+
+### 9. Bulk Delete Reviews (Soft Delete)
+
+Batch soft-deletes multiple reviews (`active: false`).
+
+**Method:** POST
+
+**URL:** `/api/v1/reviews/bulk-delete`
+
+**Authentication:** Required (`Owner`, `Admin`, `Manager`, `Super Admin`)
+
+**Headers:**
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Request Body:**
+```json
+{
+  "ids": ["60d0fe4f5311236168a109ca", "60d0fe4f5311236168a109cb"]
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Successfully deleted 2 reviews"
+}
+```
+

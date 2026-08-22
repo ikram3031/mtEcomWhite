@@ -197,15 +197,87 @@ Update payment method:
 }
 ```
 
+---
+
+### Bulk Update Payments
+
+Batch updates payment status and recalculates paid/pending amounts for multiple payment records by payment ID or order ID.
+
+**Method:** POST
+
+**URL:** `/api/v1/payments/bulk-update`
+
+**Authentication:** Required
+
+**Request Body Example:**
+
+```json
+{
+  "ids": ["64b1e0d7a6d02d37c2be1f3a"],
+  "status": "paid"
+}
+```
+
+Or by associated Order IDs:
+
+```json
+{
+  "orderIds": ["64a8c9b3f8e3a5c1d2e7f0a1"],
+  "status": "paid"
+}
+```
+
+### Success Response
+
+```json
+{
+  "status": "success",
+  "message": "Payments updated successfully"
+}
+```
+
+---
+
+### Bulk Delete Payments
+
+Batch deletes multiple payment records by ID or DID.
+
+**Method:** POST
+
+**URL:** `/api/v1/payments/bulk-delete`
+
+**Authentication:** Required
+
+**Request Body Example:**
+
+```json
+{
+  "ids": ["64b1e0d7a6d02d37c2be1f3a", "payment-did-123"]
+}
+```
+
+### Success Response
+
+```json
+{
+  "status": "success",
+  "message": "2 payment records deleted successfully"
+}
+```
+
+---
+
 ## Supported Payment Methods
 
-- `cash` – Cash payment (In-Store)
+- `cash` / `Cash on Delivery (COD)` – Cash payment
 - `card` – Card payment
 - `bkash` – bKash mobile banking (requires `paymentPhone`)
 - `nagad` – Nagad mobile banking (requires `paymentPhone`)
+- `rocket` – Rocket mobile banking
 
 ## Supported Payment Statuses
 
 - `pending` – Payment awaiting confirmation
-- `completed` – Payment successfully received
+- `partial` – Partial payment received
+- `paid` / `completed` – Payment successfully received in full
 - `failed` – Payment failed or reversed

@@ -16,7 +16,21 @@ Authorization: Bearer <accessToken>
 
 ## Endpoints
 
-### Upload Image
+### 1. Resize / Redirect Image
+
+- **Method:** GET
+- **URL:** `/api/v1/images/resize`
+- **Authentication:** Not required
+
+#### Query Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `url` | String | Yes | Image URL to redirect to. |
+
+---
+
+### 2. Upload Image
 
 - **Method:** POST
 - **URL:** `/api/v1/images/upload`

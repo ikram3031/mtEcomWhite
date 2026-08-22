@@ -238,13 +238,25 @@ Authorization: Bearer <accessToken>
 }
 ```
 
+### Get order invoice printable HTML view
+
+Renders a styled, responsive printable HTML invoice view for the order.
+
+**Method:** GET
+
+**URL:** `/api/v1/orders/:orderId/invoice`
+
+**Authentication:** Not required (Used directly in customer order emails and links)
+
+---
+
 ### Update order
 
 **Method:** PUT
 
 **URL:** `/api/v1/orders/:orderId`
 
-**Authentication:** Required
+**Authentication:** Required (Owner, Admin, Manager)
 
 ### Request Body Examples
 
@@ -284,13 +296,17 @@ Update shipping info:
 }
 ```
 
+---
+
 ### Delete order
+
+Soft deletes an order (`active: false`) and cleans up linked member totals and payment documents.
 
 **Method:** DELETE
 
 **URL:** `/api/v1/orders/:orderId`
 
-**Authentication:** Required
+**Authentication:** Required (Owner, Admin)
 
 ### Success Response
 
@@ -301,9 +317,77 @@ Update shipping info:
 }
 ```
 
+---
+
+### Bulk Update Orders
+
+Updates status and/or paymentStatus for multiple orders in bulk.
+
+**Method:** POST
+
+**URL:** `/api/v1/orders/bulk-update`
+
+**Authentication:** Required (Owner, Admin, Manager)
+
+**Headers:**
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Request Body:**
+```json
+{
+  "ids": ["64a8c9b3f8e3a5c1d2e7f0a1", "ORD-20260719-123456"],
+  "status": "completed",
+  "paymentStatus": "paid"
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Orders updated successfully"
+}
+```
+
+---
+
+### Bulk Delete Orders
+
+Soft deletes multiple orders in bulk and cleans up linked member totals and payment records.
+
+**Method:** POST
+
+**URL:** `/api/v1/orders/bulk-delete`
+
+**Authentication:** Required (Owner, Admin)
+
+**Headers:**
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Request Body:**
+```json
+{
+  "ids": ["64a8c9b3f8e3a5c1d2e7f0a1", "ORD-20260719-123456"]
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Orders deleted successfully"
+}
+```
+
+---
+
 ## Notes
 
-- `POST /api/v1/orders/new-order` is public and used for checkout submission.
-- All other order endpoints require a valid JWT access token in the `Authorization` header.
+- `POST /api/v1/orders/new-order` is public and used for storefront checkout submission.
+- `GET /api/v1/orders/:orderId/invoice` is public to allow customers to view / print their invoice from emails.
+- All other order endpoints require a valid JWT access token with appropriate role privileges.
 - Supported order statuses: `received`, `processing`, `shipped`, `completed`, `cancelled`.
-- Orders are now persisted in MongoDB using the `Order` model.
