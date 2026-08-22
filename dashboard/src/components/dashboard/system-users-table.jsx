@@ -92,12 +92,14 @@ export function SystemUsersTable({
 
   const getRoleBadge = (role) => {
     switch (role) {
+      case 'Owner':
+        return <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">{role}</Badge>;
       case 'Admin':
         return <Badge variant="default">{role}</Badge>;
       case 'Manager':
         return <Badge variant="secondary">{role}</Badge>;
-      case 'Editor':
-        return <Badge variant="outline">{role}</Badge>;
+      case 'Marketing Expert':
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25">{role}</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }

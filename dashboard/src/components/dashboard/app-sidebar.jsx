@@ -24,6 +24,7 @@ import {
   Star,
   Wrench,
   ImageDown,
+  Share2,
 } from "lucide-react"
 
 import {
@@ -43,24 +44,24 @@ import {
 import { DecantreLogo } from "@/components/DecantreLogo"
 import { useAuth } from "@/lib/auth-context"
 import { clientConfig } from "@/clientConfig"
+import { hasMenuAccess } from "@/lib/rbac"
 
 export function AppSidebar({ ...props }) {
   const location = useLocation()
   const pathname = location.pathname
   const { user } = useAuth()
   const { state, setOpen } = useSidebar()
-  const { brandName, features, allowedMenus = [] } = clientConfig
+  const { brandName, features } = clientConfig
+
+  const userRole = user?.role || "Marketing Expert"
 
   const isAllowed = (menuKey) => {
     // 1. Check feature flags first
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
 
-    // 2. Check allowedMenus array if present
-    if (Array.isArray(allowedMenus) && allowedMenus.length > 0) {
-      return allowedMenus.includes(menuKey)
-    }
-    return true
+    // 2. Check RBAC role permissions
+    return hasMenuAccess(userRole, menuKey)
   }
 
   return (
@@ -393,10 +394,10 @@ export function AppSidebar({ ...props }) {
           )}
 
           {/* Tools */}
-          {(isAllowed("tools") || isAllowed("developer")) && (
+          {isAllowed("tools") && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/tools") || pathname.startsWith("/dashboard/developer")}
+                isActive={pathname.startsWith("/dashboard/tools")}
                 tooltip="Tools"
                 render={<Link to="/dashboard/tools/bulk-image-resize" />}
               >
@@ -404,25 +405,43 @@ export function AppSidebar({ ...props }) {
                 <span>Tools</span>
               </SidebarMenuButton>
               <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    isActive={pathname === "/dashboard/tools/bulk-image-resize" || pathname === "/dashboard/developer/bulk-image-resize"}
-                    render={<Link to="/dashboard/tools/bulk-image-resize" />}
-                  >
-                    <ImageDown className="h-3.5 w-3.5" />
-                    <span>Bulk Image Resize</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    isActive={pathname === "/dashboard/tools/logs" || pathname === "/dashboard/developer/logs"}
-                    render={<Link to="/dashboard/tools/logs" />}
-                  >
-                    <Terminal className="h-3.5 w-3.5" />
-                    <span>System Logs</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
+                {isAllowed("tools.bulk-image-resize") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname === "/dashboard/tools/bulk-image-resize"}
+                      render={<Link to="/dashboard/tools/bulk-image-resize" />}
+                    >
+                      <ImageDown className="h-3.5 w-3.5" />
+                      <span>Bulk Image Resize</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
+                {isAllowed("tools.meta-catalog") && (
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      isActive={pathname === "/dashboard/tools/meta-catalog"}
+                      render={<Link to="/dashboard/tools/meta-catalog" />}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      <span>Meta Catalog</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                )}
               </SidebarMenuSub>
+            </SidebarMenuItem>
+          )}
+
+          {/* System Logs (Standalone Main Menu Item below Tools) */}
+          {isAllowed("logs") && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname === "/dashboard/logs" || pathname.startsWith("/dashboard/tools/logs")}
+                tooltip="System Logs"
+                render={<Link to="/dashboard/logs" />}
+              >
+                <Terminal className="h-4 w-4" />
+                <span>System Logs</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           )}
         </SidebarMenu>

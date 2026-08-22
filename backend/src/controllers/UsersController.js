@@ -1,10 +1,30 @@
+import crypto from "node:crypto";
+import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
 import { AssetModel } from "../models/asset.model.js";
 import { hashPassword } from "../utils/password.js";
+import { env } from "../config/env.js";
+import { renderUserInviteEmail } from "../templates/userInviteEmailTemplate.js";
 import {
   validateCreateUserPayload,
   validateUpdateUserPayload,
 } from "../helper/userControllerHelper.js";
+
+let defaultTransport;
+function getTransport() {
+  if (!defaultTransport) {
+    defaultTransport = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      auth: {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      },
+    });
+  }
+  return defaultTransport;
+}
 
 // List all users in the system.
 export const listUsers = async (req, res, next) => {
@@ -28,7 +48,7 @@ export const getUserById = async (req, res, next) => {
   }
 };
 
-// Create a new user with role-aware permission checks and asset validation.
+// Create a new user / send invitation with role-aware permission checks
 export const createUser = async (req, res, next) => {
   try {
     const payload = req.body ?? {};
@@ -43,31 +63,85 @@ export const createUser = async (req, res, next) => {
       return res.status(403).json({ status: "error", message: "Insufficient permissions to create this role" });
     }
 
-    const existing = await UserModel.findOne({ email: payload.email.toLowerCase().trim() });
+    const email = payload.email.toLowerCase().trim();
+    const existing = await UserModel.findOne({ email });
     if (existing) {
-      return res.status(409).json({ status: "error", message: "A user with this email already exists" });
-    }
-
-    // If Employee, validate assets exist
-    let assignedAssets = [];
-    if (payload.role === "Employee") {
-      assignedAssets = Array.isArray(payload.assets) ? payload.assets : [];
-      const found = await AssetModel.find({ did: { $in: assignedAssets } }).lean();
-      if (found.length !== assignedAssets.length) {
-        return res.status(400).json({ status: "error", message: "One or more assigned assets not found" });
+      if (existing.isActive) {
+        return res.status(409).json({ status: "error", message: "A user with this email already exists" });
       }
     }
 
-    const user = await UserModel.create({
-      name: payload.name.trim(),
-      email: payload.email.toLowerCase().trim(),
-      phone: payload.phone.trim(),
-      role: payload.role,
-      passwordHash: await hashPassword(payload.password),
-      assets: assignedAssets,
-    });
+    // Generate secure invite token
+    const inviteToken = crypto.randomBytes(32).toString("hex");
+    const inviteTokenExpiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000); // 7 days
 
-    res.status(201).json({ status: "success", data: user });
+    let passwordHash = null;
+    if (payload.password && payload.password.trim()) {
+      passwordHash = await hashPassword(payload.password.trim());
+    }
+
+    let user;
+    if (existing && !existing.isActive) {
+      existing.name = payload.name.trim();
+      existing.role = payload.role || existing.role;
+      existing.inviteToken = inviteToken;
+      existing.inviteTokenExpiresAt = inviteTokenExpiresAt;
+      if (passwordHash) existing.passwordHash = passwordHash;
+      await existing.save();
+      user = existing;
+    } else {
+      user = await UserModel.create({
+        name: payload.name.trim(),
+        email,
+        phone: payload.phone ? payload.phone.trim() : "",
+        role: payload.role || "Marketing Expert",
+        passwordHash,
+        inviteToken,
+        inviteTokenExpiresAt,
+        isActive: Boolean(passwordHash), // Active if password explicitly provided, otherwise pending activation
+        createdBy: req.user?.userId || null,
+      });
+    }
+
+    // Resolve white-label domain for invitation link
+    const origin = req.headers.origin || req.headers.referer || "";
+    let domainUrl = "https://decantrebd.com";
+    if (payload.domain) {
+      domainUrl = payload.domain.startsWith("http") ? payload.domain : `https://${payload.domain}`;
+    } else if (origin) {
+      try {
+        domainUrl = new URL(origin).origin;
+      } catch (_) {}
+    }
+    const inviteUrl = `${domainUrl.replace(/\/$/, "")}/invite?token=${inviteToken}`;
+
+    // Send invitation email if SMTP configured
+    if (env.SMTP_USER && env.SMTP_PASSWORD) {
+      try {
+        const transport = getTransport();
+        const brandName = env.SMTP_FROM_NAME || "Store Team";
+        await transport.sendMail({
+          from: `"${brandName}" <${env.SMTP_FROM || env.SMTP_USER}>`,
+          to: user.email,
+          subject: `You're invited to join ${brandName} as ${user.role}`,
+          html: renderUserInviteEmail({
+            name: user.name,
+            role: user.role,
+            inviteUrl,
+            brandName,
+          }),
+        });
+      } catch (mailErr) {
+        console.error("[UsersController] Failed to send invitation email:", mailErr);
+      }
+    }
+
+    res.status(201).json({
+      status: "success",
+      message: "User invited successfully. Invitation link sent via email.",
+      data: user,
+      inviteUrl,
+    });
   } catch (error) {
     next(error);
   }
