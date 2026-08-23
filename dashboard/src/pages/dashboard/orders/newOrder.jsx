@@ -297,6 +297,7 @@ const NewInStoreOrderPage = () => {
   const [completedOrder, setCompletedOrder] = useState(null);
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
 
+  const [discount, setDiscount] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -333,6 +334,17 @@ const NewInStoreOrderPage = () => {
   const subtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cart],
+  );
+
+  const discountAmount = useMemo(() => {
+    const num = Number(discount);
+    if (isNaN(num) || num < 0) return 0;
+    return Math.min(num, subtotal);
+  }, [discount, subtotal]);
+
+  const finalTotal = useMemo(
+    () => Math.max(0, subtotal - discountAmount),
+    [subtotal, discountAmount],
   );
 
   const handleSubmit = async () => {
@@ -388,9 +400,10 @@ const NewInStoreOrderPage = () => {
           concentration: "",
         })),
         subtotal,
+        discountTotalAmount: discountAmount,
         shippingFee: 0,
         tax: 0,
-        total: subtotal,
+        total: finalTotal,
         createdBy: user?.did || "staff",
       };
 
@@ -410,7 +423,7 @@ const NewInStoreOrderPage = () => {
           paymentPhone
             ? `+880${paymentPhone}`
             : "",
-        amount: subtotal,
+        amount: finalTotal,
         status: "completed",
       });
 
@@ -430,7 +443,9 @@ const NewInStoreOrderPage = () => {
         customerEmail: customerEmail.trim() || "instore@decantre.com",
         customerPhone: `+880${customerPhone.trim()}`,
         customerAddress: customerAddress.trim() || "In-Store",
-        totalAmount: subtotal,
+        subtotalAmount: subtotal,
+        discountAmount: discountAmount,
+        totalAmount: finalTotal,
         paymentMethod: paymentMethod,
         paymentPhone:
           (paymentMethod === "bkash" || paymentMethod === "nagad") &&
@@ -475,9 +490,9 @@ const NewInStoreOrderPage = () => {
         paymentMethod: completedOrder.paymentMethod,
         paymentReference: completedOrder.orderNumber,
         items: completedOrder.items,
-        subtotal: formatBDT(completedOrder.totalAmount),
+        subtotal: formatBDT(completedOrder.subtotalAmount || completedOrder.totalAmount),
         taxes: "৳0",
-        discount: "৳0",
+        discount: completedOrder.discountAmount ? formatBDT(completedOrder.discountAmount) : "৳0",
         total: formatBDT(completedOrder.totalAmount),
         invoiceUrl: completedOrder.invoiceUrl,
         notes: "Thank you for shopping with Decantre.",
@@ -833,18 +848,42 @@ const NewInStoreOrderPage = () => {
             )}
 
             {cart.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-border space-y-1.5">
+              <div className="mt-4 pt-3 border-t border-border space-y-2">
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Subtotal</span>
                   <span>{formatBDT(subtotal)}</span>
                 </div>
+
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <span className="text-xs text-muted-foreground font-medium">Discount (৳)</span>
+                  <div className="w-28">
+                    <Input
+                      type="number"
+                      min="0"
+                      max={subtotal}
+                      placeholder="0"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                      className="h-7 text-xs text-right font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-xs text-emerald-600 font-medium">
+                    <span>Discount Applied</span>
+                    <span>- {formatBDT(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
+                  <span className="text-emerald-600 font-medium">Free</span>
                 </div>
+
                 <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-border">
-                  <span>Total</span>
-                  <span className="text-primary">{formatBDT(subtotal)}</span>
+                  <span>Total Payable</span>
+                  <span className="text-primary">{formatBDT(finalTotal)}</span>
                 </div>
               </div>
             )}
