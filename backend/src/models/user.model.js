@@ -24,7 +24,7 @@ const userSchema = new Schema(
     emailOtp: { type: String, trim: true, select: false },
     emailOtpExpiresAt: { type: Date, select: false },
     twoFactorSecret: { type: String, select: false },
-    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorEnabled: { type: Boolean, default: true },
     role: { type: String, required: true, enum: USER_ROLES, default: "Marketing Expert" },
     inviteToken: { type: String, select: false },
     inviteTokenExpiresAt: { type: Date, select: false },
