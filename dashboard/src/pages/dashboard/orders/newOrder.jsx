@@ -388,6 +388,7 @@ const NewInStoreOrderPage = () => {
 
       const orderPayload = {
         orderType: "instore",
+        status: "completed",
         paymentMethod: fullPaymentMethod,
         billingInfo: billingInfo,
         shippingInfo: billingInfo,
@@ -404,6 +405,8 @@ const NewInStoreOrderPage = () => {
         shippingFee: 0,
         tax: 0,
         total: finalTotal,
+        paidAmount: finalTotal,
+        paymentStatus: "paid",
         createdBy: user?.did || "staff",
       };
 
@@ -423,8 +426,12 @@ const NewInStoreOrderPage = () => {
           paymentPhone
             ? `+880${paymentPhone}`
             : "",
+        totalAmount: finalTotal,
+        paidAmount: finalTotal,
+        pendingAmount: 0,
         amount: finalTotal,
-        status: "completed",
+        paymentStatus: "paid",
+        status: "paid",
       });
 
       const invoiceUrl = `https://decantre.com/invoice/${orderNumber}`;
