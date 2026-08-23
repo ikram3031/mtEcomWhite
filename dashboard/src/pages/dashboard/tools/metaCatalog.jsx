@@ -300,7 +300,12 @@ export default function MetaCatalogGenerator() {
       }
 
       if (selectedCategories.length > 0) {
-        params.category = selectedCategories.map((c) => c.slug || c.name || c.id);
+        const catKeys = selectedCategories
+          .map((c) => c.slug || c.did || c.name || c.id)
+          .filter(Boolean);
+        if (catKeys.length > 0) {
+          params.category = catKeys.join(',');
+        }
       }
 
       const response = await apiClient.get('/api/v1/products', { params });
@@ -381,9 +386,11 @@ export default function MetaCatalogGenerator() {
   const categoryOptions = useMemo(() => {
     if (dbCategories.length > 0) {
       return dbCategories.map((c) => ({
-        id: c.did || c._id || c.id || c.slug,
+        id: String(c.did || c.slug || c._id || c.id || c.name),
         name: c.name,
-        slug: c.slug,
+        slug: c.slug || '',
+        did: c.did || '',
+        _id: c._id || c.id || '',
       }));
     }
     return [];
@@ -471,8 +478,8 @@ export default function MetaCatalogGenerator() {
   // Toggle category multi-select
   const toggleCategorySelection = (cat) => {
     setSelectedCategories((prev) => {
-      const exists = prev.some((c) => c.id === cat.id);
-      if (exists) return prev.filter((c) => c.id !== cat.id);
+      const exists = prev.some((c) => c.name === cat.name || c.id === cat.id);
+      if (exists) return prev.filter((c) => c.name !== cat.name && c.id !== cat.id);
       return [...prev, cat];
     });
   };

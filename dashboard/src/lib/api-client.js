@@ -2,7 +2,7 @@ import axios from 'axios';
 import { handleGlobalError } from './error-handler';
 import clientConfig from '@/clientConfig';
 
-export const baseURL = clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
+export const baseURL = import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
 
 export const apiClient = axios.create({
   baseURL,
