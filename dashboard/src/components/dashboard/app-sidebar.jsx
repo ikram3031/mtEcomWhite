@@ -28,6 +28,7 @@ import {
   Settings,
   LogOut,
   User,
+  ChevronRight,
 } from "lucide-react"
 
 import {
@@ -61,6 +62,13 @@ export function AppSidebar({ ...props }) {
   const { user, logout } = useAuth()
   const { state, setOpen } = useSidebar()
   const { brandName, features } = clientConfig
+
+  // Single-open accordion state: only one parent submenu open at a time
+  const [openMenu, setOpenMenu] = React.useState(null)
+
+  const toggleMenu = (menuKey) => {
+    setOpenMenu((prev) => (prev === menuKey ? null : menuKey))
+  }
 
   const userRole = user?.role || "Marketing Expert"
 
@@ -127,35 +135,45 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/orders")}
                 tooltip="Orders"
-                render={<Link to="/dashboard/orders" />}
+                onClick={() => toggleMenu("orders")}
+                className="cursor-pointer flex items-center justify-between w-full"
               >
-                <ShoppingBag className="h-4 w-4" />
-                <span>Orders</span>
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Orders</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "orders" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("orders.new") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/orders/new"}
-                      render={<Link to="/dashboard/orders/new" />}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span>New In-Store Order</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("orders.list") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/orders"}
-                      render={<Link to="/dashboard/orders" />}
-                    >
-                      <ListOrdered className="h-3.5 w-3.5" />
-                      <span>Orders List</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-              </SidebarMenuSub>
+              {openMenu === "orders" && (
+                <SidebarMenuSub>
+                  {isAllowed("orders.new") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/orders/new"}
+                        render={<Link to="/dashboard/orders/new" />}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span>New In-Store Order</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("orders.list") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/orders"}
+                        render={<Link to="/dashboard/orders" />}
+                      >
+                        <ListOrdered className="h-3.5 w-3.5" />
+                        <span>Orders List</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           )}
 
@@ -165,123 +183,91 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/products")}
                 tooltip="Products"
-                render={<Link to="/dashboard/products" />}
+                onClick={() => toggleMenu("products")}
+                className="cursor-pointer flex items-center justify-between w-full"
               >
-                <Package className="h-4 w-4" />
-                <span>Products</span>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>Products</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "products" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("products.new") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/new"}
-                      render={<Link to="/dashboard/products/new" />}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span>Add Product</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("products.list") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products"}
-                      render={<Link to="/dashboard/products" />}
-                    >
-                      <ListOrdered className="h-3.5 w-3.5" />
-                      <span>Product List</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("products.categories") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/categories"}
-                      render={<Link to="/dashboard/products/categories" />}
-                    >
-                      <Receipt className="h-3.5 w-3.5" />
-                      <span>Categories</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("products.brands") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/brands"}
-                      render={<Link to="/dashboard/products/brands" />}
-                    >
-                      <CreditCard className="h-3.5 w-3.5" />
-                      <span>Brands</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("products.attributes") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/attributes"}
-                      render={<Link to="/dashboard/products/attributes" />}
-                    >
-                      <Sliders className="h-3.5 w-3.5" />
-                      <span>Attributes</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("products.coupons") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/products/coupons"}
-                      render={<Link to="/dashboard/products/coupons" />}
-                    >
-                      <Ticket className="h-3.5 w-3.5" />
-                      <span>Coupons</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-              </SidebarMenuSub>
+              {openMenu === "products" && (
+                <SidebarMenuSub>
+                  {isAllowed("products.new") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products/new"}
+                        render={<Link to="/dashboard/products/new" />}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span>Add Product</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.list") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products" || pathname === "/dashboard/products/list"}
+                        render={<Link to="/dashboard/products" />}
+                      >
+                        <ListOrdered className="h-3.5 w-3.5" />
+                        <span>Product List</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.categories") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products/categories"}
+                        render={<Link to="/dashboard/products/categories" />}
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                        <span>Categories</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.brands") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products/brands"}
+                        render={<Link to="/dashboard/products/brands" />}
+                      >
+                        <CreditCard className="h-3.5 w-3.5" />
+                        <span>Brands</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.attributes") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/products/attributes")}
+                        render={<Link to="/dashboard/products/attributes" />}
+                      >
+                        <Sliders className="h-3.5 w-3.5" />
+                        <span>Attributes</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.coupons") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products/coupons"}
+                        render={<Link to="/dashboard/products/coupons" />}
+                      >
+                        <Ticket className="h-3.5 w-3.5" />
+                        <span>Coupons</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           )}
-
-          {/* Stock Management - Commented out as requested */}
-          {/* {isAllowed("products.stock") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname === "/dashboard/products/stock"}
-                tooltip="Stock Management"
-                render={<Link to="/dashboard/products/stock" />}
-              >
-                <ListOrdered className="h-4 w-4" />
-                <span>Stock Management</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )} */}
-
-          {/* AI Photo Studio - Commented out as requested
-          {isAllowed("studio") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/studio")}
-                tooltip="Studio"
-                render={<Link to="/dashboard/studio/batch-images" />}
-              >
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span>Studio</span>
-              </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("studio.batch-images") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/studio/batch-images"}
-                      render={<Link to="/dashboard/studio/batch-images" />}
-                    >
-                      <Package className="h-3.5 w-3.5" />
-                      <span>Batch Images</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-          )}
-          */}
 
           {/* Billing & Payment */}
           {isAllowed("billing") && (
@@ -289,35 +275,45 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/billing")}
                 tooltip="Billing & Payment"
-                render={<Link to="/dashboard/billing" />}
+                onClick={() => toggleMenu("billing")}
+                className="cursor-pointer flex items-center justify-between w-full"
               >
-                <CreditCard className="h-4 w-4" />
-                <span>Billing & Payment</span>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>Billing & Payment</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "billing" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("billing.billings") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/billing/billings"}
-                      render={<Link to="/dashboard/billing/billings" />}
-                    >
-                      <Receipt className="h-3.5 w-3.5" />
-                      <span>Bills & Invoices</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("billing.payments") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/billing/payments"}
-                      render={<Link to="/dashboard/billing/payments" />}
-                    >
-                      <CreditCard className="h-3.5 w-3.5" />
-                      <span>Payments</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-              </SidebarMenuSub>
+              {openMenu === "billing" && (
+                <SidebarMenuSub>
+                  {isAllowed("billing.billings") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/billing/billings"}
+                        render={<Link to="/dashboard/billing/billings" />}
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                        <span>Bills & Invoices</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("billing.payments") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/billing/payments"}
+                        render={<Link to="/dashboard/billing/payments" />}
+                      >
+                        <CreditCard className="h-3.5 w-3.5" />
+                        <span>Payments</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           )}
 
@@ -334,74 +330,85 @@ export function AppSidebar({ ...props }) {
                   pathname.startsWith("/dashboard/trash")
                 }
                 tooltip="Admin"
+                onClick={() => toggleMenu("admin")}
+                className="cursor-pointer flex items-center justify-between w-full"
               >
-                <ShieldCheck className="h-4 w-4" />
-                <span>Admin</span>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Admin</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "admin" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("members") && (
+              {openMenu === "admin" && (
+                <SidebarMenuSub>
+                  {isAllowed("members") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/members")}
+                        render={<Link to="/dashboard/members" />}
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        <span>Members</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("reports") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/reports")}
+                        render={<Link to="/dashboard/reports" />}
+                      >
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        <span>Reports</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
-                      isActive={pathname.startsWith("/dashboard/members")}
-                      render={<Link to="/dashboard/members" />}
+                      isActive={pathname.startsWith("/dashboard/activity-logs")}
+                      render={<Link to="/dashboard/activity-logs" />}
                     >
-                      <Users className="h-3.5 w-3.5" />
-                      <span>Members</span>
+                      <Activity className="h-3.5 w-3.5" />
+                      <span>Activity Logs</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                )}
-                {isAllowed("reports") && (
+                  {isAllowed("users") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/users")}
+                        render={<Link to="/dashboard/users" />}
+                      >
+                        <ShieldAlert className="h-3.5 w-3.5" />
+                        <span>System Users</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("reviews") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/reviews")}
+                        render={<Link to="/dashboard/reviews" />}
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                        <span>Reviews</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
-                      isActive={pathname.startsWith("/dashboard/reports")}
-                      render={<Link to="/dashboard/reports" />}
+                      isActive={pathname.startsWith("/dashboard/trash")}
+                      render={<Link to="/dashboard/trash" />}
                     >
-                      <BarChart3 className="h-3.5 w-3.5" />
-                      <span>Reports</span>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      <span className="text-destructive font-medium">Trash</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                )}
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    isActive={pathname.startsWith("/dashboard/activity-logs")}
-                    render={<Link to="/dashboard/activity-logs" />}
-                  >
-                    <Activity className="h-3.5 w-3.5" />
-                    <span>Activity Logs</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                {isAllowed("users") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname.startsWith("/dashboard/users")}
-                      render={<Link to="/dashboard/users" />}
-                    >
-                      <ShieldAlert className="h-3.5 w-3.5" />
-                      <span>System Users</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("reviews") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname.startsWith("/dashboard/reviews")}
-                      render={<Link to="/dashboard/reviews" />}
-                    >
-                      <Star className="h-3.5 w-3.5" />
-                      <span>Reviews</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    isActive={pathname.startsWith("/dashboard/trash")}
-                    render={<Link to="/dashboard/trash" />}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    <span className="text-destructive font-medium">Trash</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           )}
 
@@ -411,41 +418,51 @@ export function AppSidebar({ ...props }) {
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/tools")}
                 tooltip="Tools"
-                render={<Link to="/dashboard/tools/bulk-image-resize" />}
+                onClick={() => toggleMenu("tools")}
+                className="cursor-pointer flex items-center justify-between w-full"
               >
-                <Wrench className="h-4 w-4" />
-                <span>Tools</span>
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  <span>Tools</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "tools" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {isAllowed("tools.bulk-image-resize") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/tools/bulk-image-resize"}
-                      render={<Link to="/dashboard/tools/bulk-image-resize" />}
-                    >
-                      <ImageDown className="h-3.5 w-3.5" />
-                      <span>Bulk Image Resize</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-                {isAllowed("tools.meta-catalog") && (
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname === "/dashboard/tools/meta-catalog"}
-                      render={<Link to="/dashboard/tools/meta-catalog" />}
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
-                      <span>Meta Catalog</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                )}
-              </SidebarMenuSub>
+              {openMenu === "tools" && (
+                <SidebarMenuSub>
+                  {isAllowed("tools.bulk-image-resize") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/bulk-image-resize"}
+                        render={<Link to="/dashboard/tools/bulk-image-resize" />}
+                      >
+                        <ImageDown className="h-3.5 w-3.5" />
+                        <span>Bulk Image Resize</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("tools.meta-catalog") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/meta-catalog"}
+                        render={<Link to="/dashboard/tools/meta-catalog" />}
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Meta Catalog</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           )}
 
-          {/* System Logs (Standalone Main Menu Item below Tools) */}
+          {/* System Logs (Fixed Standalone Main Menu Item directly at bottom of content) */}
           {isAllowed("logs") && (
-            <SidebarMenuItem>
+            <SidebarMenuItem className="mt-auto pt-2">
               <SidebarMenuButton
                 isActive={pathname === "/dashboard/logs" || pathname.startsWith("/dashboard/tools/logs")}
                 tooltip="System Logs"
