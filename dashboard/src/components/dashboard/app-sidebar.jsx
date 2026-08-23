@@ -527,33 +527,25 @@ export function AppSidebar({ ...props }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 2. All Media Icon Button (Accessible to all roles - Blue theme) */}
+          {/* 2. All Media Icon Button (Subtle blue outline & translucent bg) */}
           <Link
             to="/dashboard/media"
-            className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
-              pathname.startsWith("/dashboard/media")
-                ? "bg-blue-600 text-white font-semibold shadow-sm ring-2 ring-blue-500/40"
-                : "bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
-            }`}
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 dark:text-blue-400 border border-blue-500/40 shadow-xs transition-all cursor-pointer"
             title="All Media Assets"
             aria-label="All Media Assets"
           >
-            <ImageIcon className="h-4 w-4" />
+            <ImageIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
           </Link>
 
-          {/* 3. Settings Icon Button (Only visible to Owner, Admin, Manager) */}
+          {/* 3. Settings Icon Button (Subtle golden outline & translucent bg - Only visible to Owner, Admin, Manager) */}
           {isAllowed("settings") && (
             <Link
               to="/dashboard/settings"
-              className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
-                pathname.startsWith("/dashboard/settings")
-                  ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
-                  : "bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30"
-              }`}
+              className="h-8 w-8 flex items-center justify-center rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/40 shadow-xs transition-all cursor-pointer"
               title="Settings"
               aria-label="Settings"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4 text-amber-500 dark:text-amber-400" />
             </Link>
           )}
 
