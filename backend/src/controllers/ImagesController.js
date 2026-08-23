@@ -169,3 +169,74 @@ export const uploadProductImage = async (req, res, next) => {
     next(error);
   }
 };
+
+// Helper: Recursively find all media files inside /uploads directory
+async function getAllUploadFiles(dirPath, baseDir) {
+  let results = [];
+  if (!fs.existsSync(dirPath)) return results;
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      const nested = await getAllUploadFiles(fullPath, baseDir);
+      results = results.concat(nested);
+    } else {
+      const ext = path.extname(entry.name).toLowerCase();
+      const validExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".avif", ".pdf"];
+      if (validExtensions.includes(ext)) {
+        try {
+          const stats = await fs.promises.stat(fullPath);
+          const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, "/");
+          results.push({
+            filename: entry.name,
+            url: `/${relativePath}`,
+            size: stats.size,
+            createdAt: stats.birthtime || stats.mtime,
+            updatedAt: stats.mtime,
+          });
+        } catch {
+          // ignore inaccessible file stats
+        }
+      }
+    }
+  }
+  return results;
+}
+
+// List all media files from uploads folder with pagination and search
+export const listAllMedia = async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const limit = Math.max(1, parseInt(req.query.limit || "20", 10));
+    const search = req.query.search ? String(req.query.search).trim().toLowerCase() : "";
+
+    const uploadsDir = path.join(process.cwd(), "uploads");
+    const allFiles = await getAllUploadFiles(uploadsDir, process.cwd());
+
+    // Sort by latest created/modified date first (descending)
+    allFiles.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+    // Filter by search query if provided
+    const filteredFiles = search
+      ? allFiles.filter((f) => f.filename.toLowerCase().includes(search) || f.url.toLowerCase().includes(search))
+      : allFiles;
+
+    const total = filteredFiles.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const paginated = filteredFiles.slice((page - 1) * limit, page * limit);
+
+    return res.status(200).json({
+      status: "success",
+      data: paginated,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
