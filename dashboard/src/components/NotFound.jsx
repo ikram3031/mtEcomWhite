@@ -26,32 +26,23 @@ export default function NotFound() {
         </p>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons: 2 Buttons (Go Back -> / and Reload) */}
       <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.history.back()}
-          className="gap-2 text-xs font-semibold cursor-pointer h-9 px-4"
-        >
-          <ArrowLeft className="h-4 w-4" /> Go Back
-        </Button>
-
         <Button
           asChild
           size="sm"
-          className="gap-2 text-xs font-semibold cursor-pointer h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+          className="gap-2 text-xs font-semibold cursor-pointer h-9 px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
         >
-          <Link to="/dashboard">
-            <Home className="h-4 w-4" /> Return to Dashboard
+          <Link to="/">
+            <ArrowLeft className="h-4 w-4" /> Go Back
           </Link>
         </Button>
 
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => window.location.reload()}
-          className="gap-2 text-xs font-medium cursor-pointer h-9 px-3 text-muted-foreground hover:text-foreground"
+          className="gap-2 text-xs font-medium cursor-pointer h-9 px-4 text-muted-foreground hover:text-foreground border-border/80 hover:bg-muted/50"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Reload
         </Button>
