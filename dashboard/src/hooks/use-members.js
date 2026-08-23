@@ -48,8 +48,8 @@ const fetchMembers = async (params) => {
     const parsedMembers = (Array.isArray(memberList) ? memberList : []).map((m) => {
       const member = m || {};
       const orders = Array.isArray(member.orders) ? member.orders : [];
-      const totalOrders = orders.length;
-      const lifetimeSpent = orders.reduce(
+      const fallbackOrdersCount = orders.length;
+      const fallbackLifetimeSpent = orders.reduce(
         (sum, o) => {
           const value = o.value;
           if (typeof value === 'number') return sum + value;
@@ -58,6 +58,14 @@ const fetchMembers = async (params) => {
         },
         0
       );
+
+      const totalOrders = typeof member.totalOrders === 'number' 
+        ? member.totalOrders 
+        : fallbackOrdersCount;
+
+      const lifetimeSpent = typeof member.lifetimeSpent === 'number'
+        ? member.lifetimeSpent
+        : (typeof member.totalOrderAmount === 'number' ? member.totalOrderAmount : fallbackLifetimeSpent);
 
       return {
         id: member.id || member._id,
@@ -69,6 +77,11 @@ const fetchMembers = async (params) => {
         joinedDate: member.createdAt || new Date().toISOString(),
         segment: member.segment || undefined,
         avatar: member.avatar || undefined,
+        billingAddress: member.billingAddress || null,
+        shippingAddress: member.shippingAddress || null,
+        role: member.role || 'Customer',
+        did: member.did || '',
+        isActive: member.isActive ?? true,
       };
     });
 

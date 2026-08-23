@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { MemberModel } from "../models/member.model.js";
+import { OrderModel } from "../models/order.model.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
@@ -71,10 +72,73 @@ export const listMembers = async (req, res, next) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
+
+    const memberIds = members.map((m) => m._id);
+    const memberEmails = members.map((m) => m.email).filter(Boolean);
+
+    // Aggregate orders for these members by ObjectId or Email
+    const orderAggregates = await OrderModel.aggregate([
+      {
+        $match: {
+          $or: [
+            { member: { $in: memberIds } },
+            { "billingInfo.email": { $in: memberEmails } },
+          ],
+          active: { $ne: false },
+          status: { $ne: "cancelled" },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            memberId: "$member",
+            email: { $toLower: "$billingInfo.email" },
+          },
+          totalOrders: { $sum: 1 },
+          totalSpent: { $sum: { $ifNull: ["$totals.total", 0] } },
+        },
+      },
+    ]);
+
+    // Build fast lookup map
+    const statsMap = new Map();
+    for (const agg of orderAggregates) {
+      if (agg._id.memberId) {
+        const key = agg._id.memberId.toString();
+        const existing = statsMap.get(key) || { totalOrders: 0, totalSpent: 0 };
+        statsMap.set(key, {
+          totalOrders: existing.totalOrders + agg.totalOrders,
+          totalSpent: existing.totalSpent + agg.totalSpent,
+        });
+      }
+      if (agg._id.email) {
+        const key = agg._id.email;
+        const existing = statsMap.get(key) || { totalOrders: 0, totalSpent: 0 };
+        statsMap.set(key, {
+          totalOrders: existing.totalOrders + agg.totalOrders,
+          totalSpent: existing.totalSpent + agg.totalSpent,
+        });
+      }
+    }
+
+    const enhancedMembers = members.map((m) => {
+      const idKey = m._id.toString();
+      const emailKey = (m.email || "").toLowerCase();
+      const statsById = statsMap.get(idKey);
+      const statsByEmail = statsMap.get(emailKey);
+      const calculatedStats = statsById || statsByEmail || { totalOrders: (m.orders || []).length, totalSpent: m.totalOrderAmount || 0 };
+
+      return {
+        ...m,
+        totalOrders: calculatedStats.totalOrders,
+        totalOrderAmount: calculatedStats.totalSpent,
+        lifetimeSpent: calculatedStats.totalSpent,
+      };
+    });
       
     res.json({
       status: "success",
-      data: members,
+      data: enhancedMembers,
       meta: {
         total,
         page,
@@ -104,7 +168,33 @@ export const getMemberById = async (req, res, next) => {
         .json({ status: "error", message: "Member not found" });
     }
 
-    res.json({ status: "success", data: member });
+    // Fetch member's orders
+    const orders = await OrderModel.find({
+      $or: [
+        { member: member._id },
+        { "billingInfo.email": (member.email || "").toLowerCase() },
+      ],
+      active: { $ne: false },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const nonCancelledOrders = orders.filter((o) => o.status !== "cancelled");
+    const dynamicTotalSpent = nonCancelledOrders.reduce(
+      (sum, o) => sum + Number(o.totals?.total || 0),
+      0
+    );
+
+    res.json({
+      status: "success",
+      data: {
+        ...member,
+        totalOrders: orders.length,
+        lifetimeSpent: dynamicTotalSpent,
+        totalOrderAmount: dynamicTotalSpent,
+        orderList: orders,
+      },
+    });
   } catch (error) {
     next(error);
   }
