@@ -427,80 +427,82 @@ export default function EditAttributePage() {
               </div>
             </div>
 
-            {/* List of Configured Values with Full-Width Rows */}
-            <div className="space-y-2.5">
+            {/* List of Configured Values in 2-Column Grid */}
+            <div>
               {values.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground border border-dashed rounded-xl">
+                <div className="py-12 text-center text-muted-foreground border border-dashed rounded-xl bg-background/50">
                   No values configured yet. Use the form above to add values.
                 </div>
               ) : (
-                values.map((val, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/30 transition-all gap-4 w-full"
-                  >
-                    {/* Left: Image Box + Text */}
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      {val.imageUrl ? (
-                        <div className="relative h-12 w-12 rounded-lg border overflow-hidden shrink-0 group">
-                          <img
-                            src={val.imageUrl}
-                            alt={val.name}
-                            className="h-full w-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveExistingValueImage(idx)}
-                            className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                            title="Remove Image"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label
-                          className={`h-12 w-12 rounded-lg border border-dashed flex flex-col items-center justify-center text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer shrink-0 transition-colors ${
-                            uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
-                          }`}
-                          title="Upload 1:1 Image"
-                        >
-                          <Upload className="h-4 w-4" />
-                          <span>{uploadingIndex === idx ? '...' : '+Img'}</span>
-                          <input
-                            type="file"
-                            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleExistingValueImageUpload(idx, file);
-                            }}
-                          />
-                        </label>
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-foreground truncate">
-                          {val.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground font-mono truncate">
-                          {val.slug}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Right: Delete Action */}
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0 cursor-pointer"
-                      title="Delete Value"
-                      onClick={() => removeValue(idx)}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {values.map((val, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-background hover:bg-muted/40 hover:border-primary/40 transition-all gap-3.5 shadow-2xs"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))
+                      {/* Left: 1:1 Image Box + Text */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {val.imageUrl ? (
+                          <div className="relative h-11 w-11 rounded-lg border overflow-hidden shrink-0 group">
+                            <img
+                              src={val.imageUrl}
+                              alt={val.name}
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingValueImage(idx)}
+                              className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              title="Remove Image"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            className={`h-11 w-11 rounded-lg border border-dashed flex flex-col items-center justify-center text-[9px] text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer shrink-0 transition-colors ${
+                              uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
+                            }`}
+                            title="Upload 1:1 Image"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>{uploadingIndex === idx ? '...' : '+Img'}</span>
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleExistingValueImageUpload(idx, file);
+                              }}
+                            />
+                          </label>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-foreground truncate">
+                            {val.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            {val.slug}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Delete Action */}
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive/80 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
+                        title="Delete Value"
+                        onClick={() => removeValue(idx)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </CardContent>
