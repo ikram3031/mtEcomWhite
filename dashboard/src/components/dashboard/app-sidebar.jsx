@@ -490,19 +490,21 @@ export function AppSidebar({ ...props }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 2. Settings Icon Button (Middle - Golden style, rounded-full) */}
-          <Link
-            to="/dashboard/settings"
-            className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
-              pathname.startsWith("/dashboard/settings")
-                ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
-                : "bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30"
-            }`}
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Link>
+          {/* 2. Settings Icon Button (Middle - Only visible to Owner, Admin, Manager) */}
+          {isAllowed("settings") && (
+            <Link
+              to="/dashboard/settings"
+              className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
+                pathname.startsWith("/dashboard/settings")
+                  ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
+                  : "bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30"
+              }`}
+              title="Settings"
+              aria-label="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
+          )}
 
           {/* 3. Logout Icon Button (Right - Red icon, red border, red background accent, rounded-full) */}
           <button

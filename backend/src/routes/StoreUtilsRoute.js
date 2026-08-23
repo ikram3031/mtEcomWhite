@@ -13,11 +13,11 @@ const storeUtilsRouter = Router();
 // GET /api/v1/store-utils : Public or authenticated retrieval of store showcases
 storeUtilsRouter.get("/", getStoreUtils);
 
-// PUT /api/v1/store-utils : Update store showcases (Owner, Admin, Manager, Marketing Expert)
+// PUT /api/v1/store-utils : Update store showcases (Owner, Admin, Manager only)
 storeUtilsRouter.put(
   "/",
   authenticateToken,
-  authorizeRoles("Owner", "Admin", "Manager", "Marketing Expert"),
+  authorizeRoles("Owner", "Admin", "Manager"),
   updateStoreUtils
 );
 

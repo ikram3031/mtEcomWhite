@@ -43,8 +43,7 @@
         "products.coupons",
         "tools",
         "tools.bulk-image-resize",
-        "tools.meta-catalog",
-        "settings"
+        "tools.meta-catalog"
       ]
     }
   }
