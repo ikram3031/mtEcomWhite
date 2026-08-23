@@ -35,6 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import pkg from "../../../package.json"
 import {
   Sidebar,
   SidebarContent,
@@ -78,8 +79,11 @@ export function AppSidebar({ ...props }) {
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
-              <div className="flex items-center gap-1.5 overflow-hidden">
-                <DecantreLogo className="h-6 w-auto max-w-[115px] text-primary shrink-0" iconOnly={false} />
+              <div className="flex flex-col items-start gap-0.5 overflow-hidden">
+                <DecantreLogo className="h-5 w-auto max-w-[115px] text-primary shrink-0" iconOnly={false} />
+                <span className="text-[10px] font-mono font-medium text-muted-foreground/75 tracking-wider pl-0.5">
+                  v{pkg.version || "3.2.2"}
+                </span>
               </div>
               <button
                 onClick={() => setOpen(false)}

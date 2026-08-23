@@ -382,40 +382,43 @@ const AttributesPage = () => {
                 key={attr._id}
                 className="border shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
-                <CardHeader className="pb-3 border-b bg-muted/20">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1 min-w-0">
+                <CardHeader className="pb-3.5 border-b bg-muted/15">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1.5 min-w-0 flex-1">
                       <CardTitle className="text-lg font-bold text-foreground truncate">
                         {attr.name}
                       </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-muted-foreground font-mono bg-muted/80 border border-border/60 px-2 py-0.5 rounded-md">
                           {attr.slug}
                         </span>
-                        <Badge variant="secondary" className="text-[11px] font-semibold">
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] font-semibold bg-primary/10 text-primary border-primary/25 px-2 py-0.5"
+                        >
                           {valCount} {valCount === 1 ? 'Value' : 'Values'}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <Button
                         size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 hover:bg-primary/10 hover:text-primary cursor-pointer"
+                        variant="outline"
+                        className="h-8 w-8 rounded-full border-border/80 hover:bg-primary/15 hover:text-primary hover:border-primary/40 cursor-pointer transition-all"
                         title="Edit Attribute"
                         onClick={() => openEditDialog(attr)}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                        variant="outline"
+                        className="h-8 w-8 rounded-full text-destructive border-destructive/30 hover:bg-destructive/15 hover:text-destructive hover:border-destructive/50 cursor-pointer transition-all"
                         title="Delete Attribute"
                         onClick={() => setDeleteTarget(attr)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
