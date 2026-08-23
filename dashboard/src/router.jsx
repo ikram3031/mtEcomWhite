@@ -16,6 +16,7 @@ import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
 import Reviews from './pages/dashboard/reviews';
 import SettingsPage from './pages/dashboard/settings';
+import AllMedia from './pages/dashboard/allMedia';
 
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
@@ -143,6 +144,10 @@ export const router = createBrowserRouter([
             <SettingsPage />
           </RoleGuard>
         ),
+      },
+      {
+        path: 'media',
+        element: <AllMedia />,
       },
       {
         path: 'tools',

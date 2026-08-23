@@ -29,6 +29,7 @@ import {
   LogOut,
   User,
   ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react"
 
 import {
@@ -494,17 +495,17 @@ export function AppSidebar({ ...props }) {
       <SidebarFooter className="border-t border-sidebar-border p-2.5 group-data-[collapsible=icon]:p-2 mt-auto">
         {/* Action Icon Buttons */}
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
-          {/* 1. Profile Icon Button (Left - Shows User Card Popover Upward) */}
+          {/* 1. Profile Icon Button (Light green border - Shows User Card Popover Upward) */}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
                 <button
                   type="button"
-                  className="h-8 w-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 text-foreground border border-border transition-all cursor-pointer"
+                  className="h-8 w-8 flex items-center justify-center rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-foreground border border-emerald-500/40 shadow-xs transition-all cursor-pointer"
                   title="My Profile"
                   aria-label="My Profile"
                 >
-                  <User className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </button>
               }
             />
@@ -526,7 +527,21 @@ export function AppSidebar({ ...props }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 2. Settings Icon Button (Middle - Only visible to Owner, Admin, Manager) */}
+          {/* 2. All Media Icon Button (Accessible to all roles) */}
+          <Link
+            to="/dashboard/media"
+            className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
+              pathname.startsWith("/dashboard/media")
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
+                : "bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+            }`}
+            title="All Media Assets"
+            aria-label="All Media Assets"
+          >
+            <ImageIcon className="h-4 w-4" />
+          </Link>
+
+          {/* 3. Settings Icon Button (Only visible to Owner, Admin, Manager) */}
           {isAllowed("settings") && (
             <Link
               to="/dashboard/settings"
@@ -542,7 +557,7 @@ export function AppSidebar({ ...props }) {
             </Link>
           )}
 
-          {/* 3. Logout Icon Button (Right - Red icon, red border, red background accent, rounded-full) */}
+          {/* 4. Logout Icon Button (Red icon, red border, red background accent, rounded-full) */}
           <button
             type="button"
             onClick={() => setLogoutConfirmOpen(true)}
