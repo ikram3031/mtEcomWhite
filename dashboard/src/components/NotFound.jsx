@@ -42,7 +42,7 @@ export default function NotFound() {
           variant="outline"
           size="sm"
           onClick={() => window.location.reload()}
-          className="gap-2 text-xs font-medium cursor-pointer h-9 px-4 text-muted-foreground hover:text-foreground border-border/80 hover:bg-muted/50"
+          className="gap-2 text-xs font-semibold cursor-pointer h-9 px-4 bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/40 hover:border-destructive/60 shadow-xs"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Reload
         </Button>
