@@ -4,7 +4,8 @@ const attributeValueSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true },
-    color: { type: String, default: null, trim: true }, // Color optional as requested
+    color: { type: String, default: null, trim: true },
+    imageUrl: { type: String, default: null, trim: true },
   },
   { _id: false }
 );

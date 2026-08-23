@@ -79,9 +79,14 @@ export const buildOrderDocument = async (payload) => {
       }
     : { ...billingInfo };
 
+  const isInstore = payload.orderType === 'instore';
+  const initialStatus = payload.status 
+    ? String(payload.status).toLowerCase() 
+    : (isInstore ? 'completed' : 'processing');
+
   return {
-    orderNumber: await buildOrderNumber(payload.orderType === 'instore'),
-    status: 'processing',
+    orderNumber: await buildOrderNumber(isInstore),
+    status: ['processing', 'shipped', 'completed', 'cancelled'].includes(initialStatus) ? initialStatus : 'processing',
     createdBy: createdByUserId,
     updatedBy: null,
     member: payload.memberId && Types.ObjectId.isValid(payload.memberId) ? payload.memberId : undefined,

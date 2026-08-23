@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { uploadMiddleware, uploadProductImage } from "../controllers/ImagesController.js";
+import { uploadMiddleware, uploadProductImage, listAllMedia } from "../controllers/ImagesController.js";
 import { authenticateToken, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const imagesRouter = Router();
+
+// Retrieve all media files from /uploads with search & pagination (Accessible to all authenticated users)
+imagesRouter.get("/", authenticateToken, listAllMedia);
 
 imagesRouter.get("/resize", async (req, res, next) => {
   try {
@@ -22,7 +25,7 @@ imagesRouter.get("/resize", async (req, res, next) => {
 imagesRouter.post(
   "/upload",
   authenticateToken,
-  authorizeRoles("Owner", "Admin"),
+  authorizeRoles("Owner", "Admin", "Manager"),
   uploadMiddleware,
   uploadProductImage
 );
