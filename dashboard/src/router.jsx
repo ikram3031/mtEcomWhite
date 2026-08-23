@@ -26,6 +26,7 @@ import Coupons from './pages/dashboard/products/coupons';
 import Categories from './pages/dashboard/products/categories';
 import Brands from './pages/dashboard/products/brands';
 import Attributes from './pages/dashboard/products/attributes';
+import EditAttribute from './pages/dashboard/products/editAttribute';
 
 // Orders
 import OrdersList from './pages/dashboard/orders/ordersList';
@@ -239,6 +240,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleGuard menuKey="products.attributes">
                 <Attributes />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'attributes/:id',
+            element: (
+              <RoleGuard menuKey="products.attributes">
+                <EditAttribute />
               </RoleGuard>
             ),
           },

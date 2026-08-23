@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ function sortAttributeValues(vals = []) {
 }
 
 const AttributesPage = () => {
+  const navigate = useNavigate();
   const [attributes, setAttributes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,17 +121,7 @@ const AttributesPage = () => {
   };
 
   const openEditDialog = (attr) => {
-    setEditingAttribute(attr);
-    setName(attr.name);
-    setSlug(attr.slug);
-    setSlugManual(true);
-    setValues(sortAttributeValues(attr.values || []));
-    setNewValueName('');
-    setNewValueSlug('');
-    setNewValueSlugManual(false);
-    setNewValueImage(null);
-    setNewValueImagePreview(null);
-    setIsOpen(true);
+    navigate(`/dashboard/products/attributes/${attr._id}`);
   };
 
   // Validate image: 1:1 Aspect Ratio, Max 1MB, JPG/JPEG/PNG only
@@ -429,45 +421,48 @@ const AttributesPage = () => {
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-4 flex-1">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-                    Configured Values &amp; Images
-                  </p>
+                <CardContent className="pt-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+                      Configured Values
+                    </p>
 
-                  {valCount === 0 ? (
-                    <div className="py-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg">
-                      No values configured yet.
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {attr.values.map((v, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 bg-muted/60 hover:bg-muted border border-border/80 rounded-lg px-2.5 py-1.5 transition-colors"
-                        >
-                          {v.imageUrl ? (
-                            <img
-                              src={v.imageUrl}
-                              alt={v.name}
-                              className="h-6 w-6 rounded object-cover border shrink-0"
-                            />
-                          ) : (
-                            <div className="h-6 w-6 rounded bg-background flex items-center justify-center border shrink-0">
-                              <ImageIcon className="h-3 w-3 text-muted-foreground/50" />
+                    {valCount === 0 ? (
+                      <div className="py-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg">
+                        No values configured yet.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {attr.values.map((v, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 bg-muted/50 hover:bg-muted border border-border/70 rounded-lg p-1.5 min-w-0 transition-colors"
+                            title={`${v.name} (${v.slug})`}
+                          >
+                            {v.imageUrl ? (
+                              <img
+                                src={v.imageUrl}
+                                alt={v.name}
+                                className="h-7 w-7 rounded object-cover border shrink-0"
+                              />
+                            ) : (
+                              <div className="h-7 w-7 rounded bg-background flex items-center justify-center border shrink-0">
+                                <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/50" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-foreground leading-tight truncate">
+                                {v.name}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-mono leading-tight truncate">
+                                {v.slug}
+                              </p>
                             </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-foreground leading-tight">
-                              {v.name}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground font-mono leading-tight">
-                              {v.slug}
-                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
