@@ -285,18 +285,18 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuItem>
           )}
 
-          {/* Billing & Payment */}
+          {/* Accounting */}
           {isAllowed("billing") && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={pathname.startsWith("/dashboard/billing")}
-                tooltip="Billing & Payment"
+                tooltip="Accounting"
                 onClick={() => toggleMenu("billing")}
                 className="cursor-pointer flex items-center justify-between w-full"
               >
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
-                  <span>Billing & Payment</span>
+                  <span>Accounting</span>
                 </div>
                 <ChevronRight
                   className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
