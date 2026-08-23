@@ -36,6 +36,14 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import pkg from "../../../package.json"
 import {
   Sidebar,
@@ -65,9 +73,15 @@ export function AppSidebar({ ...props }) {
 
   // Single-open accordion state: only one parent submenu open at a time
   const [openMenu, setOpenMenu] = React.useState(null)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = React.useState(false)
 
   const toggleMenu = (menuKey) => {
     setOpenMenu((prev) => (prev === menuKey ? null : menuKey))
+  }
+
+  const handleConfirmLogout = () => {
+    setLogoutConfirmOpen(false)
+    logout()
   }
 
   const userRole = user?.role || "Marketing Expert"
@@ -530,7 +544,7 @@ export function AppSidebar({ ...props }) {
           {/* 3. Logout Icon Button (Right - Red icon, red border, red background accent, rounded-full) */}
           <button
             type="button"
-            onClick={logout}
+            onClick={() => setLogoutConfirmOpen(true)}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/40 shadow-xs transition-all cursor-pointer"
             title="Logout"
             aria-label="Logout"
@@ -540,6 +554,44 @@ export function AppSidebar({ ...props }) {
         </div>
       </SidebarFooter>
       <SidebarRail />
+
+      {/* Logout Confirmation Alert Dialog */}
+      <Dialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
+        <DialogContent className="sm:max-w-[420px] p-6 text-center">
+          <DialogHeader className="space-y-2">
+            <div className="mx-auto h-12 w-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-1">
+              <LogOut className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground text-center">
+              Do you want to log out?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground text-center">
+              Are you sure you want to end your current session? You will need to sign in again to access the dashboard.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-center gap-3 pt-4 border-t mt-2">
+            {/* No Button (Red Color) */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLogoutConfirmOpen(false)}
+              className="flex-1 bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/40 hover:border-destructive/60 font-semibold cursor-pointer text-xs"
+            >
+              No
+            </Button>
+
+            {/* Yes Button (Golden Color) */}
+            <Button
+              type="button"
+              onClick={handleConfirmLogout}
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-black dark:text-neutral-950 font-bold shadow-sm cursor-pointer text-xs"
+            >
+              Yes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   )
 }
