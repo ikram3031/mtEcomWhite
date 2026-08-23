@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Sparkles, TrendingUp, Sliders, ShieldCheck, Plus, Trash2, Package, Save } from 'lucide-react';
+import { Search, Plus, Trash2, Package, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProducts } from '@/hooks/use-products';
 import { apiClient } from '@/lib/api-client';
@@ -13,10 +13,9 @@ import { toast } from 'sonner';
 
 /**
  * Product Showcase Manager Component
- * Handles local staging of curated product collections (Featured / Best Sellers)
- * with real-time search, live table addition, and explicit Save Changes commit.
+ * Generic manager for Store Utilities collections (e.g. Featured Products, Best Sellers)
  */
-function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, iconColor }) {
+export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, iconColor }) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [stagedProducts, setStagedProducts] = useState([]);
@@ -32,7 +31,7 @@ function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, iconColor }
   });
 
   // Fetch all products for live search lookup
-  const { data: productsResponse, isLoading: isProductsLoading } = useProducts({
+  const { data: productsResponse } = useProducts({
     limit: 150,
     page: 1,
   });
@@ -282,114 +281,6 @@ function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, iconColor }
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('featured');
-
-  const tabs = [
-    { id: 'featured', label: 'Featured Products', icon: Sparkles, iconColor: 'text-amber-500' },
-    { id: 'bestseller', label: 'Best Selling Products', icon: TrendingUp, iconColor: 'text-emerald-500' },
-    { id: 'catalog-preferences', label: 'Catalog Display', icon: Sliders, iconColor: 'text-blue-500' },
-    { id: 'advanced-security', label: 'Security & Access', icon: ShieldCheck, iconColor: 'text-purple-500' },
-  ];
-
-  return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 w-full">
-      <div>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Store Settings</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Configure product catalog highlights, storefront showcases, and store configurations.
-        </p>
-      </div>
-
-      {/* Top Horizontal Tabs */}
-      <div className="border-b border-border pb-3">
-        <div className="inline-flex flex-wrap items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border/50">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const isActive = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setActiveTab(t.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-background text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/40'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${t.iconColor}`} />
-                <span>{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Active Tab Panel */}
-      <div className="w-full">
-        {activeTab === 'featured' && (
-          <ProductShowcaseManager
-            showcaseKey="featured"
-            title="Featured Products"
-            icon={Sparkles}
-            iconColor="text-amber-500"
-          />
-        )}
-
-        {activeTab === 'bestseller' && (
-          <ProductShowcaseManager
-            showcaseKey="bestSeller"
-            title="Best Selling Products"
-            icon={TrendingUp}
-            iconColor="text-emerald-500"
-          />
-        )}
-
-        {activeTab === 'catalog-preferences' && (
-          <Card className="border shadow-xs w-full">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <Sliders className="h-5 w-5 text-blue-500" />
-                Catalog Display Preferences
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center p-12 text-center space-y-3 rounded-lg border border-dashed border-border bg-muted/20">
-                <Sliders className="h-10 w-10 text-muted-foreground/50" />
-                <h3 className="font-semibold text-foreground">Coming Soon</h3>
-                <p className="text-xs text-muted-foreground max-w-sm">
-                  Automated sorting rules, default collection displays, and layout presets will be available in an upcoming update.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === 'advanced-security' && (
-          <Card className="border shadow-xs w-full">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-purple-500" />
-                Security & Access Policy
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center p-12 text-center space-y-3 rounded-lg border border-dashed border-border bg-muted/20">
-                <ShieldCheck className="h-10 w-10 text-muted-foreground/50" />
-                <h3 className="font-semibold text-foreground">Coming Soon</h3>
-                <p className="text-xs text-muted-foreground max-w-sm">
-                  Advanced multi-tenant security policies and audit governance configurations will be accessible here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>
   );
 }
