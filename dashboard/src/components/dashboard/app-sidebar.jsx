@@ -25,8 +25,16 @@ import {
   Wrench,
   ImageDown,
   Share2,
+  Settings,
+  LogOut,
+  User,
 } from "lucide-react"
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -49,7 +57,7 @@ import { hasMenuAccess } from "@/lib/rbac"
 export function AppSidebar({ ...props }) {
   const location = useLocation()
   const pathname = location.pathname
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { state, setOpen } = useSidebar()
   const { brandName, features } = clientConfig
 
@@ -66,34 +74,34 @@ export function AppSidebar({ ...props }) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border px-6 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="h-16 flex items-center justify-center border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-2">
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
-              <div className="flex items-center gap-3">
-                <DecantreLogo className="h-8 w-auto max-w-[130px] text-primary shrink-0" iconOnly={false} />
+              <div className="flex items-center gap-1.5 overflow-hidden">
+                <DecantreLogo className="h-6 w-auto max-w-[115px] text-primary shrink-0" iconOnly={false} />
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+                className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
                 title="Close Sidebar"
               >
-                <X className="h-[18px] w-[18px]" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </>
           ) : (
             <button
               onClick={() => setOpen(true)}
-              className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+              className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
               title="Open Sidebar"
             >
-              <Menu className="h-[18px] w-[18px]" />
+              <Menu className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-6">
+      <SidebarContent className="px-2 py-3 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-4">
         <SidebarMenu className="group-data-[collapsible=icon]:gap-4">
           {/* Overview */}
           {isAllowed("overview") && (
@@ -229,8 +237,8 @@ export function AppSidebar({ ...props }) {
             </SidebarMenuItem>
           )}
 
-          {/* Stock Management */}
-          {isAllowed("products.stock") && (
+          {/* Stock Management - Commented out as requested */}
+          {/* {isAllowed("products.stock") && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={pathname === "/dashboard/products/stock"}
@@ -241,7 +249,7 @@ export function AppSidebar({ ...props }) {
                 <span>Stock Management</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )}
+          )} */}
 
           {/* AI Photo Studio - Commented out as requested
           {isAllowed("studio") && (
@@ -447,19 +455,65 @@ export function AppSidebar({ ...props }) {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
-        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            {user?.email ? user.email.charAt(0).toUpperCase() : "A"}
-          </div>
-          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-medium truncate text-sidebar-foreground">
-              {user?.email || "Admin User"}
-            </span>
-            <span className="text-xs text-sidebar-foreground/60 truncate">
-              Store Manager
-            </span>
-          </div>
+      <SidebarFooter className="border-t border-sidebar-border p-2.5 group-data-[collapsible=icon]:p-2 mt-auto">
+        {/* Action Icon Buttons */}
+        <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+          {/* 1. Profile Icon Button (Left - Shows User Card Popover Upward) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="h-8 w-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 text-foreground border border-border transition-all cursor-pointer"
+                  title="My Profile"
+                  aria-label="My Profile"
+                >
+                  <User className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              }
+            />
+            <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56 p-3 shadow-lg">
+              <div className="flex flex-col space-y-2">
+                <div>
+                  <p className="text-sm font-bold text-foreground leading-tight">{user?.name || 'Admin User'}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5" title={user?.email || ''}>
+                    {user?.email || 'admin@example.com'}
+                  </p>
+                </div>
+                <div className="pt-1.5 border-t border-border flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-muted-foreground">Role:</span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 capitalize">
+                    {user?.role || 'Admin'}
+                  </span>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 2. Settings Icon Button (Middle - Golden style, rounded-full) */}
+          <Link
+            to="/dashboard/settings"
+            className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
+              pathname.startsWith("/dashboard/settings")
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
+                : "bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30"
+            }`}
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
+
+          {/* 3. Logout Icon Button (Right - Red icon, red border, red background accent, rounded-full) */}
+          <button
+            type="button"
+            onClick={logout}
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/40 shadow-xs transition-all cursor-pointer"
+            title="Logout"
+            aria-label="Logout"
+          >
+            <LogOut className="h-4 w-4 text-destructive" />
+          </button>
         </div>
       </SidebarFooter>
       <SidebarRail />

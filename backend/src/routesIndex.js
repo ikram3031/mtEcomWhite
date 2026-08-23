@@ -20,6 +20,7 @@ import studioRouter from "./routes/studio.js";
 import logsRouter from "./routes/LogsRoute.js";
 import subscriberRouter from "./routes/SubscriberRoute.js";
 import contactRouter from "./routes/ContactRoute.js";
+import storeUtilsRouter from "./routes/StoreUtilsRoute.js";
 import express from "express";
 import { searchProducts } from "./controllers/SearchController.js";
 
@@ -43,6 +44,7 @@ coreRouter.use("/coupons", couponRouter);
 coreRouter.use("/system", systemRouter);
 coreRouter.use("/subscribers", subscriberRouter);
 coreRouter.use("/contact", contactRouter);
+coreRouter.use("/store-utils", storeUtilsRouter);
 coreRouter.use("/search", searchRouter);
 coreRouter.use("/logs", logsRouter);
 // Mount AI Product Image Studio routes with increased JSON payload limit for base64 image data

@@ -57,29 +57,21 @@ export const Header = () => {
                 </Button>
               }
             />
-            <DropdownMenuContent align="end" className="w-56 p-1.5">
-              <DropdownMenuLabel className="font-normal px-2 py-1.5">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-semibold leading-none">{user?.name || 'Admin User'}</p>
-                  <p className="text-xs leading-normal text-muted-foreground truncate" title={user?.email || ''}>
+            <DropdownMenuContent align="end" className="w-60 p-3">
+              <div className="flex flex-col space-y-2">
+                <div>
+                  <p className="text-sm font-bold text-foreground leading-tight">{user?.name || 'Admin User'}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5" title={user?.email || ''}>
                     {user?.email || 'admin@example.com'}
                   </p>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <HelpCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                Support
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
+                <div className="pt-1.5 border-t border-border flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-muted-foreground">Role:</span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 capitalize">
+                    {user?.role || 'Admin'}
+                  </span>
+                </div>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

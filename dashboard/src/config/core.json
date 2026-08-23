@@ -28,7 +28,8 @@
         "tools",
         "tools.bulk-image-resize",
         "tools.meta-catalog",
-        "logs"
+        "logs",
+        "settings"
       ]
     },
     "Marketing Expert": {
@@ -42,7 +43,8 @@
         "products.coupons",
         "tools",
         "tools.bulk-image-resize",
-        "tools.meta-catalog"
+        "tools.meta-catalog",
+        "settings"
       ]
     }
   }
