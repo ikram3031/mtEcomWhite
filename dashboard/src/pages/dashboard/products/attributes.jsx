@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -9,14 +11,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Plus, Search, Edit2, Trash2, Sliders, X } from 'lucide-react';
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  Sliders,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Layers,
+  Save,
+} from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
@@ -30,14 +35,6 @@ function slugify(text) {
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-function formatTypingSlug(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_]+/g, '-')
-    .replace(/-+/g, '-');
 }
 
 function sortAttributeValues(vals = []) {
@@ -64,7 +61,10 @@ const AttributesPage = () => {
   const [newValueName, setNewValueName] = useState('');
   const [newValueSlug, setNewValueSlug] = useState('');
   const [newValueSlugManual, setNewValueSlugManual] = useState(false);
+  const [newValueImage, setNewValueImage] = useState(null);
+  const [newValueImagePreview, setNewValueImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingIndex, setUploadingIndex] = useState(null);
 
   const fetchAttributes = async () => {
     setIsLoading(true);
@@ -113,6 +113,8 @@ const AttributesPage = () => {
     setNewValueName('');
     setNewValueSlug('');
     setNewValueSlugManual(false);
+    setNewValueImage(null);
+    setNewValueImagePreview(null);
     setIsOpen(true);
   };
 
@@ -125,23 +127,143 @@ const AttributesPage = () => {
     setNewValueName('');
     setNewValueSlug('');
     setNewValueSlugManual(false);
+    setNewValueImage(null);
+    setNewValueImagePreview(null);
     setIsOpen(true);
   };
 
-  const addValue = () => {
+  // Validate image: 1:1 Aspect Ratio, Max 1MB, JPG/JPEG/PNG only
+  const validateImageFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        return reject(new Error('Only JPG, JPEG, and PNG images are allowed.'));
+      }
+
+      if (file.size > 1 * 1024 * 1024) {
+        return reject(new Error('Image size must be 1 MB or less.'));
+      }
+
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const ratio = img.width / img.height;
+        // Allow slight tolerance of ±3%
+        if (ratio < 0.97 || ratio > 1.03) {
+          return reject(
+            new Error(`Image must have a 1:1 square ratio (e.g. 1000x1000px or 1500x1500px). Current: ${img.width}x${img.height}px`)
+          );
+        }
+        resolve(true);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Invalid image file.'));
+      };
+      img.src = objectUrl;
+    });
+  };
+
+  // Upload image to /api/v1/images/upload with type=attribute
+  const uploadImageToServer = async (file, attributeSlugVal, valueSlugVal) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', 'attribute');
+    formData.append('attributeSlug', attributeSlugVal || 'attr');
+    formData.append('valueSlug', valueSlugVal || 'val');
+
+    const res = await apiClient.post('/api/v1/images/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data?.data?.imageUrl;
+  };
+
+  // Handle uploading for an existing value item in the list
+  const handleExistingValueImageUpload = async (index, file) => {
+    if (!file) return;
+    try {
+      await validateImageFile(file);
+      setUploadingIndex(index);
+
+      const targetVal = values[index];
+      const uploadedUrl = await uploadImageToServer(
+        file,
+        slug || slugify(name),
+        targetVal.slug || slugify(targetVal.name)
+      );
+
+      setValues((prev) =>
+        prev.map((v, i) => (i === index ? { ...v, imageUrl: uploadedUrl } : v))
+      );
+      toast.success('Image uploaded successfully');
+    } catch (err) {
+      toast.error(err.message || 'Image upload failed');
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
+  const handleRemoveExistingValueImage = (index) => {
+    setValues((prev) =>
+      prev.map((v, i) => (i === index ? { ...v, imageUrl: null } : v))
+    );
+  };
+
+  // Handle uploading for the new value input box
+  const handleNewValueImageSelect = async (file) => {
+    if (!file) return;
+    try {
+      await validateImageFile(file);
+      setNewValueImage(file);
+      setNewValueImagePreview(URL.createObjectURL(file));
+      toast.success('1:1 image selected');
+    } catch (err) {
+      toast.error(err.message || 'Image selection failed');
+    }
+  };
+
+  const addValue = async () => {
     const trimmedName = newValueName.trim();
     if (!trimmedName) return;
-    const trimmedSlug = (newValueSlug.trim() || slugify(trimmedName));
-    
-    if (values.some((v) => v.slug === trimmedSlug || v.name.toLowerCase() === trimmedName.toLowerCase())) {
+    const trimmedSlug = newValueSlug.trim() || slugify(trimmedName);
+
+    if (
+      values.some(
+        (v) =>
+          v.slug === trimmedSlug ||
+          v.name.toLowerCase() === trimmedName.toLowerCase()
+      )
+    ) {
       toast.error('Value with this name or slug already exists in this group');
       return;
     }
 
-    setValues((prev) => sortAttributeValues([...prev, { name: trimmedName, slug: trimmedSlug }]));
+    let finalImageUrl = null;
+    if (newValueImage) {
+      try {
+        finalImageUrl = await uploadImageToServer(
+          newValueImage,
+          slug || slugify(name),
+          trimmedSlug
+        );
+      } catch (err) {
+        toast.error('Failed to upload value image');
+        return;
+      }
+    }
+
+    setValues((prev) =>
+      sortAttributeValues([
+        ...prev,
+        { name: trimmedName, slug: trimmedSlug, imageUrl: finalImageUrl },
+      ])
+    );
     setNewValueName('');
     setNewValueSlug('');
     setNewValueSlugManual(false);
+    setNewValueImage(null);
+    setNewValueImagePreview(null);
   };
 
   const removeValue = (index) => {
@@ -164,7 +286,10 @@ const AttributesPage = () => {
       };
 
       if (editingAttribute) {
-        await apiClient.put(`/api/v1/dashboard/attributes/${editingAttribute._id}`, body);
+        await apiClient.put(
+          `/api/v1/dashboard/attributes/${editingAttribute._id}`,
+          body
+        );
         toast.success('Attribute updated successfully');
       } else {
         await apiClient.post('/api/v1/dashboard/attributes', body);
@@ -187,7 +312,9 @@ const AttributesPage = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await apiClient.delete(`/api/v1/dashboard/attributes/${deleteTarget._id}`);
+      await apiClient.delete(
+        `/api/v1/dashboard/attributes/${deleteTarget._id}`
+      );
       toast.success('Attribute deleted successfully');
       fetchAttributes();
       setDeleteTarget(null);
@@ -198,25 +325,30 @@ const AttributesPage = () => {
     }
   };
 
-  const filteredAttributes = attributes.filter((a) =>
-    a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    a.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAttributes = attributes.filter(
+    (a) =>
+      a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
             <Sliders className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Product Attributes</h2>
-            <p className="text-sm text-muted-foreground">Manage variation groups (e.g. Size, Volume, Color) for your products.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
+              Product Attributes
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage variation attributes and per-value images (e.g. Size, Volume, Color).
+            </p>
           </div>
         </div>
-        <Button onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={openAddDialog} className="cursor-pointer gap-2 font-semibold">
+          <Plus className="h-4 w-4" />
           Add Attribute
         </Button>
       </div>
@@ -234,203 +366,364 @@ const AttributesPage = () => {
         </div>
       </div>
 
-      <div className="bg-card text-card-foreground shadow-sm border rounded-lg overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading attributes...</div>
-        ) : filteredAttributes.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No attributes found.</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Values</TableHead>
-                <TableHead className="w-[100px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAttributes.map((attr) => (
-                <TableRow key={attr._id}>
-                  <TableCell className="font-medium">{attr.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{attr.slug}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1.5">
-                      {attr.values?.map((val) => (
-                        <span
-                          key={val.slug}
-                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground font-medium border border-border"
-                        >
-                          {val.name}
+      {/* Grid Layout: 3 Cards Per Row on Large Screens */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-52 rounded-xl bg-muted/40 animate-pulse border" />
+          ))}
+        </div>
+      ) : filteredAttributes.length === 0 ? (
+        <div className="p-12 text-center text-muted-foreground border rounded-xl bg-card">
+          <Sliders className="h-10 w-10 mx-auto mb-3 opacity-30 text-primary" />
+          <p className="font-semibold text-foreground">No attributes found.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Click &quot;Add Attribute&quot; to create your first attribute group.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAttributes.map((attr) => {
+            const valCount = attr.values?.length || 0;
+            return (
+              <Card
+                key={attr._id}
+                className="border shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <CardHeader className="pb-3 border-b bg-muted/20">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1 min-w-0">
+                      <CardTitle className="text-lg font-bold text-foreground truncate">
+                        {attr.name}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+                          {attr.slug}
                         </span>
-                      ))}
+                        <Badge variant="secondary" className="text-[11px] font-semibold">
+                          {valCount} {valCount === 1 ? 'Value' : 'Values'}
+                        </Badge>
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(attr)}>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 hover:bg-primary/10 hover:text-primary cursor-pointer"
+                        title="Edit Attribute"
+                        onClick={() => openEditDialog(attr)}
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget({ _id: attr._id, name: attr.name })}
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                        title="Delete Attribute"
+                        onClick={() => setDeleteTarget(attr)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                  </div>
+                </CardHeader>
 
+                <CardContent className="pt-4 flex-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+                    Configured Values &amp; Images
+                  </p>
+
+                  {valCount === 0 ? (
+                    <div className="py-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg">
+                      No values configured yet.
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {attr.values.map((v, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-muted/60 hover:bg-muted border border-border/80 rounded-lg px-2.5 py-1.5 transition-colors"
+                        >
+                          {v.imageUrl ? (
+                            <img
+                              src={v.imageUrl}
+                              alt={v.name}
+                              className="h-6 w-6 rounded object-cover border shrink-0"
+                            />
+                          ) : (
+                            <div className="h-6 w-6 rounded bg-background flex items-center justify-center border shrink-0">
+                              <ImageIcon className="h-3 w-3 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-foreground leading-tight">
+                              {v.name}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono leading-tight">
+                              {v.slug}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add / Edit Attribute Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingAttribute ? 'Edit Attribute' : 'Add New Attribute'}</DialogTitle>
-            <DialogDescription>Define attribute group name, slug, and variations.</DialogDescription>
+            <DialogTitle>
+              {editingAttribute ? 'Edit Attribute Group' : 'Add New Attribute Group'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure attribute name, slug, and per-value 1:1 square assets saved to{' '}
+              <span className="font-mono text-primary font-semibold">/uploads/assets/attributes</span>.
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">Attribute Name</label>
-              <Input
-                id="name"
-                required
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="e.g. Volume"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label htmlFor="slug" className="text-sm font-medium">Slug</label>
-                <button
-                  type="button"
-                  onClick={() => setSlugManual(!slugManual)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  {slugManual ? 'Auto-generate' : 'Edit manually'}
-                </button>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+            {/* Attribute Main Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">
+                  Attribute Name <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  placeholder="e.g. Size, Volume, Color"
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  required
+                />
               </div>
-              <Input
-                id="slug"
-                required
-                value={slug}
-                onChange={(e) => setSlug(formatTypingSlug(e.target.value))}
-                onBlur={() => setSlug((prev) => slugify(prev))}
-                disabled={!slugManual}
-                placeholder="e.g. volume"
-              />
+
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">
+                  Slug <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  placeholder="e.g. size, volume, color"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlugManual(true);
+                    setSlug(slugify(e.target.value));
+                  }}
+                  required
+                />
+              </div>
             </div>
 
+            {/* Attribute Values Manager */}
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Attribute Values / Variations</label>
-                <span className="text-xs text-muted-foreground">{values.length} added</span>
+                <h4 className="text-sm font-bold text-foreground">
+                  Attribute Values ({values.length})
+                </h4>
+                <span className="text-[11px] text-muted-foreground">
+                  1:1 Ratio • Max 1MB • JPG/PNG
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground block">
-                    Value Name *
-                  </label>
-                  <Input
-                    value={newValueName}
-                    onChange={(e) => handleNewValueNameChange(e.target.value)}
-                    placeholder="e.g. 50ml"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addValue();
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-muted-foreground block">
-                      Value Slug *
+              {/* Add New Value Input Row */}
+              <div className="p-3 rounded-lg border bg-muted/30 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
+                      Value Name
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setNewValueSlugManual(!newValueSlugManual)}
-                      className="text-[10px] text-primary hover:underline cursor-pointer"
-                    >
-                      {newValueSlugManual ? 'Auto-generate' : 'Edit manually'}
-                    </button>
+                    <Input
+                      placeholder="e.g. 5ml, 10ml, Red"
+                      value={newValueName}
+                      onChange={(e) => handleNewValueNameChange(e.target.value)}
+                    />
                   </div>
-                  <Input
-                    value={newValueSlug}
-                    onChange={(e) => {
-                      setNewValueSlugManual(true);
-                      setNewValueSlug(formatTypingSlug(e.target.value));
-                    }}
-                    onBlur={() => setNewValueSlug((prev) => slugify(prev))}
-                    placeholder="e.g. 50ml"
-                    disabled={!newValueSlugManual}
-                    className={!newValueSlugManual ? 'opacity-70 cursor-not-allowed' : ''}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addValue();
-                      }
-                    }}
-                  />
+                  <div>
+                    <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
+                      Value Slug
+                    </label>
+                    <Input
+                      placeholder="e.g. 5ml, 10ml, red"
+                      value={newValueSlug}
+                      onChange={(e) => {
+                        setNewValueSlugManual(true);
+                        setNewValueSlug(slugify(e.target.value));
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <Button type="button" variant="secondary" onClick={addValue} className="h-9 font-semibold">
-                  Add
-                </Button>
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                  {/* Image Selector for New Value */}
+                  <div className="flex items-center gap-2">
+                    {newValueImagePreview ? (
+                      <div className="relative h-10 w-10 rounded border overflow-hidden">
+                        <img
+                          src={newValueImagePreview}
+                          alt="preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewValueImage(null);
+                            setNewValueImagePreview(null);
+                          }}
+                          className="absolute top-0 right-0 bg-destructive text-destructive-foreground p-0.5 rounded-bl"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed text-xs text-muted-foreground hover:text-foreground hover:bg-background cursor-pointer transition-colors">
+                        <Upload className="h-3.5 w-3.5" />
+                        <span>Add 1:1 Image</span>
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleNewValueImageSelect(file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={addValue}
+                    disabled={!newValueName.trim()}
+                    className="cursor-pointer gap-1 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add to List
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {values.map((val, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground font-medium border border-border"
-                  >
-                    {val.name}
-                    <button
-                      type="button"
-                      onClick={() => removeValue(index)}
-                      className="text-muted-foreground hover:text-foreground ml-1"
+              {/* Configured Values List */}
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {values.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No values added to this attribute yet.
+                  </p>
+                ) : (
+                  values.map((val, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2.5 rounded-lg border bg-background hover:bg-muted/20 transition-colors gap-3"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+                      {/* Image Preview & Upload Trigger */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        {val.imageUrl ? (
+                          <div className="relative h-10 w-10 rounded border overflow-hidden shrink-0 group">
+                            <img
+                              src={val.imageUrl}
+                              alt={val.name}
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingValueImage(idx)}
+                              className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove Image"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            className={`h-10 w-10 rounded border border-dashed flex flex-col items-center justify-center text-[9px] text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer shrink-0 transition-colors ${
+                              uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
+                            }`}
+                            title="Upload 1:1 Image"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>{uploadingIndex === idx ? '...' : '+Img'}</span>
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleExistingValueImageUpload(idx, file);
+                              }}
+                            />
+                          </label>
+                        )}
+
+                        <div className="truncate">
+                          <p className="text-sm font-bold text-foreground leading-tight truncate">
+                            {val.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            {val.slug}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0 cursor-pointer"
+                        onClick={() => removeValue(idx)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={isSubmitting}
+                className="cursor-pointer text-xs"
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : editingAttribute ? 'Update' : 'Create'}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="cursor-pointer text-xs font-semibold gap-1.5"
+              >
+                <Save className="h-4 w-4" />
+                {isSubmitting
+                  ? 'Saving...'
+                  : editingAttribute
+                  ? 'Update Attribute'
+                  : 'Save Attribute'}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Dialog */}
       <ConfirmDeleteDialog
-        open={!!deleteTarget}
+        open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Delete Attribute"
         description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        isDeleting={isDeleting}
         onConfirm={handleDelete}
+        isLoading={isDeleting}
       />
     </div>
   );
-}
+};
 
 export default AttributesPage;

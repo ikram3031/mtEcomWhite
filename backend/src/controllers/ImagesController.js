@@ -44,9 +44,46 @@ export const uploadProductImage = async (req, res, next) => {
         .replace(/^-+|-+$/g, "") || "image";
     const timestamp = Date.now();
 
-    // Check if it is a product upload (support both req.body and req.query for backwards compatibility)
     const isProduct =
       req.body.type === "product" || req.query.type === "product";
+    const isAttribute =
+      req.body.type === "attribute" || req.query.type === "attribute";
+
+    if (isAttribute) {
+      const attributeDir = path.join(process.cwd(), "uploads", "assets", "attributes");
+      await fs.promises.mkdir(attributeDir, { recursive: true });
+
+      const attrName = (req.body.attributeSlug || req.body.attributeName || "attr")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-");
+      const valName = (req.body.valueSlug || req.body.valueName || slugName)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-");
+
+      const filename = `${attrName}_${valName}_${timestamp}.webp`;
+      const filePath = path.join(attributeDir, filename);
+
+      // Process image: 1:1 Square, max 1000x1000px, high-quality WebP
+      await sharp(req.file.buffer)
+        .rotate()
+        .resize({
+          width: 1000,
+          height: 1000,
+          fit: "cover",
+          position: "center",
+        })
+        .webp({ quality: 90 })
+        .toFile(filePath);
+
+      const imageUrl = `/uploads/assets/attributes/${filename}`;
+
+      return res.status(200).json({
+        status: "success",
+        data: {
+          imageUrl,
+        },
+      });
+    }
 
     if (isProduct) {
       const productSlug = req.body.productSlug || req.query.productSlug;
