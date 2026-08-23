@@ -527,13 +527,13 @@ export function AppSidebar({ ...props }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 2. All Media Icon Button (Accessible to all roles) */}
+          {/* 2. All Media Icon Button (Accessible to all roles - Blue theme) */}
           <Link
             to="/dashboard/media"
             className={`h-8 w-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
               pathname.startsWith("/dashboard/media")
-                ? "bg-primary text-primary-foreground font-semibold shadow-sm ring-2 ring-primary/40"
-                : "bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+                ? "bg-blue-600 text-white font-semibold shadow-sm ring-2 ring-blue-500/40"
+                : "bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
             }`}
             title="All Media Assets"
             aria-label="All Media Assets"
