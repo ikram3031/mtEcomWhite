@@ -5,7 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Trash2, Package, Save, Loader2, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Search, Plus, Trash2, Package, Save, Loader2, X, ShoppingBag, Check } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -68,6 +75,8 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [stagedProducts, setStagedProducts] = useState([]);
+  const [browseModalOpen, setBrowseModalOpen] = useState(false);
+  const [browseSearchQuery, setBrowseSearchQuery] = useState('');
 
   // Debounce search input
   useEffect(() => {
@@ -84,7 +93,7 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
       const res = await apiClient.get('/api/v1/store-utils');
       return res.data?.data || { featured: [], bestSeller: [] };
     },
-    staleTime: 1000 * 60 * 3, // 3 minutes cache
+    staleTime: 1000 * 60 * 2, // 2 minutes cache
   });
 
   // 2. Initialize and normalize staged products whenever storeUtilsData updates
@@ -95,13 +104,13 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     }
   }, [storeUtilsData, showcaseKey]);
 
-  // 3. Live search query to find any product across the entire database
+  // 3. Live search query for inline autocomplete dropdown
   const { data: searchResults = [], isFetching: isSearching } = useQuery({
     queryKey: ['showcase-product-search', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery) return [];
       const res = await apiClient.get('/api/v1/products', {
-        params: { q: debouncedQuery, limit: 8 },
+        params: { q: debouncedQuery, limit: 10 },
       });
       const raw = Array.isArray(res.data)
         ? res.data
@@ -113,7 +122,25 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     staleTime: 1000 * 30,
   });
 
-  // Filter out already staged products from search results dropdown
+  // 4. Query all products for the Browse Catalog modal
+  const { data: allCatalogProducts = [], isLoading: isCatalogLoading } = useQuery({
+    queryKey: ['catalog-browse-products', browseSearchQuery],
+    queryFn: async () => {
+      const params = { limit: 50 };
+      if (browseSearchQuery.trim()) {
+        params.q = browseSearchQuery.trim();
+      }
+      const res = await apiClient.get('/api/v1/products', { params });
+      const raw = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data || res.data?.products || []);
+      return raw.map(normalizeProduct).filter(Boolean);
+    },
+    enabled: browseModalOpen,
+    staleTime: 1000 * 60,
+  });
+
+  // Filter out already staged products from inline search results dropdown
   const availableSearchResults = useMemo(() => {
     const stagedIdSet = new Set(stagedProducts.map((p) => p.id || p._id || p.did));
     return searchResults.filter((p) => !stagedIdSet.has(p.id || p._id || p.did));
@@ -134,6 +161,7 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     const pId = product.id || product._id || product.did;
     if (!stagedProducts.some((sp) => (sp.id || sp._id || sp.did) === pId)) {
       setStagedProducts((prev) => [...prev, product]);
+      toast.success(`Added ${product.name} to ${title}`);
     }
     setSearchQuery('');
     setDebouncedQuery('');
@@ -173,7 +201,7 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
   return (
     <div className="space-y-6">
       <Card className="border shadow-xs w-full">
-        {/* Header with Title, Count Badge, and Save Changes Button */}
+        {/* Header with Title, Count Badge, and Actions */}
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
@@ -186,27 +214,39 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
               </Badge>
             </div>
 
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={!isDirty || saveMutation.isPending}
-              className={`h-9 gap-1.5 text-xs font-semibold px-4 cursor-pointer transition-all ${
-                isDirty
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md ring-2 ring-primary/30'
-                  : 'bg-muted text-muted-foreground hover:bg-muted opacity-70'
-              }`}
-            >
-              {saveMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBrowseModalOpen(true)}
+                className="h-9 gap-1.5 text-xs font-medium cursor-pointer"
+              >
+                <ShoppingBag className="h-4 w-4 text-primary" />
+                Browse Catalog
+              </Button>
+
+              <Button
+                onClick={() => saveMutation.mutate()}
+                disabled={!isDirty || saveMutation.isPending}
+                className={`h-9 gap-1.5 text-xs font-semibold px-4 cursor-pointer transition-all ${
+                  isDirty
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md ring-2 ring-primary/30'
+                    : 'bg-muted text-muted-foreground hover:bg-muted opacity-70'
+                }`}
+              >
+                {saveMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -320,8 +360,17 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
                   ))
                 ) : stagedProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground text-xs">
-                      No products are currently added to {title}. Use the search bar above to find and add products, then click &quot;Save Changes&quot;.
+                    <TableCell colSpan={6} className="h-36 text-center text-muted-foreground text-xs space-y-2">
+                      <p>No products are currently added to {title}.</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setBrowseModalOpen(true)}
+                        className="text-xs cursor-pointer"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Browse Catalog & Add Products
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -386,6 +435,101 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
           </div>
         </CardContent>
       </Card>
+
+      {/* Browse Full Catalog Modal */}
+      <Dialog open={browseModalOpen} onOpenChange={setBrowseModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              <span>Browse Catalog & Add to {title}</span>
+            </DialogTitle>
+            <DialogDescription>
+              Select products from your inventory to showcase in {title}.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Search bar inside modal */}
+          <div className="relative my-2">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by product name, SKU..."
+              value={browseSearchQuery}
+              onChange={(e) => setBrowseSearchQuery(e.target.value)}
+              className="pl-9 text-xs"
+            />
+          </div>
+
+          {/* Product list in modal */}
+          <div className="flex-1 overflow-y-auto max-h-[50vh] divide-y divide-border border rounded-md p-1">
+            {isCatalogLoading ? (
+              <div className="p-8 text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span>Loading catalog products...</span>
+              </div>
+            ) : allCatalogProducts.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-xs">
+                No products found.
+              </div>
+            ) : (
+              allCatalogProducts.map((p) => {
+                const pId = p.id || p._id || p.did;
+                const isAlreadyAdded = stagedProducts.some((sp) => (sp.id || sp._id || sp.did) === pId);
+
+                return (
+                  <div
+                    key={pId}
+                    className="flex items-center justify-between p-2.5 hover:bg-muted/40 transition-colors rounded-sm"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p.image ? (
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="h-10 w-10 rounded object-cover border shrink-0"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0 border">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="truncate">
+                        <p className="text-xs font-semibold text-foreground truncate">{p.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate font-mono">
+                          {p.sku || 'No SKU'} • ৳{p.price.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant={isAlreadyAdded ? 'secondary' : 'default'}
+                      disabled={isAlreadyAdded}
+                      className="h-8 text-xs font-medium shrink-0 cursor-pointer"
+                      onClick={() => handleAddProduct(p)}
+                    >
+                      {isAlreadyAdded ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+                          Added
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3.5 w-3.5 mr-1" />
+                          Add
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -29,13 +29,55 @@ export const getStoreUtils = async (req, res, next) => {
       storeUtils = storeUtils.toObject ? storeUtils.toObject() : storeUtils;
     }
 
-    const featuredProducts = Array.isArray(storeUtils.featured)
-      ? storeUtils.featured.filter(Boolean).map(serializeProduct)
-      : [];
+    // If storeUtils featured is empty, auto-populate from products tagged with "featured"
+    let featuredList = Array.isArray(storeUtils.featured) ? storeUtils.featured.filter(Boolean) : [];
+    if (featuredList.length === 0) {
+      const taggedFeatured = await ProductModel.find({
+        $or: [
+          { tags: "featured" },
+          { tags: "Featured" },
+          { tags: { $regex: /^featured$/i } },
+        ],
+      })
+        .populate("categories")
+        .limit(30)
+        .lean();
 
-    const bestSellerProducts = Array.isArray(storeUtils.bestSeller)
-      ? storeUtils.bestSeller.filter(Boolean).map(serializeProduct)
-      : [];
+      if (taggedFeatured.length > 0) {
+        featuredList = taggedFeatured;
+        await StoreUtilsModel.updateOne(
+          { key: "default" },
+          { $set: { featured: taggedFeatured.map((p) => p._id) } }
+        );
+      }
+    }
+
+    // If storeUtils bestSeller is empty, auto-populate from products tagged with "best-seller"
+    let bestSellerList = Array.isArray(storeUtils.bestSeller) ? storeUtils.bestSeller.filter(Boolean) : [];
+    if (bestSellerList.length === 0) {
+      const taggedBestSeller = await ProductModel.find({
+        $or: [
+          { tags: "best-seller" },
+          { tags: "bestseller" },
+          { tags: "Best Seller" },
+          { tags: { $regex: /^best-?seller$/i } },
+        ],
+      })
+        .populate("categories")
+        .limit(30)
+        .lean();
+
+      if (taggedBestSeller.length > 0) {
+        bestSellerList = taggedBestSeller;
+        await StoreUtilsModel.updateOne(
+          { key: "default" },
+          { $set: { bestSeller: taggedBestSeller.map((p) => p._id) } }
+        );
+      }
+    }
+
+    const featuredProducts = featuredList.map(serializeProduct);
+    const bestSellerProducts = bestSellerList.map(serializeProduct);
 
     res.json({
       status: "success",
