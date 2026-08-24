@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { createShutdownHandler } from "./helper/sutdownHelper.js";
 import { initWebSocketServer } from "./websocket.js";
+import { initMediaSchedulers, stopMediaSchedulers } from "./schedulers/mediaScheduler.js";
 
 async function bootstrap() {
   // await connectMySQL();
@@ -20,7 +21,14 @@ async function bootstrap() {
   // Initialize Real-time Notification WebSocket Server
   const wss = initWebSocketServer(server);
 
-  const shutdown = createShutdownHandler(server);
+  // Initialize Cloudflare R2 Sync & Orphan Image Cleanup Background Schedulers
+  initMediaSchedulers();
+
+  const shutdown = (signal) => {
+    stopMediaSchedulers();
+    const handler = createShutdownHandler(server);
+    return handler(signal);
+  };
 
   process.on("SIGINT", () => void shutdown("SIGINT"));
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
