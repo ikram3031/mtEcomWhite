@@ -240,7 +240,7 @@ export default function AllMediaPage() {
 
       {/* Media Detail & Copy Link Modal */}
       <Dialog open={!!selectedMedia} onOpenChange={(open) => !open && setSelectedMedia(null)}>
-        <DialogContent className="sm:max-w-3xl md:max-w-4xl p-0 max-h-[75vh] flex flex-col overflow-hidden">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl p-0 max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="p-4 sm:p-5 border-b shrink-0">
             <DialogTitle className="text-base font-bold text-foreground truncate pr-6">
               {selectedMedia?.filename || 'Media Preview'}
