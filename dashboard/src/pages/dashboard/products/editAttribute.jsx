@@ -13,7 +13,7 @@ import {
   Save,
   Image as ImageIcon,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/error-handler';
 
@@ -87,13 +87,13 @@ export default function EditAttributePage() {
   // Validate image: 1:1 Aspect Ratio, Max 1MB, JPG/JPEG/PNG only
   const validateImageFile = (file) => {
     return new Promise((resolve, reject) => {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        return reject(new Error('Only JPG, JPEG, and PNG images are allowed.'));
+        return reject(new Error('Only JPG, JPEG, PNG, and WEBP images are allowed.'));
       }
 
-      if (file.size > 1 * 1024 * 1024) {
-        return reject(new Error('Image size must be 1 MB or less.'));
+      if (file.size > 2 * 1024 * 1024) {
+        return reject(new Error('Image size must be 2 MB or less.'));
       }
 
       const img = new Image();
@@ -337,21 +337,21 @@ export default function EditAttributePage() {
               <CardTitle className="text-base font-bold text-foreground">
                 Attribute Values ({values.length})
               </CardTitle>
-              <span className="text-xs text-muted-foreground">
-                1:1 Square Ratio • Max 1MB • JPG/PNG
+              <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md border">
+                1:1 Square Ratio • Max 2MB • JPG/PNG/WEBP
               </span>
             </div>
           </CardHeader>
           <CardContent className="pt-5 space-y-5">
             {/* Add New Value Section */}
-            <div className="p-4 rounded-xl border bg-muted/30 space-y-3">
+            <div className="p-4 rounded-xl border border-border/80 bg-muted/30 space-y-3">
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">
                 Add New Value
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                    Value Name
+                  <label className="text-[11px] font-semibold text-muted-foreground mb-1 block">
+                    Value Name *
                   </label>
                   <Input
                     placeholder="e.g. 5ml, 10ml, Red"
@@ -366,8 +366,8 @@ export default function EditAttributePage() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">
-                    Value Slug
+                  <label className="text-[11px] font-semibold text-muted-foreground mb-1 block">
+                    Value Slug *
                   </label>
                   <Input
                     placeholder="e.g. 5ml, 10ml, red"
@@ -379,32 +379,42 @@ export default function EditAttributePage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Prominent Image Upload Button / Preview */}
+                <div>
+                  <label className="text-[11px] font-semibold text-muted-foreground mb-1 block">
+                    1:1 Image (Optional)
+                  </label>
                   {newValueImagePreview ? (
-                    <div className="relative h-10 w-10 rounded border overflow-hidden shrink-0">
-                      <img
-                        src={newValueImagePreview}
-                        alt="preview"
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="relative h-10 w-full rounded-lg border-2 border-primary/40 bg-muted/30 overflow-hidden flex items-center justify-between px-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <img
+                          src={newValueImagePreview}
+                          alt="preview"
+                          className="h-7 w-7 rounded object-cover border"
+                        />
+                        <span className="text-[11px] font-mono truncate text-foreground">
+                          {newValueImage?.name || 'Selected'}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
                           setNewValueImage(null);
                           setNewValueImagePreview(null);
                         }}
-                        className="absolute top-0 right-0 bg-destructive text-destructive-foreground p-0.5 rounded-bl"
+                        className="h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer shrink-0"
+                        title="Remove Image"
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border border-dashed text-xs text-muted-foreground hover:text-foreground hover:bg-background cursor-pointer transition-colors shrink-0">
-                      <Upload className="h-3.5 w-3.5" />
-                      <span>1:1 Image</span>
+                    <label className="flex items-center justify-center gap-2 h-10 px-3 rounded-lg border-2 border-dashed border-primary/30 hover:border-primary text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/5 cursor-pointer transition-all">
+                      <Upload className="h-4 w-4 text-primary" />
+                      <span>Upload 1:1 Image</span>
                       <input
                         type="file"
-                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -413,15 +423,16 @@ export default function EditAttributePage() {
                       />
                     </label>
                   )}
+                </div>
 
+                <div>
                   <Button
                     type="button"
-                    variant="secondary"
                     onClick={addValue}
                     disabled={!newValueName.trim()}
-                    className="cursor-pointer gap-1 text-xs h-9 flex-1"
+                    className="cursor-pointer gap-1.5 text-xs h-10 w-full font-semibold shadow-xs"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Add Value
+                    <Plus className="h-4 w-4" /> Add Value
                   </Button>
                 </div>
               </div>
@@ -431,45 +442,50 @@ export default function EditAttributePage() {
             <div>
               {values.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground border border-dashed rounded-xl bg-background/50">
-                  No values configured yet. Use the form above to add values.
+                  <Sliders className="h-10 w-10 mx-auto mb-2 opacity-30 text-primary" />
+                  <p className="text-sm font-semibold">No values configured yet</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Use the form above to add attribute values and upload optional 1:1 images.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {values.map((val, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-background hover:bg-muted/40 hover:border-primary/40 transition-all gap-3.5 shadow-2xs"
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-2xs group"
                     >
-                      {/* Left: 1:1 Image Box + Text */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Left: Prominent 1:1 Image Box + Text */}
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         {val.imageUrl ? (
-                          <div className="relative h-11 w-11 rounded-lg border overflow-hidden shrink-0 group">
+                          <div className="relative size-14 rounded-xl border border-border/80 bg-muted/20 overflow-hidden shrink-0 group/img shadow-2xs">
                             <img
-                              src={val.imageUrl}
+                              src={resolveImageUrl(val.imageUrl)}
                               alt={val.name}
                               className="h-full w-full object-cover"
                             />
                             <button
                               type="button"
                               onClick={() => handleRemoveExistingValueImage(idx)}
-                              className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              className="absolute inset-0 bg-black/70 text-white flex flex-col items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer text-[10px] font-semibold gap-0.5"
                               title="Remove Image"
                             >
-                              <X className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              <span>Remove</span>
                             </button>
                           </div>
                         ) : (
                           <label
-                            className={`h-11 w-11 rounded-lg border border-dashed flex flex-col items-center justify-center text-[9px] text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer shrink-0 transition-colors ${
+                            className={`size-14 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-0.5 ${
                               uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
                             }`}
-                            title="Upload 1:1 Image"
+                            title="Upload 1:1 Image (Max 2MB)"
                           >
-                            <Upload className="h-3.5 w-3.5" />
-                            <span>{uploadingIndex === idx ? '...' : '+Img'}</span>
+                            <Upload className="h-4 w-4 text-primary/70" />
+                            <span className="text-[10px] font-semibold">
+                              {uploadingIndex === idx ? '...' : '+ Image'}
+                            </span>
                             <input
                               type="file"
-                              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
@@ -479,13 +495,13 @@ export default function EditAttributePage() {
                           </label>
                         )}
 
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 space-y-1">
                           <p className="text-sm font-bold text-foreground truncate">
                             {val.name}
                           </p>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
+                          <span className="inline-block text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50">
                             {val.slug}
-                          </p>
+                          </span>
                         </div>
                       </div>
 
@@ -494,7 +510,7 @@ export default function EditAttributePage() {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-destructive/80 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
+                        className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-lg transition-colors"
                         title="Delete Value"
                         onClick={() => removeValue(idx)}
                       >
