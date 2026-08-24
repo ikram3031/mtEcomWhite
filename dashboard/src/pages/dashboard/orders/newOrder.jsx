@@ -356,6 +356,9 @@ const NewInStoreOrderPage = () => {
     [subtotal, discountAmount],
   );
 
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailInvalid = Boolean(customerEmail.trim() && !isValidEmail(customerEmail.trim()));
+
   const handleSubmit = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty. Add at least one product.");
@@ -367,6 +370,10 @@ const NewInStoreOrderPage = () => {
     }
     if (customerPhone.trim().length !== 10) {
       toast.error("Please enter a valid 10-digit Phone Number.");
+      return;
+    }
+    if (customerEmail.trim() && !isValidEmail(customerEmail.trim())) {
+      toast.error("Please enter a valid email address.");
       return;
     }
     if (
@@ -765,13 +772,22 @@ const NewInStoreOrderPage = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Email
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground block">
+                    Email
+                  </label>
+                  {isEmailInvalid && (
+                    <span className="text-[11px] text-destructive font-medium">
+                      Invalid email address
+                    </span>
+                  )}
+                </div>
                 <Input
+                  type="email"
                   placeholder="email@example.com"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
+                  className={isEmailInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <div>
@@ -874,13 +890,15 @@ const NewInStoreOrderPage = () => {
                   <span className="text-xs text-muted-foreground font-medium">Discount (৳)</span>
                   <div className="w-28">
                     <Input
-                      type="number"
-                      min="0"
-                      max={subtotal}
+                      type="text"
+                      inputMode="numeric"
                       placeholder="0"
                       value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
-                      className="h-7 text-xs text-right font-semibold"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setDiscount(val);
+                      }}
+                      className="h-8 text-xs text-right font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
@@ -892,13 +910,8 @@ const NewInStoreOrderPage = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Shipping</span>
-                  <span className="text-emerald-600 font-medium">Free</span>
-                </div>
-
                 <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-border">
-                  <span>Total Payable</span>
+                  <span>Total</span>
                   <span className="text-primary">{formatBDT(finalTotal)}</span>
                 </div>
               </div>
@@ -958,21 +971,27 @@ const NewInStoreOrderPage = () => {
           </div>
 
           <div className="bg-muted/50 border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-foreground">Payment:</span>{" "}
+                <span className="capitalize font-medium">{paymentMethod}</span>
+                {(paymentMethod === "bkash" || paymentMethod === "nagad") &&
+                  paymentPhone && (
+                    <span className="text-muted-foreground ml-1">
+                      (+880{paymentPhone})
+                    </span>
+                  )}
+              </p>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px] font-semibold">
+                Paid (In-Store)
+              </Badge>
+            </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">Payment:</span>{" "}
-              <span className="capitalize">{paymentMethod}</span>
-              {(paymentMethod === "bkash" || paymentMethod === "nagad") &&
-                paymentPhone && (
-                  <span className="text-muted-foreground ml-1">
-                    (+880{paymentPhone})
-                  </span>
-                )}
-              <br />
-              Order number prefix:{" "}
+              Order ID prefix:{" "}
               <span className="font-mono font-semibold text-primary">
-                S
+                IS
               </span>{" "}
-              (e.g. <span className="font-mono text-primary">S2607001</span>)
+              (e.g. <span className="font-mono text-primary">IS26080001</span>)
             </p>
           </div>
 
