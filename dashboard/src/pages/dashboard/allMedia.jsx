@@ -240,7 +240,7 @@ export default function AllMediaPage() {
 
       {/* Media Detail & Copy Link Modal */}
       <Dialog open={!!selectedMedia} onOpenChange={(open) => !open && setSelectedMedia(null)}>
-        <DialogContent className="max-w-xl p-6">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl p-6 overflow-hidden">
           <DialogHeader className="pb-3 border-b">
             <DialogTitle className="text-base font-bold text-foreground truncate">
               {selectedMedia?.filename || 'Media Preview'}
@@ -249,43 +249,46 @@ export default function AllMediaPage() {
 
           {selectedMedia && (
             <div className="space-y-4 pt-2">
-              {/* Media Preview Box */}
-              <div className="relative max-h-72 w-full rounded-xl border bg-muted/20 flex items-center justify-center overflow-hidden p-2">
+              {/* Media Preview Box (Spacious, elegant background and crisp display) */}
+              <div className="relative w-full min-h-[340px] max-h-[540px] rounded-2xl border border-border/70 bg-neutral-900/60 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center overflow-hidden p-3 shadow-inner">
                 {selectedMedia.url.match(/\.(jpeg|jpg|png|webp|gif|svg|avif)$/i) ? (
                   <img
                     src={resolveImageUrl(selectedMedia.url)}
                     alt={selectedMedia.filename}
-                    className="max-h-64 max-w-full object-contain rounded-lg shadow-xs"
+                    className="max-h-[500px] w-auto max-w-full object-contain rounded-xl shadow-lg transition-transform duration-200"
                   />
                 ) : (
-                  <div className="py-12 flex flex-col items-center text-muted-foreground">
-                    <FileText className="h-16 w-16 text-primary mb-2" />
-                    <p className="text-xs font-mono font-semibold">{selectedMedia.filename}</p>
+                  <div className="py-16 flex flex-col items-center text-muted-foreground">
+                    <FileText className="h-20 w-20 text-primary/80 mb-3" />
+                    <p className="text-sm font-mono font-semibold text-foreground">{selectedMedia.filename}</p>
+                    <span className="text-xs text-muted-foreground mt-1 uppercase font-mono tracking-wider">
+                      {selectedMedia.filename.split('.').pop()} File
+                    </span>
                   </div>
                 )}
               </div>
 
               {/* Metadata Badges */}
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="flex items-center gap-2 p-2.5 rounded-lg border bg-background">
-                  <HardDrive className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex items-center gap-2.5 p-3 rounded-xl border bg-card/60">
+                  <HardDrive className="h-4 w-4 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] text-muted-foreground">File Size</p>
-                    <p className="font-semibold text-foreground font-mono">{formatFileSize(selectedMedia.size)}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">File Size</p>
+                    <p className="font-semibold text-foreground font-mono mt-0.5">{formatFileSize(selectedMedia.size)}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-lg border bg-background">
-                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex items-center gap-2.5 p-3 rounded-xl border bg-card/60">
+                  <Calendar className="h-4 w-4 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Last Modified</p>
-                    <p className="font-semibold text-foreground font-mono">
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Last Modified</p>
+                    <p className="font-semibold text-foreground font-mono mt-0.5">
                       {new Date(selectedMedia.updatedAt || selectedMedia.createdAt).toLocaleString()}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Disabled Link Input with Golden Copy Button */}
+              {/* URL Input with Copy Link & Open in New Tab */}
               <div className="space-y-1.5 pt-1">
                 <label className="text-xs font-semibold text-foreground block">
                   Media Direct URL
@@ -293,18 +296,32 @@ export default function AllMediaPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     readOnly
-                    disabled
                     value={resolveImageUrl(selectedMedia.url)}
-                    className="font-mono text-xs text-foreground bg-muted/40 border-border select-all cursor-text disabled:opacity-90 flex-1"
+                    className="font-mono text-xs text-foreground bg-muted/40 border-border select-all cursor-text flex-1"
                   />
                   <Button
                     type="button"
                     onClick={() => handleCopyLink(selectedMedia.url)}
-                    className="h-9 px-3.5 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 font-semibold gap-1.5 cursor-pointer text-xs shrink-0 transition-all"
+                    className="h-9 px-4 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 font-semibold gap-1.5 cursor-pointer text-xs shrink-0 transition-all"
                     title="Copy Direct URL"
                   >
                     {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 px-3 border-border hover:border-primary/40 cursor-pointer text-xs shrink-0"
+                    title="Open in new tab"
+                    asChild
+                  >
+                    <a
+                      href={resolveImageUrl(selectedMedia.url)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </a>
                   </Button>
                 </div>
               </div>
