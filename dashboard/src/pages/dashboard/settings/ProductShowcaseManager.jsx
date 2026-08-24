@@ -96,37 +96,41 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     staleTime: 1000 * 60 * 2, // 2 minutes cache
   });
 
-  // 2. Initialize and normalize staged products whenever storeUtilsData updates
+  // 2. Initialize and normalize staged products whenever storeUtilsData updates (only active & in-stock)
   useEffect(() => {
     if (storeUtilsData && Array.isArray(storeUtilsData[showcaseKey])) {
-      const mapped = storeUtilsData[showcaseKey].map(normalizeProduct).filter(Boolean);
+      const mapped = storeUtilsData[showcaseKey]
+        .map(normalizeProduct)
+        .filter((p) => p && p.isActive !== false && !p.isOutOfStock);
       setStagedProducts(mapped);
     }
   }, [storeUtilsData, showcaseKey]);
 
-  // 3. Live search query for inline autocomplete dropdown
+  // 3. Live search query for inline autocomplete dropdown (only active & in-stock)
   const { data: searchResults = [], isFetching: isSearching } = useQuery({
     queryKey: ['showcase-product-search', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery) return [];
       const res = await apiClient.get('/api/v1/products', {
-        params: { q: debouncedQuery, limit: 10 },
+        params: { q: debouncedQuery, limit: 12, isActive: true, stockStatus: 'instock' },
       });
       const raw = Array.isArray(res.data)
         ? res.data
         : (res.data?.data || res.data?.products || []);
 
-      return raw.map(normalizeProduct).filter(Boolean);
+      return raw
+        .map(normalizeProduct)
+        .filter((p) => p && p.isActive !== false && !p.isOutOfStock);
     },
     enabled: debouncedQuery.length > 0,
     staleTime: 1000 * 30,
   });
 
-  // 4. Query all products for the Browse Catalog modal
+  // 4. Query active in-stock products for the Browse Catalog modal
   const { data: allCatalogProducts = [], isLoading: isCatalogLoading } = useQuery({
     queryKey: ['catalog-browse-products', browseSearchQuery],
     queryFn: async () => {
-      const params = { limit: 50 };
+      const params = { limit: 60, isActive: true, stockStatus: 'instock' };
       if (browseSearchQuery.trim()) {
         params.q = browseSearchQuery.trim();
       }
@@ -134,7 +138,10 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
       const raw = Array.isArray(res.data)
         ? res.data
         : (res.data?.data || res.data?.products || []);
-      return raw.map(normalizeProduct).filter(Boolean);
+
+      return raw
+        .map(normalizeProduct)
+        .filter((p) => p && p.isActive !== false && !p.isOutOfStock);
     },
     enabled: browseModalOpen,
     staleTime: 1000 * 60,

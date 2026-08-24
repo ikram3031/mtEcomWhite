@@ -12,10 +12,18 @@ export const getStoreUtils = async (req, res, next) => {
     let storeUtils = await StoreUtilsModel.findOne({ key: "default" })
       .populate({
         path: "featured",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .populate({
         path: "bestSeller",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .lean();
@@ -29,10 +37,19 @@ export const getStoreUtils = async (req, res, next) => {
       storeUtils = storeUtils.toObject ? storeUtils.toObject() : storeUtils;
     }
 
-    // If storeUtils featured is empty, auto-populate from products tagged with "featured"
-    let featuredList = Array.isArray(storeUtils.featured) ? storeUtils.featured.filter(Boolean) : [];
+    const isAvailableProduct = (p) => {
+      if (!p || typeof p !== "object") return false;
+      if (p.isActive === false) return false;
+      if (p.stockStatus === "outofstock" || p.stockStatus === "out_of_stock") return false;
+      return true;
+    };
+
+    // If storeUtils featured is empty, auto-populate from active in-stock products tagged with "featured"
+    let featuredList = Array.isArray(storeUtils.featured) ? storeUtils.featured.filter(isAvailableProduct) : [];
     if (featuredList.length === 0) {
       const taggedFeatured = await ProductModel.find({
+        isActive: true,
+        stockStatus: { $nin: ["outofstock", "out_of_stock"] },
         $or: [
           { tags: "featured" },
           { tags: "Featured" },
@@ -52,10 +69,12 @@ export const getStoreUtils = async (req, res, next) => {
       }
     }
 
-    // If storeUtils bestSeller is empty, auto-populate from products tagged with "best-seller"
-    let bestSellerList = Array.isArray(storeUtils.bestSeller) ? storeUtils.bestSeller.filter(Boolean) : [];
+    // If storeUtils bestSeller is empty, auto-populate from active in-stock products tagged with "best-seller"
+    let bestSellerList = Array.isArray(storeUtils.bestSeller) ? storeUtils.bestSeller.filter(isAvailableProduct) : [];
     if (bestSellerList.length === 0) {
       const taggedBestSeller = await ProductModel.find({
+        isActive: true,
+        stockStatus: { $nin: ["outofstock", "out_of_stock"] },
         $or: [
           { tags: "best-seller" },
           { tags: "bestseller" },
@@ -76,8 +95,8 @@ export const getStoreUtils = async (req, res, next) => {
       }
     }
 
-    const featuredProducts = featuredList.map(serializeProduct);
-    const bestSellerProducts = bestSellerList.map(serializeProduct);
+    const featuredProducts = featuredList.filter(isAvailableProduct).map(serializeProduct);
+    const bestSellerProducts = bestSellerList.filter(isAvailableProduct).map(serializeProduct);
 
     res.json({
       status: "success",
@@ -162,20 +181,35 @@ export const updateStoreUtils = async (req, res, next) => {
     )
       .populate({
         path: "featured",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .populate({
         path: "bestSeller",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .lean();
 
+    const isAvailableProduct = (p) => {
+      if (!p || typeof p !== "object") return false;
+      if (p.isActive === false) return false;
+      if (p.stockStatus === "outofstock" || p.stockStatus === "out_of_stock") return false;
+      return true;
+    };
+
     const featuredProducts = Array.isArray(updatedDoc.featured)
-      ? updatedDoc.featured.filter(Boolean).map(serializeProduct)
+      ? updatedDoc.featured.filter(isAvailableProduct).map(serializeProduct)
       : [];
 
     const bestSellerProducts = Array.isArray(updatedDoc.bestSeller)
-      ? updatedDoc.bestSeller.filter(Boolean).map(serializeProduct)
+      ? updatedDoc.bestSeller.filter(isAvailableProduct).map(serializeProduct)
       : [];
 
     res.json({
