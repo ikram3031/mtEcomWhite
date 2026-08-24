@@ -10,21 +10,24 @@ import InvitePage from './pages/invite';
 // Dashboard
 import Overview from './pages/dashboard/overview';
 import Users from './pages/dashboard/users';
-import Reports from './pages/dashboard/reports';
+import Reports from './pages/dashboard/reportsV2';
 import Members from './pages/dashboard/members';
 import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
 import Reviews from './pages/dashboard/reviews';
+import SettingsPage from './pages/dashboard/settings';
+import AllMedia from './pages/dashboard/allMedia';
 
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
 import ProductDetails from './pages/dashboard/products/productDetails';
 import AddNewProduct from './pages/dashboard/products/addNewProduct';
-import Stock from './pages/dashboard/products/stock';
+// import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
 import Categories from './pages/dashboard/products/categories';
 import Brands from './pages/dashboard/products/brands';
 import Attributes from './pages/dashboard/products/attributes';
+import EditAttribute from './pages/dashboard/products/editAttribute';
 
 // Orders
 import OrdersList from './pages/dashboard/orders/ordersList';
@@ -135,6 +138,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'settings',
+        element: (
+          <RoleGuard menuKey="settings">
+            <SettingsPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'media',
+        element: <AllMedia />,
+      },
+      {
         path: 'tools',
         children: [
           { path: '', element: <Navigate to="bulk-image-resize" replace /> },
@@ -192,14 +207,14 @@ export const router = createBrowserRouter([
               </RoleGuard>
             ),
           },
-          {
+          /* {
             path: 'stock',
             element: (
               <RoleGuard menuKey="products.list">
                 <Stock />
               </RoleGuard>
             ),
-          },
+          }, */
           {
             path: 'coupons',
             element: (
@@ -230,6 +245,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleGuard menuKey="products.attributes">
                 <Attributes />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'attributes/:id',
+            element: (
+              <RoleGuard menuKey="products.attributes">
+                <EditAttribute />
               </RoleGuard>
             ),
           },

@@ -8,6 +8,15 @@
     "brand": true,
     "variantImage": false
   },
+  "stockManagement": {
+    "simpleProduct": true,
+    "variableProduct": true
+  },
+  "reports": {
+    "enableInStoreFilter": true,
+    "enableExport": true,
+    "enabledTabs": ["sales", "products", "payments", "inventory"]
+  },
   "logoUrl": "/src/uploads/assets/toyoland_logo.png",
   "allowedMenus": [
     "overview",

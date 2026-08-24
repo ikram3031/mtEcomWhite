@@ -12,10 +12,18 @@ export const getStoreUtils = async (req, res, next) => {
     let storeUtils = await StoreUtilsModel.findOne({ key: "default" })
       .populate({
         path: "featured",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .populate({
         path: "bestSeller",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .lean();
@@ -29,13 +37,66 @@ export const getStoreUtils = async (req, res, next) => {
       storeUtils = storeUtils.toObject ? storeUtils.toObject() : storeUtils;
     }
 
-    const featuredProducts = Array.isArray(storeUtils.featured)
-      ? storeUtils.featured.filter(Boolean).map(serializeProduct)
-      : [];
+    const isAvailableProduct = (p) => {
+      if (!p || typeof p !== "object") return false;
+      if (p.isActive === false) return false;
+      if (p.stockStatus === "outofstock" || p.stockStatus === "out_of_stock") return false;
+      return true;
+    };
 
-    const bestSellerProducts = Array.isArray(storeUtils.bestSeller)
-      ? storeUtils.bestSeller.filter(Boolean).map(serializeProduct)
-      : [];
+    // If storeUtils featured is empty, auto-populate from active in-stock products tagged with "featured"
+    let featuredList = Array.isArray(storeUtils.featured) ? storeUtils.featured.filter(isAvailableProduct) : [];
+    if (featuredList.length === 0) {
+      const taggedFeatured = await ProductModel.find({
+        isActive: true,
+        stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        $or: [
+          { tags: "featured" },
+          { tags: "Featured" },
+          { tags: { $regex: /^featured$/i } },
+        ],
+      })
+        .populate("categories")
+        .limit(30)
+        .lean();
+
+      if (taggedFeatured.length > 0) {
+        featuredList = taggedFeatured;
+        await StoreUtilsModel.updateOne(
+          { key: "default" },
+          { $set: { featured: taggedFeatured.map((p) => p._id) } }
+        );
+      }
+    }
+
+    // If storeUtils bestSeller is empty, auto-populate from active in-stock products tagged with "best-seller"
+    let bestSellerList = Array.isArray(storeUtils.bestSeller) ? storeUtils.bestSeller.filter(isAvailableProduct) : [];
+    if (bestSellerList.length === 0) {
+      const taggedBestSeller = await ProductModel.find({
+        isActive: true,
+        stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        $or: [
+          { tags: "best-seller" },
+          { tags: "bestseller" },
+          { tags: "Best Seller" },
+          { tags: { $regex: /^best-?seller$/i } },
+        ],
+      })
+        .populate("categories")
+        .limit(30)
+        .lean();
+
+      if (taggedBestSeller.length > 0) {
+        bestSellerList = taggedBestSeller;
+        await StoreUtilsModel.updateOne(
+          { key: "default" },
+          { $set: { bestSeller: taggedBestSeller.map((p) => p._id) } }
+        );
+      }
+    }
+
+    const featuredProducts = featuredList.filter(isAvailableProduct).map(serializeProduct);
+    const bestSellerProducts = bestSellerList.filter(isAvailableProduct).map(serializeProduct);
 
     res.json({
       status: "success",
@@ -59,21 +120,31 @@ export const updateStoreUtils = async (req, res, next) => {
     const body = req.body || {};
     const updateData = {};
 
-    // Validate and sanitize featured product ObjectIDs
+    // Validate and sanitize featured product ObjectIDs (support ObjectId, id, and did)
     if (body.featured !== undefined) {
       const rawFeatured = Array.isArray(body.featured)
         ? body.featured
         : [body.featured];
 
-      const validFeaturedIds = rawFeatured
-        .map((id) => (typeof id === "object" && id !== null ? id.id || id._id : id))
-        .filter((id) => Types.ObjectId.isValid(id))
-        .map((id) => new Types.ObjectId(id));
+      const resolvedFeaturedIds = [];
+      for (const item of rawFeatured) {
+        const val = typeof item === "object" && item !== null ? item.id || item._id || item.did : item;
+        if (!val) continue;
 
-      updateData.featured = validFeaturedIds;
+        if (Types.ObjectId.isValid(val)) {
+          resolvedFeaturedIds.push(new Types.ObjectId(val));
+        } else if (typeof val === "string") {
+          const pDoc = await ProductModel.findOne({ did: val.trim() }).select("_id").lean();
+          if (pDoc?._id) {
+            resolvedFeaturedIds.push(pDoc._id);
+          }
+        }
+      }
+
+      updateData.featured = resolvedFeaturedIds;
     }
 
-    // Validate and sanitize bestSeller product ObjectIDs
+    // Validate and sanitize bestSeller product ObjectIDs (support ObjectId, id, and did)
     if (body.bestSeller !== undefined || body.best_seller !== undefined) {
       const rawBestSeller =
         body.bestSeller !== undefined ? body.bestSeller : body.best_seller;
@@ -81,12 +152,22 @@ export const updateStoreUtils = async (req, res, next) => {
         ? rawBestSeller
         : [rawBestSeller];
 
-      const validBestSellerIds = rawBestSellerArr
-        .map((id) => (typeof id === "object" && id !== null ? id.id || id._id : id))
-        .filter((id) => Types.ObjectId.isValid(id))
-        .map((id) => new Types.ObjectId(id));
+      const resolvedBestSellerIds = [];
+      for (const item of rawBestSellerArr) {
+        const val = typeof item === "object" && item !== null ? item.id || item._id || item.did : item;
+        if (!val) continue;
 
-      updateData.bestSeller = validBestSellerIds;
+        if (Types.ObjectId.isValid(val)) {
+          resolvedBestSellerIds.push(new Types.ObjectId(val));
+        } else if (typeof val === "string") {
+          const pDoc = await ProductModel.findOne({ did: val.trim() }).select("_id").lean();
+          if (pDoc?._id) {
+            resolvedBestSellerIds.push(pDoc._id);
+          }
+        }
+      }
+
+      updateData.bestSeller = resolvedBestSellerIds;
     }
 
     if (req.user?.userId || req.user?.id) {
@@ -100,20 +181,35 @@ export const updateStoreUtils = async (req, res, next) => {
     )
       .populate({
         path: "featured",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .populate({
         path: "bestSeller",
+        match: {
+          isActive: true,
+          stockStatus: { $nin: ["outofstock", "out_of_stock"] },
+        },
         populate: { path: "categories" },
       })
       .lean();
 
+    const isAvailableProduct = (p) => {
+      if (!p || typeof p !== "object") return false;
+      if (p.isActive === false) return false;
+      if (p.stockStatus === "outofstock" || p.stockStatus === "out_of_stock") return false;
+      return true;
+    };
+
     const featuredProducts = Array.isArray(updatedDoc.featured)
-      ? updatedDoc.featured.filter(Boolean).map(serializeProduct)
+      ? updatedDoc.featured.filter(isAvailableProduct).map(serializeProduct)
       : [];
 
     const bestSellerProducts = Array.isArray(updatedDoc.bestSeller)
-      ? updatedDoc.bestSeller.filter(Boolean).map(serializeProduct)
+      ? updatedDoc.bestSeller.filter(isAvailableProduct).map(serializeProduct)
       : [];
 
     res.json({

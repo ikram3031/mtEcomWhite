@@ -18,6 +18,9 @@ import {
   Square,
   Sparkles,
   Layers,
+  ExternalLink,
+  Filter,
+  CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +51,7 @@ const META_CSV_COLUMNS = [
   'price',
   'google_product_category',
   'fb_product_category',
+  'product_type',
   'quantity_to_sell_on_facebook',
   'sale_price',
   'sale_price_effective_date',
@@ -60,6 +64,11 @@ const META_CSV_COLUMNS = [
   'pattern',
   'shipping',
   'shipping_weight',
+  'custom_label_0',
+  'custom_label_1',
+  'custom_label_2',
+  'custom_label_3',
+  'custom_label_4',
   'offer_disclaimer',
   'offer_disclaimer_url',
   'video[0].url',
@@ -88,6 +97,9 @@ const escapeCsvCell = (str) => {
   return s;
 };
 
+const LOCAL_STORAGE_STAGED_KEY = 'meta_catalog_staged_products_v2';
+const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v2';
+
 export default function MetaCatalogGenerator() {
   const { data: dbCategories = [] } = useCategories();
 
@@ -99,7 +111,7 @@ export default function MetaCatalogGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Settings
+  // Settings State (with LocalStorage restore)
   const [settingsOpen, setSettingsOpen] = useState(false);
   const defaultDomain =
     clientConfig?.brandName?.toLowerCase() === 'engulfic'
@@ -108,35 +120,140 @@ export default function MetaCatalogGenerator() {
       ? 'https://toyoland.shop'
       : 'https://decantrebd.com';
 
-  const [siteUrl, setSiteUrl] = useState(defaultDomain);
-  const [imageBaseUrl, setImageBaseUrl] = useState(
-    (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '')
-  );
-  const currency = 'BDT';
-  const [idMapping, setIdMapping] = useState('did');
-  const [defaultCondition, setDefaultCondition] = useState('new');
-  const [googleCategory, setGoogleCategory] = useState('');
-  const [customLabel0, setCustomLabel0] = useState('');
-  const [includeVariants, setIncludeVariants] = useState(true);
+  const [siteUrl, setSiteUrl] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).siteUrl || defaultDomain;
+    } catch (_) {}
+    return defaultDomain;
+  });
 
-  // Filters & Staged Catalog
-  const [stagedMap, setStagedMap] = useState(new Map()); // Map of staged product objects by ID
+  const [productPathPrefix, setProductPathPrefix] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).productPathPrefix || '/products/';
+    } catch (_) {}
+    return '/products/';
+  });
+
+  const [imageBaseUrl, setImageBaseUrl] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '');
+    } catch (_) {}
+    return (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '');
+  });
+
+  const currency = 'BDT';
+  const [idMapping, setIdMapping] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).idMapping || 'did';
+    } catch (_) {}
+    return 'did';
+  });
+
+  const [defaultCondition, setDefaultCondition] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).defaultCondition || 'new';
+    } catch (_) {}
+    return 'new';
+  });
+
+  const [googleCategory, setGoogleCategory] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).googleCategory || '';
+    } catch (_) {}
+    return '';
+  });
+
+  const [customLabel0, setCustomLabel0] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).customLabel0 || '';
+    } catch (_) {}
+    return '';
+  });
+
+  const [includeVariants, setIncludeVariants] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+      if (saved) return JSON.parse(saved).includeVariants ?? true;
+    } catch (_) {}
+    return true;
+  });
+
+  // Staged Catalog State (with LocalStorage restore)
+  const [stagedMap, setStagedMap] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_STAGED_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return new Map(parsed.map((item) => [item.did || item.id, item]));
+        }
+      }
+    } catch (_) {}
+    return new Map();
+  });
+
+  // Save settings to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        LOCAL_STORAGE_SETTINGS_KEY,
+        JSON.stringify({
+          siteUrl,
+          productPathPrefix,
+          imageBaseUrl,
+          idMapping,
+          defaultCondition,
+          googleCategory,
+          customLabel0,
+          includeVariants,
+        })
+      );
+    } catch (_) {}
+  }, [
+    siteUrl,
+    productPathPrefix,
+    imageBaseUrl,
+    idMapping,
+    defaultCondition,
+    googleCategory,
+    customLabel0,
+    includeVariants,
+  ]);
+
+  // Save stagedMap to LocalStorage
+  useEffect(() => {
+    try {
+      const arrayData = Array.from(stagedMap.values());
+      localStorage.setItem(LOCAL_STORAGE_STAGED_KEY, JSON.stringify(arrayData));
+    } catch (_) {}
+  }, [stagedMap]);
+
+  // Filters & UI State
   const [checkedIds, setCheckedIds] = useState(new Set()); // For bulk adding visible items
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [stockFilter, setStockFilter] = useState('instock'); // Default to in-stock
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('browse'); // 'browse' | 'staged' | 'preview'
 
   const observerRef = useRef(null);
   const sentinelRef = useRef(null);
+  const fetchCountRef = useRef(0);
 
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-    }, 400);
+    }, 350);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -281,7 +398,7 @@ export default function MetaCatalogGenerator() {
 
   // Fetch Page of Products (20 at a time)
   const fetchProductsPage = async (pageNum, isReset = false) => {
-    if (isLoading) return;
+    const currentFetchId = ++fetchCountRef.current;
     setIsLoading(true);
     if (isReset) setIsInitialLoading(true);
 
@@ -300,10 +417,19 @@ export default function MetaCatalogGenerator() {
       }
 
       if (selectedCategories.length > 0) {
-        params.category = selectedCategories.map((c) => c.slug || c.name || c.id);
+        const catKeys = selectedCategories
+          .map((c) => c.slug || c.did || c.name || c.id)
+          .filter(Boolean);
+        if (catKeys.length > 0) {
+          params.category = catKeys.join(',');
+        }
       }
 
       const response = await apiClient.get('/api/v1/products', { params });
+
+      // Ignore response if another fetch was dispatched
+      if (currentFetchId !== fetchCountRef.current) return;
+
       let rawList = [];
       let totalCount = 0;
 
@@ -337,8 +463,10 @@ export default function MetaCatalogGenerator() {
       console.error('Failed to fetch products page:', err);
       toast.error('Failed to load products.');
     } finally {
-      setIsLoading(false);
-      setIsInitialLoading(false);
+      if (currentFetchId === fetchCountRef.current) {
+        setIsLoading(false);
+        setIsInitialLoading(false);
+      }
     }
   };
 
@@ -381,13 +509,24 @@ export default function MetaCatalogGenerator() {
   const categoryOptions = useMemo(() => {
     if (dbCategories.length > 0) {
       return dbCategories.map((c) => ({
-        id: c.did || c._id || c.id || c.slug,
+        id: String(c.did || c.slug || c._id || c.id || c.name),
         name: c.name,
-        slug: c.slug,
+        slug: c.slug || '',
+        did: c.did || '',
+        _id: c._id || c.id || '',
       }));
     }
     return [];
   }, [dbCategories]);
+
+  // Filtered categories based on in-dropdown search
+  const filteredCategoryOptions = useMemo(() => {
+    if (!categorySearchQuery.trim()) return categoryOptions;
+    const q = categorySearchQuery.toLowerCase().trim();
+    return categoryOptions.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q)
+    );
+  }, [categoryOptions, categorySearchQuery]);
 
   // Staged Add / Remove
   const toggleStageProduct = (product) => {
@@ -471,8 +610,8 @@ export default function MetaCatalogGenerator() {
   // Toggle category multi-select
   const toggleCategorySelection = (cat) => {
     setSelectedCategories((prev) => {
-      const exists = prev.some((c) => c.id === cat.id);
-      if (exists) return prev.filter((c) => c.id !== cat.id);
+      const exists = prev.some((c) => c.name === cat.name || c.id === cat.id);
+      if (exists) return prev.filter((c) => c.name !== cat.name && c.id !== cat.id);
       return [...prev, cat];
     });
   };
@@ -480,12 +619,16 @@ export default function MetaCatalogGenerator() {
   // Generate Catalog Rows according to Meta specifications
   const catalogRows = useMemo(() => {
     const rows = [];
+    const prefix = productPathPrefix.startsWith('/') ? productPathPrefix : `/${productPathPrefix}`;
+    const cleanPrefix = prefix.endsWith('/') ? prefix : `${prefix}/`;
+
     stagedMap.forEach((p) => {
-      const cleanDesc = stripHtml(p.description || p.name || 'Quality beauty product.');
-      const brandName = p.brand || clientConfig?.brandName || 'Decantre';
+      const cleanDesc = stripHtml(p.description || p.name || 'Quality product.');
+      const brandName = p.brand || clientConfig?.brandName || 'Store';
       const productSlug = p.slug || p.did || p.id || '';
-      const productLink = `${siteUrl.replace(/\/$/, '')}/products/${productSlug}`;
+      const productLink = `${siteUrl.replace(/\/$/, '')}${cleanPrefix}${productSlug}`;
       const mainImage = p.imageUrl;
+      const productTypeCategory = p.primaryCategory || 'General';
 
       let contentId = p.did || p.id;
       if (idMapping === 'sku' && p.sku) contentId = p.sku;
@@ -509,6 +652,7 @@ export default function MetaCatalogGenerator() {
             price: `${varPrice.toFixed(2)} ${currency}`,
             google_product_category: googleCategory || '',
             fb_product_category: '',
+            product_type: productTypeCategory,
             quantity_to_sell_on_facebook: v.stockQuantity ?? 50,
             sale_price: varHasDiscount ? `${varSalePrice.toFixed(2)} ${currency}` : '',
             sale_price_effective_date: '',
@@ -521,13 +665,18 @@ export default function MetaCatalogGenerator() {
             pattern: '',
             shipping: '',
             shipping_weight: '',
+            custom_label_0: customLabel0 || '',
+            custom_label_1: productTypeCategory,
+            custom_label_2: '',
+            custom_label_3: '',
+            custom_label_4: '',
             offer_disclaimer: '',
             offer_disclaimer_url: '',
             'video[0].url': '',
             'video[0].tag[0]': '',
             gtin: '',
             'product_tags[0]': customLabel0 || '',
-            'product_tags[1]': p.primaryCategory || '',
+            'product_tags[1]': productTypeCategory,
             'style[0]': '',
           });
         });
@@ -548,6 +697,7 @@ export default function MetaCatalogGenerator() {
           price: `${rawPrice.toFixed(2)} ${currency}`,
           google_product_category: googleCategory || '',
           fb_product_category: '',
+          product_type: productTypeCategory,
           quantity_to_sell_on_facebook: p.stockAmount ?? 50,
           sale_price: hasDiscount ? `${rawSalePrice.toFixed(2)} ${currency}` : '',
           sale_price_effective_date: '',
@@ -560,13 +710,18 @@ export default function MetaCatalogGenerator() {
           pattern: '',
           shipping: '',
           shipping_weight: '',
+          custom_label_0: customLabel0 || '',
+          custom_label_1: productTypeCategory,
+          custom_label_2: '',
+          custom_label_3: '',
+          custom_label_4: '',
           offer_disclaimer: '',
           offer_disclaimer_url: '',
           'video[0].url': '',
           'video[0].tag[0]': '',
           gtin: '',
           'product_tags[0]': customLabel0 || '',
-          'product_tags[1]': p.primaryCategory || '',
+          'product_tags[1]': productTypeCategory,
           'style[0]': '',
         });
       }
@@ -576,6 +731,7 @@ export default function MetaCatalogGenerator() {
   }, [
     stagedMap,
     siteUrl,
+    productPathPrefix,
     idMapping,
     defaultCondition,
     googleCategory,
@@ -633,11 +789,11 @@ export default function MetaCatalogGenerator() {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Pick selective products, filter categories, and download your Meta Pixel compliant CSV catalog.
+            Pick selective products, filter categories, and download your Meta Pixel & Commerce compliant CSV catalog.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -734,9 +890,18 @@ export default function MetaCatalogGenerator() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-9 text-xs w-full"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Category Multi-Select Dropdown */}
+            {/* Category Multi-Select Dropdown with In-Dropdown Search */}
             <div className="relative flex-1 lg:max-w-sm">
               <button
                 type="button"
@@ -757,34 +922,56 @@ export default function MetaCatalogGenerator() {
                     className="fixed inset-0 z-40"
                     onClick={() => setCategoryDropdownOpen(false)}
                   />
-                  <div className="absolute top-10 left-0 right-0 z-50 rounded-lg border bg-popover p-2 shadow-xl max-h-64 overflow-y-auto space-y-1 text-xs">
+                  <div className="absolute top-10 left-0 right-0 z-50 rounded-lg border bg-popover p-2 shadow-xl max-h-72 overflow-y-auto space-y-1 text-xs">
+                    {/* Header & Clear */}
                     <div className="flex items-center justify-between px-2 py-1 border-b mb-1">
                       <span className="font-semibold text-[11px] text-muted-foreground">Select Categories</span>
                       {selectedCategories.length > 0 && (
                         <button
                           type="button"
                           onClick={() => setSelectedCategories([])}
-                          className="text-[11px] text-primary hover:underline"
+                          className="text-[11px] text-primary hover:underline font-medium"
                         >
                           Clear Selection
                         </button>
                       )}
                     </div>
-                    {categoryOptions.map((cat) => {
-                      const isSelected = selectedCategories.some((c) => c.id === cat.id);
-                      return (
-                        <div
-                          key={cat.id}
-                          onClick={() => toggleCategorySelection(cat)}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition-colors ${
-                            isSelected ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'
-                          }`}
-                        >
-                          <span className="truncate">{cat.name}</span>
-                          {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+
+                    {/* In-Dropdown Category Search */}
+                    <div className="px-1 pb-1">
+                      <Input
+                        placeholder="Search categories..."
+                        value={categorySearchQuery}
+                        onChange={(e) => setCategorySearchQuery(e.target.value)}
+                        className="h-7 text-[11px] px-2"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Category List */}
+                    <div className="space-y-0.5 max-h-48 overflow-y-auto pt-1">
+                      {filteredCategoryOptions.length === 0 ? (
+                        <div className="p-2 text-center text-muted-foreground text-[11px]">
+                          No categories found.
                         </div>
-                      );
-                    })}
+                      ) : (
+                        filteredCategoryOptions.map((cat) => {
+                          const isSelected = selectedCategories.some((c) => c.id === cat.id || c.name === cat.name);
+                          return (
+                            <div
+                              key={cat.id}
+                              onClick={() => toggleCategorySelection(cat)}
+                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition-colors ${
+                                isSelected ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'
+                              }`}
+                            >
+                              <span className="truncate">{cat.name}</span>
+                              {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </>
               )}
@@ -812,6 +999,20 @@ export default function MetaCatalogGenerator() {
                   </button>
                 ))}
               </div>
+
+              {/* Select All Visible Toggle */}
+              {products.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllVisible}
+                  className="h-9 text-xs"
+                  title="Toggle select all loaded items"
+                >
+                  <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                  {checkedIds.size === products.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              )}
 
               {checkedIds.size > 0 ? (
                 <Button
@@ -855,7 +1056,7 @@ export default function MetaCatalogGenerator() {
               <button
                 type="button"
                 onClick={() => setSelectedCategories([])}
-                className="text-xs text-muted-foreground hover:text-foreground underline ml-2"
+                className="text-xs text-muted-foreground hover:text-foreground underline ml-2 cursor-pointer"
               >
                 Reset Filters
               </button>
@@ -883,7 +1084,7 @@ export default function MetaCatalogGenerator() {
                     <button
                       type="button"
                       onClick={() => toggleCheckProduct(idVal)}
-                      className="text-muted-foreground hover:text-foreground p-0.5"
+                      className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
                       title="Select for bulk add"
                     >
                       {isChecked ? (
@@ -956,7 +1157,7 @@ export default function MetaCatalogGenerator() {
                     <button
                       type="button"
                       onClick={() => toggleStageProduct(p)}
-                      className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                      className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                         isStaged
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-destructive/15 hover:text-destructive border border-emerald-500/30'
                           : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs'
@@ -1063,7 +1264,7 @@ export default function MetaCatalogGenerator() {
                               size="sm"
                               variant="ghost"
                               onClick={() => removeStagedItem(idVal)}
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive cursor-pointer"
                               title="Remove from feed"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1152,7 +1353,7 @@ export default function MetaCatalogGenerator() {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-muted/80 sticky top-0 z-10 border-b shadow-2xs">
                     <tr>
-                      {['id', 'title', 'availability', 'price', 'sale_price', 'brand', 'link', 'image_link'].map(
+                      {['id', 'title', 'availability', 'price', 'sale_price', 'brand', 'product_type', 'link', 'image_link'].map(
                         (col) => (
                           <th
                             key={col}
@@ -1175,18 +1376,19 @@ export default function MetaCatalogGenerator() {
                           <span
                             className={
                               row.availability === 'in stock'
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-destructive'
+                                ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                                : 'text-destructive font-semibold'
                             }
                           >
                             {row.availability}
                           </span>
                         </td>
                         <td className="p-2.5 border-r">{row.price}</td>
-                        <td className="p-2.5 border-r text-emerald-600 dark:text-emerald-400">
+                        <td className="p-2.5 border-r text-emerald-600 dark:text-emerald-400 font-semibold">
                           {row.sale_price || '—'}
                         </td>
                         <td className="p-2.5 border-r">{row.brand}</td>
+                        <td className="p-2.5 border-r text-muted-foreground">{row.product_type}</td>
                         <td className="p-2.5 border-r truncate max-w-[180px]" title={row.link}>
                           {row.link}
                         </td>
@@ -1227,8 +1429,20 @@ export default function MetaCatalogGenerator() {
                 placeholder="https://decantrebd.com"
                 className="h-8 text-xs font-mono"
               />
+            </div>
+
+            <div>
+              <label className="font-medium text-foreground block mb-1">
+                Product URL Path Prefix
+              </label>
+              <Input
+                value={productPathPrefix}
+                onChange={(e) => setProductPathPrefix(e.target.value)}
+                placeholder="/products/"
+                className="h-8 text-xs font-mono"
+              />
               <span className="text-[10px] text-muted-foreground mt-0.5 block">
-                Prefix for product links: <code>/products/:slug</code>
+                Resulting link: <code>{siteUrl.replace(/\/$/, '')}{productPathPrefix.startsWith('/') ? productPathPrefix : `/${productPathPrefix}`}:slug</code>
               </span>
             </div>
 
@@ -1254,7 +1468,7 @@ export default function MetaCatalogGenerator() {
                   onChange={(e) => setIdMapping(e.target.value)}
                   className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus:ring-1 focus:ring-primary outline-hidden"
                 >
-                  <option value="did">product.did (Recommended)</option>
+                  <option value="did">product.did (Recommended for Meta Pixel)</option>
                   <option value="sku">product.sku</option>
                   <option value="id">product.id (MongoDB ObjectID)</option>
                 </select>
@@ -1272,26 +1486,43 @@ export default function MetaCatalogGenerator() {
               </div>
             </div>
 
-            <div>
-              <label className="font-medium text-foreground block mb-1">
-                Google / FB Category (Optional)
-              </label>
-              <Input
-                value={googleCategory}
-                onChange={(e) => setGoogleCategory(e.target.value)}
-                placeholder="Leave blank or e.g. Health & Beauty > Perfumes"
-                className="h-8 text-xs"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-medium text-foreground block mb-1">
+                  Default Condition
+                </label>
+                <select
+                  value={defaultCondition}
+                  onChange={(e) => setDefaultCondition(e.target.value)}
+                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus:ring-1 focus:ring-primary outline-hidden"
+                >
+                  <option value="new">new</option>
+                  <option value="refurbished">refurbished</option>
+                  <option value="used">used</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-medium text-foreground block mb-1">
+                  Google / FB Category (Optional)
+                </label>
+                <Input
+                  value={googleCategory}
+                  onChange={(e) => setGoogleCategory(e.target.value)}
+                  placeholder="e.g. Health & Beauty > Perfumes"
+                  className="h-8 text-xs"
+                />
+              </div>
             </div>
 
             <div>
               <label className="font-medium text-foreground block mb-1">
-                Custom Label 0 (Optional Ad Set Filter)
+                Custom Label 0 (Optional Ad Set Tag)
               </label>
               <Input
                 value={customLabel0}
                 onChange={(e) => setCustomLabel0(e.target.value)}
-                placeholder="e.g. Best Sellers / Decant Collection"
+                placeholder="e.g. Best Sellers / Meta Ads Collection"
                 className="h-8 text-xs"
               />
             </div>
@@ -1304,15 +1535,15 @@ export default function MetaCatalogGenerator() {
                 onChange={(e) => setIncludeVariants(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
               />
-              <label htmlFor="incVarModal" className="cursor-pointer font-medium select-none">
-                Export each variant as a row with <code>item_group_id</code>
+              <label htmlFor="incVarModal" className="cursor-pointer font-medium select-none text-xs">
+                Export each variant as an individual row with <code>item_group_id</code>
               </label>
             </div>
           </div>
 
           <DialogFooter>
             <Button size="sm" onClick={() => setSettingsOpen(false)}>
-              Done
+              Done & Save
             </Button>
           </DialogFooter>
         </DialogContent>

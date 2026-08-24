@@ -26,20 +26,38 @@ const normalizeStatus = (status) => {
 };
 
 const mapPayment = (payment) => {
-  const order = payment.orderId || {};
-  const invoiceId = order.orderNumber || order.did || order._id || payment.id || payment._id || 'Unknown';
-  const customerName = order.customer?.fullName || 'Guest Customer';
-  const method = payment.paymentMethod || 'Unknown';
-  const amount = typeof payment.amount === 'number' ? payment.amount : Number(payment.paidAmount ?? payment.totalAmount ?? 0);
+  const order = (typeof payment.orderId === 'object' && payment.orderId !== null) ? payment.orderId : {};
+  const invoiceId = order.orderNumber || order.did || payment.did || payment.id || payment._id || 'Unknown';
+  const customerName =
+    order.billingInfo?.fullName ||
+    order.shippingInfo?.fullName ||
+    order.customerName ||
+    order.customer?.fullName ||
+    order.fullName ||
+    payment.customerName ||
+    payment.customer?.fullName ||
+    (order.billingInfo?.phone ? `Customer (${order.billingInfo.phone})` : '') ||
+    'Guest Customer';
+  const method = payment.paymentMethod || order.paymentMethod || 'Unknown';
+  const amount =
+    typeof payment.totalAmount === 'number' && payment.totalAmount > 0
+      ? payment.totalAmount
+      : typeof order.totals?.total === 'number' && order.totals.total > 0
+      ? order.totals.total
+      : typeof payment.amount === 'number' && payment.amount > 0
+      ? payment.amount
+      : typeof payment.paidAmount === 'number' && payment.paidAmount > 0
+      ? payment.paidAmount
+      : 0;
 
   return {
     id: payment.id || payment._id || 'unknown',
     invoiceId,
     customerName,
     method,
-    date: formatDate(payment.createdAt || payment.updatedAt),
+    date: formatDate(payment.createdAt || payment.updatedAt || order.createdAt),
     amount,
-    status: normalizeStatus(payment.status),
+    status: normalizeStatus(payment.status || (payment.paidAmount >= amount && amount > 0 ? 'paid' : 'pending')),
   };
 };
 
@@ -68,10 +86,10 @@ const fetchPayments = async (params) => {
 
     return { items, meta };
   } catch (error) {
-    console.warn('Payment API failed, using fallback mock payments:', error);
+    console.error('Payment API request failed:', error);
   }
 
-  return { items: mockPayments, meta: undefined };
+  return { items: [], meta: undefined };
 };
 
 export function usePayments(params) {

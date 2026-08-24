@@ -11,6 +11,9 @@ const Toaster = ({ ...props }) => {
       className="toaster group"
       position="top-right"
       richColors
+      closeButton
+      visibleToasts={1}
+      duration={3500}
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />
