@@ -240,26 +240,26 @@ export default function AllMediaPage() {
 
       {/* Media Detail & Copy Link Modal */}
       <Dialog open={!!selectedMedia} onOpenChange={(open) => !open && setSelectedMedia(null)}>
-        <DialogContent className="sm:max-w-3xl md:max-w-4xl p-6 overflow-hidden">
-          <DialogHeader className="pb-3 border-b">
-            <DialogTitle className="text-base font-bold text-foreground truncate">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl p-0 max-h-[75vh] flex flex-col overflow-hidden">
+          <DialogHeader className="p-4 sm:p-5 border-b shrink-0">
+            <DialogTitle className="text-base font-bold text-foreground truncate pr-6">
               {selectedMedia?.filename || 'Media Preview'}
             </DialogTitle>
           </DialogHeader>
 
           {selectedMedia && (
-            <div className="space-y-4 pt-2">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
               {/* Media Preview Box (Spacious, elegant background and crisp display) */}
-              <div className="relative w-full min-h-[340px] max-h-[540px] rounded-2xl border border-border/70 bg-neutral-900/60 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center overflow-hidden p-3 shadow-inner">
+              <div className="relative w-full min-h-[220px] max-h-[380px] rounded-2xl border border-border/70 bg-neutral-900/60 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center overflow-hidden p-3 shadow-inner">
                 {selectedMedia.url.match(/\.(jpeg|jpg|png|webp|gif|svg|avif)$/i) ? (
                   <img
                     src={resolveImageUrl(selectedMedia.url)}
                     alt={selectedMedia.filename}
-                    className="max-h-[500px] w-auto max-w-full object-contain rounded-xl shadow-lg transition-transform duration-200"
+                    className="max-h-[350px] w-auto max-w-full object-contain rounded-xl shadow-lg transition-transform duration-200"
                   />
                 ) : (
-                  <div className="py-16 flex flex-col items-center text-muted-foreground">
-                    <FileText className="h-20 w-20 text-primary/80 mb-3" />
+                  <div className="py-12 flex flex-col items-center text-muted-foreground">
+                    <FileText className="h-16 w-16 text-primary/80 mb-3" />
                     <p className="text-sm font-mono font-semibold text-foreground">{selectedMedia.filename}</p>
                     <span className="text-xs text-muted-foreground mt-1 uppercase font-mono tracking-wider">
                       {selectedMedia.filename.split('.').pop()} File
@@ -269,7 +269,7 @@ export default function AllMediaPage() {
               </div>
 
               {/* Metadata Badges */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="flex items-center gap-2.5 p-3 rounded-xl border bg-card/60">
                   <HardDrive className="h-4 w-4 text-primary shrink-0" />
                   <div>
@@ -293,7 +293,7 @@ export default function AllMediaPage() {
                 <label className="text-xs font-semibold text-foreground block">
                   Media Direct URL
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <Input
                     readOnly
                     value={resolveImageUrl(selectedMedia.url)}
