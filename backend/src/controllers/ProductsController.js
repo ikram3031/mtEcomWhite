@@ -94,6 +94,7 @@ export const createProduct = async (req, res, next) => {
       });
     }
     const imageUrl = rawImageUrl.trim();
+    const thumbnailUrl = (body.thumbnailUrl || body.thumbnail_url || imageUrl).trim();
     const rawGallery = body.images || body.galleryImages || body.gallery || [];
     const images = Array.isArray(rawGallery)
       ? rawGallery
@@ -133,6 +134,8 @@ export const createProduct = async (req, res, next) => {
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
       brand: brandDids,
+      imageUrl,
+      thumbnailUrl,
       images,
       stockStatus: body.stockStatus || "instock",
       stockAmount:
