@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import { effectivePrice, formatBDT } from "@/utils/orderHelper";
+import { clientConfig } from "@/clientConfig";
 
 function ProductAddDialog({
   product,
@@ -152,12 +153,15 @@ function ProductAddDialog({
                   </p>
                 )}
             </div>
+            <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Stock Status</p>
             <Badge
               variant={(product.stock ?? 0) > 0 ? "secondary" : "destructive"}
               className="text-xs"
             >
               {(product.stock ?? 0) > 0 ? `${product.stock} in stock` : "Out of Stock"}
             </Badge>
+          </div>
           </div>
         )}
 
@@ -172,23 +176,28 @@ function ProductAddDialog({
                 .map((v) => {
                   const vPrice = effectivePrice(v.price, v.offerPrice ?? null);
                   const isSelected = selectedVariant?.size === v.size;
-                  const hasNoStock = v.stockQuantity === 0;
+                  const manageVarStock = clientConfig?.stockManagement?.variableProduct !== false;
+                  const hasNoStock = manageVarStock && (v.stockQuantity === 0 || v.stock === 0);
 
                   return (
                     <button
                       key={v.size}
                       type="button"
+                      disabled={hasNoStock}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (hasNoStock) return;
                         setSelectedVariant(isSelected ? null : v);
                       }}
                       className={`
                         w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm transition-all
                         ${
-                          isSelected
-                            ? "border-primary bg-primary/8 ring-1 ring-primary/30"
-                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"
+                          hasNoStock
+                            ? "opacity-50 cursor-not-allowed border-border bg-muted/20"
+                            : isSelected
+                            ? "border-primary bg-primary/8 ring-1 ring-primary/30 cursor-pointer"
+                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
                         }
                       `}
                     >
@@ -196,20 +205,20 @@ function ProductAddDialog({
                         <span
                           className={`
                           h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                          ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
+                          ${hasNoStock ? "border-muted-foreground/30 bg-muted/40" : isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
                         `}
                         >
-                          {isSelected && (
+                          {isSelected && !hasNoStock && (
                             <span className="h-1.5 w-1.5 rounded-full bg-white" />
                           )}
                         </span>
                         <span className="font-medium">{v.size}</span>
                         {hasNoStock && (
                           <Badge
-                            variant="secondary"
-                            className="text-[10px] px-1 py-0"
+                            variant="destructive"
+                            className="text-[10px] px-1.5 py-0 font-medium"
                           >
-                            Out of Stock (DB)
+                            Out of Stock
                           </Badge>
                         )}
                       </div>

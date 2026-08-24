@@ -8,6 +8,10 @@
     "brand": true,
     "variantImage": true
   },
+  "stockManagement": {
+    "simpleProduct": true,
+    "variableProduct": false
+  },
   "logoUrl": "/src/uploads/logo_horizontal.png",
   "siteIconUrl": "/src/uploads/logo.webp",
   "allowedMenus": [
