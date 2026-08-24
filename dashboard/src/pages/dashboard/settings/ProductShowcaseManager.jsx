@@ -106,18 +106,18 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     }
   }, [storeUtilsData, showcaseKey]);
 
-  // 3. Live search query for inline autocomplete dropdown (only active & in-stock)
+  // 3. Live search query for inline autocomplete dropdown using high-performance aggregation
   const { data: searchResults = [], isFetching: isSearching } = useQuery({
     queryKey: ['showcase-product-search', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery) return [];
-      const res = await apiClient.get('/api/v1/products', {
-        params: { q: debouncedQuery, limit: 12, isActive: true, stockStatus: 'instock' },
+      const res = await apiClient.post('/api/v1/dash/products', {
+        q: debouncedQuery,
+        limit: 12,
+        isActive: true,
+        stockStatus: 'instock',
       });
-      const raw = Array.isArray(res.data)
-        ? res.data
-        : (res.data?.data || res.data?.products || []);
-
+      const raw = res.data?.data || [];
       return raw
         .map(normalizeProduct)
         .filter((p) => p && p.isActive !== false && !p.isOutOfStock);
@@ -126,18 +126,22 @@ export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, icon
     staleTime: 1000 * 30,
   });
 
-  // 4. Query active in-stock products for the Browse Catalog modal
+  // 4. Query active in-stock products for the Browse Catalog modal using aggregation
   const { data: allCatalogProducts = [], isLoading: isCatalogLoading } = useQuery({
     queryKey: ['catalog-browse-products', browseSearchQuery],
     queryFn: async () => {
-      const params = { limit: 60, isActive: true, stockStatus: 'instock' };
+      const payload = {
+        limit: 60,
+        isActive: true,
+        stockStatus: 'instock',
+        sort: 'createdAt',
+        order: 'desc',
+      };
       if (browseSearchQuery.trim()) {
-        params.q = browseSearchQuery.trim();
+        payload.q = browseSearchQuery.trim();
       }
-      const res = await apiClient.get('/api/v1/products', { params });
-      const raw = Array.isArray(res.data)
-        ? res.data
-        : (res.data?.data || res.data?.products || []);
+      const res = await apiClient.post('/api/v1/dash/products', payload);
+      const raw = res.data?.data || [];
 
       return raw
         .map(normalizeProduct)
