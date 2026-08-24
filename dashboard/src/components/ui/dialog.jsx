@@ -61,12 +61,12 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
-                size="icon-sm"
+                className="absolute top-3 right-3 h-7 w-7 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:border-destructive/60 hover:text-destructive transition-all cursor-pointer shadow-2xs"
+                size="icon"
               />
             }
           >
-            <XIcon />
+            <XIcon className="h-3.5 w-3.5 stroke-[2.5]" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
