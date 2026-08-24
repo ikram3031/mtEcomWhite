@@ -41,9 +41,10 @@ export const searchDashProducts = async (req, res, next) => {
     // 1. Build initial indexed $match filter
     const initialMatch = {};
 
-    // Active status filter
+    // Active status filter — use $ne: false to include products where isActive is missing/null
     if (body.isActive !== undefined && body.isActive !== null && body.isActive !== "") {
-      initialMatch.isActive = body.isActive === true || body.isActive === "true";
+      const wantActive = body.isActive === true || body.isActive === "true";
+      initialMatch.isActive = wantActive ? { $ne: false } : false;
     }
 
     // Stock Status filter
