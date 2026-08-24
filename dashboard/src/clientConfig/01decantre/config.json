@@ -12,6 +12,11 @@
     "simpleProduct": true,
     "variableProduct": false
   },
+  "reports": {
+    "enableInStoreFilter": true,
+    "enableExport": true,
+    "enabledTabs": ["sales", "products", "payments", "inventory"]
+  },
   "logoUrl": "/src/uploads/logo_horizontal.png",
   "siteIconUrl": "/src/uploads/logo.webp",
   "allowedMenus": [

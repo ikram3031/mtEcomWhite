@@ -10,7 +10,7 @@ import InvitePage from './pages/invite';
 // Dashboard
 import Overview from './pages/dashboard/overview';
 import Users from './pages/dashboard/users';
-import Reports from './pages/dashboard/reports';
+import Reports from './pages/dashboard/reportsV2';
 import Members from './pages/dashboard/members';
 import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
