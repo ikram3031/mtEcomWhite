@@ -453,56 +453,55 @@ export default function EditAttributePage() {
                       key={idx}
                       className="flex items-center justify-between p-4 min-h-[160px] rounded-2xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-xs group"
                     >
-                      {/* Left: Large 1:1 Image Box + Text */}
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        {val.imageUrl ? (
-                          <div className="relative size-32 shrink-0 group/img">
-                            <div className="size-32 rounded-2xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
-                              <img
-                                src={resolveImageUrl(val.imageUrl)}
-                                alt={val.name}
-                                className="h-full w-full object-cover rounded-xl group-hover/img:scale-105 transition-transform duration-200"
-                              />
-                            </div>
-                            {/* Bordered Cross Button on Top Right Corner */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveExistingValueImage(idx)}
-                              className="absolute -top-2 -right-2 size-7 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
-                              title="Remove Image"
-                            >
-                              <X className="h-4 w-4 stroke-[2.5]" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label
-                            className={`size-32 rounded-2xl border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-2 shadow-2xs ${
-                              uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
-                            }`}
-                            title="Upload 1:1 Image (Max 2MB)"
-                          >
-                            <Upload className="h-7 w-7 text-primary/80" />
-                            <span className="text-xs font-bold">+ Image</span>
-                            <input
-                              type="file"
-                              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleExistingValueImageUpload(idx, file);
-                              }}
+                      {/* Left: Large 1:1 Image Box */}
+                      {val.imageUrl ? (
+                        <div className="relative size-32 shrink-0 group/img">
+                          <div className="size-32 rounded-2xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
+                            <img
+                              src={resolveImageUrl(val.imageUrl)}
+                              alt={val.name}
+                              className="h-full w-full object-cover rounded-xl group-hover/img:scale-105 transition-transform duration-200"
                             />
-                          </label>
-                        )}
-
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <p className="text-lg sm:text-xl font-bold text-foreground truncate">
-                            {val.name}
-                          </p>
-                          <span className="inline-block text-xs font-mono text-muted-foreground px-3 py-1 rounded-md bg-muted/70 border border-border/60">
-                            {val.slug}
-                          </span>
+                          </div>
+                          {/* Bordered Cross Button on Top Right Corner */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingValueImage(idx)}
+                            className="absolute -top-2 -right-2 size-7 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
+                            title="Remove Image"
+                          >
+                            <X className="h-4 w-4 stroke-[2.5]" />
+                          </button>
                         </div>
+                      ) : (
+                        <label
+                          className={`size-32 rounded-2xl border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-2 shadow-2xs ${
+                            uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
+                          }`}
+                          title="Upload 1:1 Image (Max 2MB)"
+                        >
+                          <Upload className="h-7 w-7 text-primary/80" />
+                          <span className="text-xs font-bold">+ Image</span>
+                          <input
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleExistingValueImageUpload(idx, file);
+                            }}
+                          />
+                        </label>
+                      )}
+
+                      {/* Middle: Centered Value Name & Slug */}
+                      <div className="min-w-0 flex-1 flex flex-col items-center justify-center text-center space-y-2 px-2">
+                        <p className="text-lg sm:text-xl font-bold text-foreground truncate max-w-full">
+                          {val.name}
+                        </p>
+                        <span className="inline-block text-xs font-mono text-muted-foreground px-3 py-1 rounded-md bg-muted/70 border border-border/60">
+                          {val.slug}
+                        </span>
                       </div>
 
                       {/* Right: Delete Action */}
