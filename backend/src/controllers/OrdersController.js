@@ -11,7 +11,9 @@ import { buildAllowedOrderUpdates,
   updateMemberOrderReference,
   updateMemberTotals,
 } from '../helper/orderControllerHelper.js';
-import { buildOrderInvoiceEmailHtml } from '../templates/orderInvoiceEmailTemplate.js';
+import { getClientInvoiceHtml } from '../templates/invoices/index.js';
+import { LogModel } from '../models/log.model.js';
+import { broadcastLiveNotification } from '../websocket.js';
 
 const { Types } = mongoose;
 
@@ -68,6 +70,30 @@ export const createOrder = async (req, res, next) => {
     // Safely trigger non-blocking email notifications for Customer and Admin
     sendOrderEmailsAsynchronously(createdOrder);
 
+    // Automatically record newOrder activity log
+    try {
+      const customerName =
+        createdOrder.billingInfo?.fullName ||
+        createdOrder.shippingInfo?.fullName ||
+        "Customer";
+      const actorDid = req.user?.did || "storefront";
+      const log = await LogModel.create({
+        type: "newOrder",
+        typeDid: "111",
+        description: `${customerName} placed a new order #${createdOrder.orderNumber}`,
+        readStatus: false,
+        active: true,
+        createdBy: actorDid,
+        updatedBy: actorDid,
+      });
+
+      broadcastLiveNotification(log).catch((err) => {
+        console.error("Non-blocking WS live notification error on order:", err);
+      });
+    } catch (logErr) {
+      console.error("Non-blocking order log creation error:", logErr);
+    }
+
     return res.status(201).json({
       status: 'success',
       message: 'Order received successfully',
@@ -83,7 +109,12 @@ export const listOrders = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const filter = { active: true };
+    const filter = {};
+    if (req.query.active !== undefined) {
+      filter.active = req.query.active === 'false' || req.query.active === false ? false : true;
+    } else {
+      filter.active = true;
+    }
 
     if (req.query.status) {
       filter.status = req.query.status;
@@ -495,7 +526,11 @@ export const getOrderInvoiceView = async (req, res, next) => {
       paymentMethod: order.paymentMethod || "Cash on Delivery"
     };
 
-    const invoiceHtml = buildOrderInvoiceEmailHtml({ order: formattedOrderData, isPrintView: true });
+    const invoiceHtml = getClientInvoiceHtml({
+      order: formattedOrderData,
+      isPrintView: true,
+      client: order.client || 'decantre',
+    });
     res.setHeader("Content-Type", "text/html");
     res.setHeader("Content-Disposition", `inline; filename="Invoice-${formattedOrderData.orderId}.pdf"`);
     return res.send(invoiceHtml);

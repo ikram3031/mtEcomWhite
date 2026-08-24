@@ -46,7 +46,8 @@ export const serializeProduct = (product) => {
   return {
 		...rest,
 		id,
-		stockStatus: source?.stockStatus ?? null,
+		stockStatus: source?.stockStatus ?? "instock",
+		stockAmount: typeof source?.stockAmount === "number" ? source.stockAmount : Number(source?.stockAmount || 0),
 		created_at: source?.createdAt ?? null,
 		updated_at: source?.updatedAt ?? null,
 		image_url: source?.imageUrl ?? null,
@@ -83,7 +84,8 @@ export const buildProductFilter = async (input = {}) => {
       return;
     }
 
-    if (value === "" || value === null || value === undefined) {
+    if (key === "isActive") {
+      filter.isActive = value === "false" || value === false ? false : true;
       return;
     }
 
@@ -111,16 +113,21 @@ export const buildProductFilter = async (input = {}) => {
     filter.stockStatus = stockStatus;
   }
 
-  const categoryInput = source.category ?? source.categories;
-  if (categoryInput) {
-    const categoryValues = Array.isArray(categoryInput) ? categoryInput : [categoryInput];
+  const rawCategoryInput = source.category ?? source.categories ?? source['category[]'] ?? source['categories[]'];
+  if (rawCategoryInput) {
+    const rawValues = Array.isArray(rawCategoryInput) ? rawCategoryInput : [rawCategoryInput];
+    const categoryValues = [];
+    rawValues.forEach((val) => {
+      if (typeof val === "string" && val.includes(",")) {
+        categoryValues.push(...val.split(",").map((s) => s.trim()).filter(Boolean));
+      } else if (val !== "" && val !== null && val !== undefined) {
+        categoryValues.push(val);
+      }
+    });
+
     const resolved = [];
 
     for (const categoryValue of categoryValues) {
-      if (categoryValue === "" || categoryValue === null || categoryValue === undefined) {
-        continue;
-      }
-
       if (Types.ObjectId.isValid(categoryValue)) {
         resolved.push(categoryValue);
         continue;
@@ -134,8 +141,12 @@ export const buildProductFilter = async (input = {}) => {
         : {
             $or: [
               { slug: normalizedCategory },
-              { slug: { $regex: normalizedCategory, $options: "i" } }
-            ]
+              { slug: { $regex: `^${normalizedCategory}$`, $options: "i" } },
+              { slug: { $regex: normalizedCategory, $options: "i" } },
+              { name: normalizedCategory },
+              { name: { $regex: `^${normalizedCategory}$`, $options: "i" } },
+              { name: { $regex: normalizedCategory, $options: "i" } },
+            ],
           };
 
       const categoryDocs = await CategoryModel.find(categoryQuery).lean();
@@ -146,7 +157,12 @@ export const buildProductFilter = async (input = {}) => {
       }
     }
 
-    filter.categories = { $in: resolved };
+    if (resolved.length > 0) {
+      filter.categories = { $in: resolved };
+    } else {
+      // If categories were requested but none resolved, force an empty match
+      filter.categories = { $in: [] };
+    }
   }
 
   const brandInput = source.brand ?? source.brands;

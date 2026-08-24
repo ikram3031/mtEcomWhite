@@ -53,27 +53,28 @@ const UsersPage = () => {
 
   const handleInviteUser = async (e) => {
     e.preventDefault();
-    if (!newUserName || !newUserEmail || !newUserPassword) {
-      toast.error('Please fill in all required fields.');
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      toast.error('Please provide both full name and email address.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await apiClient.post('/api/v1/users', {
-        name: newUserName,
-        email: newUserEmail,
-        password: newUserPassword,
+      const response = await apiClient.post('/api/v1/users', {
+        name: newUserName.trim(),
+        email: newUserEmail.trim(),
+        password: newUserPassword.trim() || undefined,
         role: newUserRole,
+        domain: window.location.origin,
       });
 
-      toast.success(`User ${newUserName} invited successfully!`);
+      toast.success(response.data?.message || `Invitation sent to ${newUserEmail}!`);
       queryClient.invalidateQueries({ queryKey: ['system-users'] });
       setIsInviteOpen(false);
       setNewUserName('');
       setNewUserEmail('');
       setNewUserPassword('');
-      setNewUserRole('Admin');
+      setNewUserRole('Marketing Expert');
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to invite user.'));
     } finally {
@@ -151,25 +152,26 @@ const UsersPage = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Password</label>
+                <label className="text-xs font-semibold">
+                  Temporary Password <span className="text-muted-foreground font-normal">(Optional - user can set via invite link)</span>
+                </label>
                 <Input
                   type="password"
-                  required
-                  placeholder="••••••••"
+                  placeholder="Leave blank to invite via email"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold">Assigned Role</label>
-                <Select value={newUserRole} onValueChange={(val) => setNewUserRole(val ?? 'Admin')}>
+                <Select value={newUserRole} onValueChange={(val) => setNewUserRole(val ?? 'Marketing Expert')}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Admin">Admin</SelectItem>
                     <SelectItem value="Manager">Manager</SelectItem>
-                    <SelectItem value="Editor">Editor</SelectItem>
+                    <SelectItem value="Marketing Expert">Marketing Expert</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -216,7 +218,7 @@ const UsersPage = () => {
               <SelectItem value="All">All Roles</SelectItem>
               <SelectItem value="Admin">Admin</SelectItem>
               <SelectItem value="Manager">Manager</SelectItem>
-              <SelectItem value="Editor">Editor</SelectItem>
+              <SelectItem value="Marketing Expert">Marketing Expert</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -12,24 +12,8 @@ export const validateCreateUserPayload = (payload) => {
     errors.push("email is required");
   }
 
-  if (!payload.phone || typeof payload.phone !== "string" || !payload.phone.trim()) {
-    errors.push("phone is required");
-  }
-
-  if (!payload.password || typeof payload.password !== "string" || payload.password.length < 6) {
-    errors.push("password is required and must be at least 6 characters");
-  }
-
-  if (!payload.role || !USER_ROLES.includes(payload.role)) {
+  if (payload.role && !USER_ROLES.includes(payload.role)) {
     errors.push(`role must be one of: ${USER_ROLES.join(", ")}`);
-  }
-
-  if (payload.role === "Employee") {
-    if (!Array.isArray(payload.assets) || payload.assets.length === 0) {
-      errors.push("Employee must be assigned at least one asset");
-    } else if (payload.assets.length > 2) {
-      errors.push("An employee may have at most 2 assets assigned");
-    }
   }
 
   return errors;

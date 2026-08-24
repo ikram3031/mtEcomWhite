@@ -1,5 +1,6 @@
 import { Router } from "express";
 import productsRouter from "./routes/ProductsRoute.js";
+import reviewRouter from "./routes/ReviewRoute.js";
 import imagesRouter from "./routes/ImagesRoute.js";
 import authRouter from "./routes/AuthRoute.js";
 import usersRouter from "./routes/UsersRoute.js";
@@ -16,12 +17,17 @@ import couponRouter from "./routes/CouponRoute.js";
 import systemRouter from "./routes/SystemRoute.js";
 import searchRouter from "./routes/SearchRoute.js";
 import studioRouter from "./routes/studio.js";
+import logsRouter from "./routes/LogsRoute.js";
+import subscriberRouter from "./routes/SubscriberRoute.js";
+import contactRouter from "./routes/ContactRoute.js";
+import storeUtilsRouter from "./routes/StoreUtilsRoute.js";
 import express from "express";
 import { searchProducts } from "./controllers/SearchController.js";
 
 const coreRouter = Router();
 
 coreRouter.use("/products", productsRouter);
+coreRouter.use("/reviews", reviewRouter);
 coreRouter.use("/images", imagesRouter);
 coreRouter.use("/auth", authRouter);
 coreRouter.use("/users", usersRouter);
@@ -36,7 +42,11 @@ coreRouter.use("/brands", brandRouter);
 coreRouter.use("/dashboard", dashboardRouter);
 coreRouter.use("/coupons", couponRouter);
 coreRouter.use("/system", systemRouter);
+coreRouter.use("/subscribers", subscriberRouter);
+coreRouter.use("/contact", contactRouter);
+coreRouter.use("/store-utils", storeUtilsRouter);
 coreRouter.use("/search", searchRouter);
+coreRouter.use("/logs", logsRouter);
 // Mount AI Product Image Studio routes with increased JSON payload limit for base64 image data
 coreRouter.use("/studio", express.json({ limit: "60mb" }), studioRouter);
 coreRouter.get("/search-products", searchProducts);

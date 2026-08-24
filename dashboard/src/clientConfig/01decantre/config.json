@@ -8,6 +8,10 @@
     "brand": true,
     "variantImage": true
   },
+  "stockManagement": {
+    "simpleProduct": true,
+    "variableProduct": false
+  },
   "logoUrl": "/src/uploads/logo_horizontal.png",
   "siteIconUrl": "/src/uploads/logo.webp",
   "allowedMenus": [
@@ -22,6 +26,7 @@
     "products.brands",
     "products.attributes",
     "products.coupons",
+    "reviews",
     "members",
     "billing",
     "billing.billings",
@@ -29,8 +34,11 @@
     "reports",
     "users",
     "developer",
+    "tools",
     "studio",
-    "studio.batch-images"
+    "studio.batch-images",
+    "activity-logs",
+    "trash"
   ],
   "theme": {
     "light": {
@@ -40,7 +48,7 @@
       "--card-foreground": "#111827",
       "--popover": "#ffffff",
       "--popover-foreground": "#111827",
-      "--primary": "#d87943",
+      "--primary": "#C5A059",
       "--primary-foreground": "#ffffff",
       "--secondary": "#c5a059",
       "--secondary-foreground": "#ffffff",
@@ -52,20 +60,20 @@
       "--destructive-foreground": "#fafafa",
       "--border": "#e5e7eb",
       "--input": "#e5e7eb",
-      "--ring": "#d87943",
+      "--ring": "#C5A059",
       "--chart-1": "#c5a059",
-      "--chart-2": "#e78a53",
+      "--chart-2": "#C5A059",
       "--chart-3": "#fbcb97",
       "--chart-4": "#888888",
       "--chart-5": "#999999",
       "--sidebar": "#f3f4f6",
       "--sidebar-foreground": "#111827",
-      "--sidebar-primary": "#d87943",
+      "--sidebar-primary": "#C5A059",
       "--sidebar-primary-foreground": "#ffffff",
       "--sidebar-accent": "#ffffff",
       "--sidebar-accent-foreground": "#111827",
       "--sidebar-border": "#e5e7eb",
-      "--sidebar-ring": "#d87943",
+      "--sidebar-ring": "#C5A059",
       "--radius": "0.75rem"
     },
     "dark": {
@@ -87,20 +95,20 @@
       "--destructive-foreground": "#ffffff",
       "--border": "#222222",
       "--input": "#222222",
-      "--ring": "#e78a53",
+      "--ring": "#C5A059",
       "--chart-1": "#c5a059",
-      "--chart-2": "#e78a53",
+      "--chart-2": "#C5A059",
       "--chart-3": "#fbcb97",
       "--chart-4": "#888888",
       "--chart-5": "#999999",
       "--sidebar": "#121212",
       "--sidebar-foreground": "#c1c1c1",
-      "--sidebar-primary": "#e78a53",
+      "--sidebar-primary": "#C5A059",
       "--sidebar-primary-foreground": "#121113",
       "--sidebar-accent": "#333333",
       "--sidebar-accent-foreground": "#c1c1c1",
       "--sidebar-border": "#222222",
-      "--sidebar-ring": "#e78a53",
+      "--sidebar-ring": "#C5A059",
       "--radius": "0.75rem"
     }
   }

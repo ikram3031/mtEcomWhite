@@ -5,7 +5,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useProducts } from "@/hooks/use-products";
 import { useCategories, useBrands } from "@/lib/category-cache";
 import { apiClient } from "@/lib/api-client";
+import { logActivity } from "@/lib/activity-logger";
 import { toast } from "sonner";
+import { clientConfig } from "@/clientConfig";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -137,7 +139,7 @@ const ProductAddDialog = ({ product, onClose, onAddToCart }) => {
           </div>
         </div>
 
-        {!isVariant && (
+        {!isVariant && clientConfig?.stockManagement?.simpleProduct !== false && (
           <div className="bg-muted/50 rounded-lg px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">{formatBDT(simplePrice)}</p>
@@ -162,28 +164,51 @@ const ProductAddDialog = ({ product, onClose, onAddToCart }) => {
                 .map((v) => {
                   const vPrice = effectivePrice(v.price, v.offerPrice ?? null);
                   const isSelected = selectedVariant?.size === v.size;
-                  const hasNoStock = v.stockQuantity === 0;
+                  const manageVarStock = clientConfig?.stockManagement?.variableProduct !== false;
+                  const hasNoStock = manageVarStock && (v.stockQuantity === 0 || v.stock === 0);
 
                   return (
                     <button
                       key={v.size}
                       type="button"
+                      disabled={hasNoStock}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (hasNoStock) return;
                         setSelectedVariant(isSelected ? null : v);
                       }}
                       className={`
                         w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm transition-all
-                        ${isSelected ? "border-primary bg-primary/8 ring-1 ring-primary/30" : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"}
+                        ${
+                          hasNoStock
+                            ? "opacity-50 cursor-not-allowed border-border bg-muted/20"
+                            : isSelected
+                            ? "border-primary bg-primary/8 ring-1 ring-primary/30 cursor-pointer"
+                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
+                        }
                       `}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
-                          {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                        <span
+                          className={`
+                          h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                          ${hasNoStock ? "border-muted-foreground/30 bg-muted/40" : isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
+                        `}
+                        >
+                          {isSelected && !hasNoStock && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
                         </span>
                         <span className="font-medium">{v.size}</span>
-                        {hasNoStock && <Badge variant="secondary" className="text-[10px] px-1 py-0">Out of Stock (DB)</Badge>}
+                        {hasNoStock && (
+                          <Badge
+                            variant="destructive"
+                            className="text-[10px] px-1.5 py-0 font-medium"
+                          >
+                            Out of Stock
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-primary">{formatBDT(vPrice)}</p>
@@ -408,9 +433,14 @@ const OrderDetailsPage = () => {
       });
 
       await apiClient.put(`/api/v1/orders/${id}`, orderPayload);
+      logActivity({
+        type: 'updated',
+        description: `Order #${order.orderNumber || id} updated (status: "${orderStatus}") by "${user?.name || 'Admin'}"`,
+      });
       toast.success("Order updated successfully");
       queryClient.invalidateQueries(["order", id]);
       queryClient.invalidateQueries(["orders"]);
+      queryClient.invalidateQueries(["activity-logs"]);
       setIsEditMode(false);
     } catch (err) {
       console.error(err);

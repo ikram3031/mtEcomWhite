@@ -307,3 +307,122 @@ export const googleAuth = async (req, res, next) => {
   }
 };
 
+// GET /api/v1/auth/invite/verify - Verify invitation token
+export const verifyInviteToken = async (req, res, next) => {
+  try {
+    const { token } = req.query;
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ status: "error", message: "Invitation token is required" });
+    }
+
+    const cleanToken = token.trim();
+    const user = await UserModel.findOne({
+      $or: [{ inviteToken: cleanToken }],
+    }).select("+passwordHash +inviteToken +inviteTokenExpiresAt");
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "Invalid or expired invitation link. Please request a new invite from the administrator.",
+      });
+    }
+
+    // Check if user is already registered and active
+    if (user.isActive && user.passwordHash) {
+      return res.json({
+        status: "already_registered",
+        message: "You are already registered with our system.",
+        data: {
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      });
+    }
+
+    // Check if invite token has expired
+    if (user.inviteTokenExpiresAt && user.inviteTokenExpiresAt < new Date()) {
+      return res.status(400).json({
+        status: "expired",
+        message: "This invitation link has expired. Please ask your administrator to send a new invite.",
+      });
+    }
+
+    res.json({
+      status: "valid",
+      message: "Invitation is valid.",
+      data: {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/v1/auth/invite/accept - Accept invitation and set password
+export const acceptInvite = async (req, res, next) => {
+  try {
+    const { token, password, confirmPassword } = req.body ?? {};
+
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ status: "error", message: "Invitation token is required" });
+    }
+
+    if (!password || !confirmPassword) {
+      return res.status(400).json({ status: "error", message: "Both password and confirmation password are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ status: "error", message: "Passwords do not match" });
+    }
+
+    // Strong password validation: 8+ chars, upper, lower, number, special char
+    const hasMinLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+
+    if (!hasMinLength || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      return res.status(400).json({
+        status: "error",
+        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    const cleanToken = token.trim();
+    const user = await UserModel.findOne({ inviteToken: cleanToken }).select("+passwordHash +inviteToken +inviteTokenExpiresAt");
+
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "Invalid or expired invitation link" });
+    }
+
+    if (user.inviteTokenExpiresAt && user.inviteTokenExpiresAt < new Date()) {
+      return res.status(400).json({ status: "error", message: "This invitation link has expired. Please request a new invite." });
+    }
+
+    // Hash password and activate user
+    user.passwordHash = await hashPassword(password);
+    user.isActive = true;
+    user.inviteToken = undefined;
+    user.inviteTokenExpiresAt = undefined;
+    await user.save();
+
+    res.json({
+      status: "success",
+      message: "Password set and account activated successfully. You may now log in to the dashboard.",
+      data: {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+

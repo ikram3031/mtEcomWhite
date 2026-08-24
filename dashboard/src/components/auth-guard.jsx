@@ -8,7 +8,7 @@ export function AuthGuard({ children }) {
 
   useEffect(() => {
     if (!isLoading && !user && typeof window !== 'undefined') {
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   }, [user, isLoading, navigate]);
 

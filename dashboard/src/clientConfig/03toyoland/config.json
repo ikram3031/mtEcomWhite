@@ -8,6 +8,10 @@
     "brand": true,
     "variantImage": false
   },
+  "stockManagement": {
+    "simpleProduct": true,
+    "variableProduct": true
+  },
   "logoUrl": "/src/uploads/assets/toyoland_logo.png",
   "allowedMenus": [
     "overview",
@@ -21,10 +25,15 @@
     "products.brands",
     "products.attributes",
     "products.coupons",
+    "reviews",
     "members",
     "reports",
     "studio",
-    "studio.batch-images"
+    "studio.batch-images",
+    "activity-logs",
+    "users",
+    "tools",
+    "trash"
   ],
   "theme": {
     "light": {

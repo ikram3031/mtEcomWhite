@@ -117,15 +117,30 @@ export const createProduct = async (req, res, next) => {
       taxRate: body.taxRate !== undefined && body.taxRate !== null && body.taxRate !== "" ? Number(body.taxRate) : null,
       isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
       type: body.type || "simple",
-      imageUrl,
-      thumbnailUrl: body.thumbnailUrl || body.thumbnail_url || imageUrl,
-      season: body.season || "",
-      tags: Array.isArray(body.tags) ? body.tags : [],
+      season: Array.isArray(body.season)
+        ? body.season
+        : typeof body.season === "string" && body.season.trim()
+        ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
+        : ["All-Season"],
+      tags: Array.isArray(body.tags)
+        ? body.tags
+            .flatMap((t) => (typeof t === "string" ? t.split(",") : t))
+            .map((t) => String(t).trim())
+            .filter(Boolean)
+        : typeof body.tags === "string"
+        ? body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [],
       notes: Array.isArray(body.notes) ? body.notes : [],
       categories: categoryIds,
       brand: brandDids,
       images,
       stockStatus: body.stockStatus || "instock",
+      stockAmount:
+        body.stockAmount !== undefined &&
+        body.stockAmount !== null &&
+        body.stockAmount !== ""
+          ? Math.max(0, Number(body.stockAmount))
+          : 0,
       createdBy: userId,
     };
 
@@ -294,10 +309,31 @@ export const updateProduct = async (req, res, next) => {
       product.thumbnailUrl = body.thumbnailUrl.trim();
     if (body.thumbnail_url && body.thumbnail_url.trim())
       product.thumbnailUrl = body.thumbnail_url.trim();
-    if (body.season !== undefined) product.season = body.season;
-    if (body.tags !== undefined) product.tags = body.tags;
+    if (body.season !== undefined) {
+      product.season = Array.isArray(body.season)
+        ? body.season
+        : typeof body.season === "string" && body.season.trim()
+        ? body.season.split(",").map((s) => s.trim()).filter(Boolean)
+        : ["All-Season"];
+    }
+    if (body.tags !== undefined) {
+      product.tags = Array.isArray(body.tags)
+        ? body.tags
+            .flatMap((t) => (typeof t === "string" ? t.split(",") : t))
+            .map((t) => String(t).trim())
+            .filter(Boolean)
+        : typeof body.tags === "string"
+        ? body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+    }
     if (body.notes !== undefined) product.notes = body.notes;
     if (body.stockStatus !== undefined) product.stockStatus = body.stockStatus;
+    if (body.stockAmount !== undefined) {
+      product.stockAmount =
+        body.stockAmount !== null && body.stockAmount !== ""
+          ? Math.max(0, Number(body.stockAmount))
+          : 0;
+    }
 
     // Update gallery images
     const rawGallery =

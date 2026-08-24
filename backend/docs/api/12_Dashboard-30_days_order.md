@@ -1,66 +1,111 @@
-# Dashboard API — Daily Orders
+# Dashboard API Documentation
 
-Endpoint: `GET /api/v1/dashboard/orders/daily`
+This document describes all dashboard analytical and business intelligence endpoints.
 
-Summary
-- Returns daily order counts for a recent date range (default last 30 days). Useful for dashboard charts and quick metrics.
+## Base URL
 
-Query parameters
-- `days` (optional): integer number of days to return, default `30`. Minimum `1`.
-
-Response
-- Success response (HTTP 200) returns JSON with `status` and `data` fields.
-
-Example response
-
+```text
+https://server.decantrebd.com/api/v1
 ```
-HTTP/1.1 200 OK
-Content-Type: application/json
 
+## Base Path
+
+`/api/v1/dashboard`
+
+---
+
+## 1. Daily Orders Count
+
+Returns daily order counts for a recent date range (default last 30 days) grouped according to Bangladesh Time (+06:00). Useful for order timeline charts.
+
+- **Method:** `GET`
+- **URL:** `/api/v1/dashboard/orders/daily`
+- **Authentication:** Not required
+
+### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `days` | Integer | No | `30` | Number of recent days to return (Minimum 1) |
+
+### Success Response (200 OK)
+
+```json
 {
   "status": "success",
   "data": [
-    { "date": "2026-07-02", "count": 0 },
-    { "date": "2026-07-03", "count": 2 },
-    { "date": "2026-07-04", "count": 5 },
-    ...
+    { "date": "2026-07-24", "count": 2 },
+    { "date": "2026-07-25", "count": 0 },
+    { "date": "2026-07-26", "count": 5 }
   ]
 }
 ```
 
-Notes
-- Dates are returned in `YYYY-MM-DD` format (UTC, start of day). The array length equals the requested `days` and is ordered from oldest → newest.
-- Missing days are filled with `count: 0` so charts do not need to fill gaps client-side.
-- The endpoint is implemented in `backend/src/controllers/DashboardController.js` and mounted at `/api/v1/dashboard/orders/daily`.
+---
 
-Implementation details
-- The backend uses a MongoDB aggregation that groups `orders` by the `createdAt` date string and sums counts per day. After aggregation the controller fills in any missing days in the requested window.
+## 2. Key Performance Indicators (KPI) & Comparison Trends
 
-Client usage (frontend)
-- Hook: `dashboard/hooks/use-order-counts.ts`
+Returns total sales volume, completed orders, average order value (AOV), total registered members, and comparison percentage trends against the previous period.
 
-Example (curl)
+- **Method:** `GET`
+- **URL:** `/api/v1/dashboard/kpi`
+- **Authentication:** Not required
 
-```bash
-curl "http://localhost:3000/api/v1/dashboard/orders/daily?days=30"
-```
+### Query Parameters
 
-Example (frontend fetch)
+| Parameter | Type | Required | Default | Allowed Values |
+|---|---|---|---|---|
+| `range` | String | No | `30days` | `today`, `7days`, `30days`, `3months` |
 
-```ts
-import { apiClient } from '@/lib/api-client';
+### Success Response (200 OK)
 
-async function fetchDailyOrders(days = 30) {
-  const res = await apiClient.get('/api/v1/dashboard/orders/daily', { params: { days } });
-  return res.data?.data ?? [];
+```json
+{
+  "status": "success",
+  "data": {
+    "sales": 184500,
+    "completedOrders": 92,
+    "aov": 2005.43,
+    "members": 35,
+    "trends": {
+      "sales": "15.4",
+      "orders": "8.2",
+      "aov": "6.7",
+      "members": "22.5"
+    }
+  }
 }
 ```
 
-Errors
-- On server error the endpoint will forward the error to the standard error handler and return a 5xx status.
+---
 
-Security & Authorization
-- Current implementation registers the route without role-based guards in `backend/src/app.js`. If this endpoint should be protected, add an authorization middleware (e.g. `authorizeRoles`) to the route in `backend/src/routes/DashboardRoute.js`.
+## 3. Order Status Distribution
 
-Change log
-- 2026-07-31: Added `dailyOrders` aggregation endpoint and documentation.
+Returns counts of orders broken down by status within the specified time range.
+
+- **Method:** `GET`
+- **URL:** `/api/v1/dashboard/orders/status-distribution`
+- **Authentication:** Not required
+
+### Query Parameters
+
+| Parameter | Type | Required | Default | Allowed Values |
+|---|---|---|---|---|
+| `range` | String | No | `30days` | `today`, `7days`, `30days`, `3months` |
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "statusCounts": {
+      "processing": 14,
+      "shipped": 8,
+      "completed": 120,
+      "cancelled": 3
+    }
+  }
+}
+```
+

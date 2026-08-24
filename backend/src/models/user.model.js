@@ -3,7 +3,7 @@ import { generateDid } from "../utils/generateDid.js";
 
 const { models } = mongoose;
 
-export const USER_ROLES = ["Owner", "Admin", "Manager", "Employee"];
+export const USER_ROLES = ["Owner", "Admin", "Manager", "Marketing-Expert", "Marketing Expert"];
 
 const userSchema = new Schema(
   {
@@ -17,25 +17,19 @@ const userSchema = new Schema(
       index: true,
     },
     did: { type: String, default: () => generateDid(), unique: true, index: true },
-    passwordHash: { type: String, required: true, trim: true, select: false },
-    phone: { type: String, required: true, trim: true, index: true },
+    passwordHash: { type: String, required: false, trim: true, select: false },
+    phone: { type: String, required: false, trim: true, index: true, default: "" },
     refreshToken: { type: String, select: false },
     refreshTokenExpiresAt: { type: Date, select: false },
     emailOtp: { type: String, trim: true, select: false },
     emailOtpExpiresAt: { type: Date, select: false },
     twoFactorSecret: { type: String, select: false },
-    twoFactorEnabled: { type: Boolean, default: false },
-    role: { type: String, required: true, enum: USER_ROLES, default: "Employee" },
+    twoFactorEnabled: { type: Boolean, default: true },
+    role: { type: String, required: true, enum: USER_ROLES, default: "Marketing Expert" },
+    inviteToken: { type: String, select: false },
+    inviteTokenExpiresAt: { type: Date, select: false },
     assets: {
       type: [String],
-      validate: {
-        validator: function (arr) {
-          // ensure max 2 assets per employee
-          if (!Array.isArray(arr)) return true;
-          return arr.length <= 2;
-        },
-        message: 'An employee may have at most 2 assets assigned',
-      },
       default: [],
     },
     isActive: { type: Boolean, default: true },

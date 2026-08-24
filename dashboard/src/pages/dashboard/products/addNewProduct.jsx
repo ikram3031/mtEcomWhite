@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { apiClient, baseURL } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { useCategories, useBrands } from "@/lib/category-cache";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { clientConfig } from "@/clientConfig";
 import { RichTextEditor } from "@/components/dashboard/rich-text-editor";
+import { useDashboardStore } from "@/store/use-dashboard-store";
 import {
   ProductDetailsCard,
   ProductDataCard,
@@ -45,6 +46,11 @@ const AddNewProduct = () => {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
 
+  // Draft source info (duplicate banner)
+  const [draftSourceName, setDraftSourceName] = useState("");
+
+  const { duplicateDraft, clearDuplicateDraft } = useDashboardStore();
+
   // 1. Basic details
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -63,6 +69,8 @@ const AddNewProduct = () => {
   const [offerPrice, setOfferPrice] = useState("");
   const [chargeTax, setChargeTax] = useState(false);
   const [taxRate, setTaxRate] = useState("");
+  const [stockStatus, setStockStatus] = useState("instock");
+  const [stockAmount, setStockAmount] = useState("");
 
   // 4. Variant product fields
   const [variants, setVariants] = useState([emptyVariant()]);
@@ -72,10 +80,11 @@ const AddNewProduct = () => {
   // 5. Sidebar & Organization (isActive boolean & Tags)
   const [isActive, setIsActive] = useState(true);
   const [tags, setTags] = useState([]);
-  const [categorySlug, setCategorySlug] = useState("");
-  const [brandSlug, setBrandSlug] = useState("");
+  const [categorySlugs, setCategorySlugs] = useState([]);
+  const [brandSlugs, setBrandSlugs] = useState([]);
   const [parentBrandSlug, setParentBrandSlug] = useState("");
-  const [season, setSeason] = useState("All-Season");
+  const [brandSlug, setBrandSlug] = useState("");
+  const [season, setSeason] = useState(["All-Season"]);
 
   // 6. Media / Upload states
   const [isUploading, setIsUploading] = useState(false);
@@ -115,6 +124,109 @@ const AddNewProduct = () => {
         );
       })
     : [];
+
+  // Draft pre-fill: mount-এ একবার চেক করে সব field set করা হয়
+  useEffect(() => {
+    if (!duplicateDraft) return;
+
+    const p = duplicateDraft;
+    if (p.name) setName(p.name);
+    if (p.slug) setSlug(p.slug);
+    if (p.sku) setSku(p.sku);
+    if (p.description) setDescription(p.description);
+    if (p.longDescription) setLongDescription(p.longDescription);
+    if (p.type) setProductType(p.type);
+    if (p.season) {
+      setSeason(
+        Array.isArray(p.season)
+          ? p.season
+          : typeof p.season === "string"
+          ? p.season.split(",").map((s) => s.trim()).filter(Boolean)
+          : ["All-Season"]
+      );
+    }
+    if (typeof p.isActive === "boolean") setIsActive(p.isActive);
+    if (p.stockStatus) setStockStatus(p.stockStatus);
+    if (p.stockAmount !== undefined) setStockAmount(String(p.stockAmount));
+
+    // Tags
+    if (Array.isArray(p.tags) && p.tags.length > 0) {
+      setTags(p.tags);
+    }
+
+    // Main Image
+    const mainImg = p.imageUrl || p.thumbnailUrl;
+    if (mainImg) {
+      setImagePreview(mainImg);
+      setUploadedImageUrl(mainImg);
+    }
+
+    // Gallery images
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      setGalleryImages(
+        p.images.map((img, index) => ({
+          id: `dup-${index}-${Date.now()}`,
+          file: null,
+          preview: typeof img === "string" ? img : img?.url || img?.imageUrl || "",
+          altText: "",
+          isLoaded: true,
+        }))
+      );
+    }
+
+    // Categories (all)
+    if (Array.isArray(p.categories) && p.categories.length > 0) {
+      setCategorySlugs(
+        p.categories
+          .map((c) =>
+            typeof c === "object" && c !== null ? c.slug || c.did || c._id : String(c)
+          )
+          .filter(Boolean)
+      );
+    } else if (p.category) {
+      setCategorySlugs([
+        typeof p.category === "object"
+          ? p.category.slug || p.category.did || p.category._id
+          : String(p.category),
+      ]);
+    }
+
+    // Brands (all)
+    if (Array.isArray(p.brand) && p.brand.length > 0) {
+      setBrandSlugs(
+        p.brand
+          .map((b) =>
+            typeof b === "object" && b !== null ? b.slug || b.did || b._id : String(b)
+          )
+          .filter(Boolean)
+      );
+    } else if (p.brand && typeof p.brand === "string") {
+      setBrandSlugs([p.brand]);
+    }
+
+    // Simple product fields
+    if (p.type === "simple") {
+      setPrice(p.price ? String(p.price) : "");
+      setOfferPrice(p.offerPrice ? String(p.offerPrice) : "");
+    }
+
+    // Variant fields
+    if (p.type === "variant" && Array.isArray(p.variants) && p.variants.length > 0) {
+      setVariants(
+        p.variants.map((v) => ({
+          size: v.size || "",
+          price: v.price ? String(v.price) : "",
+          offerPrice: v.offerPrice ? String(v.offerPrice) : "",
+          sku: v.sku || "",
+          imageUrl: v.imageUrl || "",
+          imagePreview: v.imageUrl || "",
+          imageFile: null,
+          imageError: "",
+        }))
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // শুধু mount-এ একবার
 
   useEffect(() => {
     const fetchAttributes = async () => {
@@ -318,6 +430,18 @@ const AddNewProduct = () => {
         toast.error("Base price must be greater than 0.");
         return;
       }
+      if (stockStatus === "instock") {
+        if (
+          stockAmount === "" ||
+          stockAmount === null ||
+          stockAmount === undefined ||
+          isNaN(Number(stockAmount)) ||
+          Number(stockAmount) <= 0
+        ) {
+          toast.error("Stock quantity is mandatory for in-stock simple product (must be at least 1).");
+          return;
+        }
+      }
     } else {
       const validVariants = variants.filter((v) => v.size.trim() && v.price);
       if (validVariants.length === 0) {
@@ -439,6 +563,11 @@ const AddNewProduct = () => {
         chargeTax,
         taxRate: chargeTax && taxRate ? parseFloat(taxRate) : null,
         isActive: Boolean(isActive),
+        stockStatus: stockStatus || "instock",
+        stockAmount:
+          productType === "simple" && stockStatus === "instock"
+            ? Math.max(0, parseInt(stockAmount, 10))
+            : 0,
         tags: Array.isArray(tags) ? tags : [],
         images: uploadedGalleryImages,
         metaData: {
@@ -447,9 +576,19 @@ const AddNewProduct = () => {
         },
       };
 
-      if (categorySlug) body.category = categorySlug;
-      const effectiveBrand = brandSlug || parentBrandSlug;
-      if (effectiveBrand) body.brand = effectiveBrand;
+      if (categorySlugs.length > 0) {
+        body.categories = categorySlugs;
+        body.category = categorySlugs[0];
+      } else {
+        body.categories = [];
+      }
+
+      if (brandSlugs.length > 0) {
+        body.brand = brandSlugs;
+        body.brands = brandSlugs;
+      } else {
+        body.brand = [];
+      }
 
       if (productType === "simple") {
         body.price = parseFloat(price);
@@ -461,6 +600,7 @@ const AddNewProduct = () => {
       await apiClient.post("/api/v1/products", body);
       toast.success("Product published successfully!");
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      clearDuplicateDraft();
       navigate("/dashboard/products");
     } catch (err) {
       if (uploadToastId) {
@@ -492,7 +632,7 @@ const AddNewProduct = () => {
               <ChevronLeft className="h-4 w-4" />
             </Link>
             <h2 className="text-xl font-bold tracking-tight text-foreground">
-              Add New Product
+              {draftSourceName ? 'Duplicate Product' : 'Add New Product'}
             </h2>
           </div>
 
@@ -500,7 +640,10 @@ const AddNewProduct = () => {
             <Button
               variant="ghost"
               type="button"
-              onClick={() => navigate("/dashboard/products")}
+              onClick={() => {
+                clearDuplicateDraft();
+                navigate("/dashboard/products");
+              }}
               className="text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
             >
               Discard
@@ -525,6 +668,25 @@ const AddNewProduct = () => {
             </Button>
           </div>
         </div>
+
+        {/* Content Layout Grid */}
+        {draftSourceName && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-2.5 text-sm">
+            <span className="text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">Duplicated from:</span>{' '}
+              <span className="opacity-80">&ldquo;{draftSourceName}&rdquo;</span>
+              {' '}— Review and update before publishing.
+            </span>
+            <button
+              type="button"
+              onClick={clearDuplicateDraft}
+              className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors flex-shrink-0"
+              title="Clear draft"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
@@ -554,6 +716,10 @@ const AddNewProduct = () => {
               setChargeTax={setChargeTax}
               taxRate={taxRate}
               setTaxRate={setTaxRate}
+              stockStatus={stockStatus}
+              setStockStatus={setStockStatus}
+              stockAmount={stockAmount}
+              setStockAmount={setStockAmount}
               variants={variants}
               attributeGroups={attributeGroups}
               selectedAttributeGroup={selectedAttributeGroup}
@@ -596,13 +762,11 @@ const AddNewProduct = () => {
               galleryInputRef={galleryInputRef}
               handleGalleryImageSelect={handleGalleryImageSelect}
               removeGalleryImage={removeGalleryImage}
-              categorySlug={categorySlug}
-              setCategorySlug={setCategorySlug}
+              categorySlugs={categorySlugs}
+              setCategorySlugs={setCategorySlugs}
               categories={categories}
-              parentBrandSlug={parentBrandSlug}
-              setParentBrandSlug={setParentBrandSlug}
-              brandSlug={brandSlug}
-              setBrandSlug={setBrandSlug}
+              brandSlugs={brandSlugs}
+              setBrandSlugs={setBrandSlugs}
               parentBrands={parentBrands}
               childBrands={childBrands}
               brands={brands}

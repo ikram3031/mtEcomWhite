@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Table,
@@ -21,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, ImageIcon, PackageX, Trash2, Eye } from 'lucide-react';
+import { MoreHorizontal, ImageIcon, PackageX, Trash2, Eye, Copy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import {
@@ -43,6 +44,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useDashboardStore } from '@/store/use-dashboard-store';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 export function ProductsTable({
@@ -55,7 +57,26 @@ export function ProductsTable({
   selectedIds,
   onSelectedIdsChange,
 }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { setDuplicateDraft } = useDashboardStore();
+
+  const [duplicatingId, setDuplicatingId] = useState(null);
+
+  const handleDuplicate = async (product) => {
+    setDuplicatingId(product.id);
+    try {
+      const res = await apiClient.get(`/api/v1/products/${product.id}`);
+      const fullProduct = res.data?.data || res.data;
+      if (!fullProduct) throw new Error('No product data received');
+      setDuplicateDraft(fullProduct);
+      navigate('/dashboard/products/new');
+    } catch {
+      toast.error(`Failed to duplicate "${product.name}". Please try again.`);
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
 
   const { data: responseData, isLoading, isError, error } = useProducts({
     search: searchQuery,
@@ -278,6 +299,14 @@ export function ProductsTable({
                       >
                         <PackageX className="h-3.5 w-3.5 text-muted-foreground" />
                         Change Stock
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer text-xs flex items-center gap-2"
+                        onClick={() => handleDuplicate(product)}
+                        disabled={duplicatingId === product.id}
+                      >
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                        {duplicatingId === product.id ? 'Duplicating...' : 'Duplicate Product'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

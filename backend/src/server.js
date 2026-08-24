@@ -4,6 +4,7 @@ import { connectDatabase } from "./database/index.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { createShutdownHandler } from "./helper/sutdownHelper.js";
+import { initWebSocketServer } from "./websocket.js";
 
 async function bootstrap() {
   // await connectMySQL();
@@ -15,6 +16,9 @@ async function bootstrap() {
   const server = app.listen(port, "0.0.0.0", () => {
     logger.info({ port, environment: env.NODE_ENV }, "Server listening");
   });
+
+  // Initialize Real-time Notification WebSocket Server
+  const wss = initWebSocketServer(server);
 
   const shutdown = createShutdownHandler(server);
 
