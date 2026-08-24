@@ -59,21 +59,31 @@ export const updateStoreUtils = async (req, res, next) => {
     const body = req.body || {};
     const updateData = {};
 
-    // Validate and sanitize featured product ObjectIDs
+    // Validate and sanitize featured product ObjectIDs (support ObjectId, id, and did)
     if (body.featured !== undefined) {
       const rawFeatured = Array.isArray(body.featured)
         ? body.featured
         : [body.featured];
 
-      const validFeaturedIds = rawFeatured
-        .map((id) => (typeof id === "object" && id !== null ? id.id || id._id : id))
-        .filter((id) => Types.ObjectId.isValid(id))
-        .map((id) => new Types.ObjectId(id));
+      const resolvedFeaturedIds = [];
+      for (const item of rawFeatured) {
+        const val = typeof item === "object" && item !== null ? item.id || item._id || item.did : item;
+        if (!val) continue;
 
-      updateData.featured = validFeaturedIds;
+        if (Types.ObjectId.isValid(val)) {
+          resolvedFeaturedIds.push(new Types.ObjectId(val));
+        } else if (typeof val === "string") {
+          const pDoc = await ProductModel.findOne({ did: val.trim() }).select("_id").lean();
+          if (pDoc?._id) {
+            resolvedFeaturedIds.push(pDoc._id);
+          }
+        }
+      }
+
+      updateData.featured = resolvedFeaturedIds;
     }
 
-    // Validate and sanitize bestSeller product ObjectIDs
+    // Validate and sanitize bestSeller product ObjectIDs (support ObjectId, id, and did)
     if (body.bestSeller !== undefined || body.best_seller !== undefined) {
       const rawBestSeller =
         body.bestSeller !== undefined ? body.bestSeller : body.best_seller;
@@ -81,12 +91,22 @@ export const updateStoreUtils = async (req, res, next) => {
         ? rawBestSeller
         : [rawBestSeller];
 
-      const validBestSellerIds = rawBestSellerArr
-        .map((id) => (typeof id === "object" && id !== null ? id.id || id._id : id))
-        .filter((id) => Types.ObjectId.isValid(id))
-        .map((id) => new Types.ObjectId(id));
+      const resolvedBestSellerIds = [];
+      for (const item of rawBestSellerArr) {
+        const val = typeof item === "object" && item !== null ? item.id || item._id || item.did : item;
+        if (!val) continue;
 
-      updateData.bestSeller = validBestSellerIds;
+        if (Types.ObjectId.isValid(val)) {
+          resolvedBestSellerIds.push(new Types.ObjectId(val));
+        } else if (typeof val === "string") {
+          const pDoc = await ProductModel.findOne({ did: val.trim() }).select("_id").lean();
+          if (pDoc?._id) {
+            resolvedBestSellerIds.push(pDoc._id);
+          }
+        }
+      }
+
+      updateData.bestSeller = resolvedBestSellerIds;
     }
 
     if (req.user?.userId || req.user?.id) {
