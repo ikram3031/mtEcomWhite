@@ -438,49 +438,51 @@ export default function EditAttributePage() {
               </div>
             </div>
 
-            {/* List of Configured Values in 2-Column Grid */}
+            {/* List of Configured Values in 3-Column Grid */}
             <div>
               {values.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground border border-dashed rounded-xl bg-background/50">
-                  <Sliders className="h-10 w-10 mx-auto mb-2 opacity-30 text-primary" />
-                  <p className="text-sm font-semibold">No values configured yet</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Use the form above to add attribute values and upload optional 1:1 images.</p>
+                <div className="py-16 text-center text-muted-foreground border border-dashed rounded-2xl bg-background/50">
+                  <Sliders className="h-12 w-12 mx-auto mb-2 opacity-30 text-primary" />
+                  <p className="text-base font-bold text-foreground">No values configured yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Use the form above to add attribute values and upload optional 1:1 images.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
                   {values.map((val, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-2xs group"
+                      className="flex items-center justify-between p-5 min-h-[128px] rounded-2xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-xs group"
                     >
-                      {/* Left: Prominent 1:1 Image Box + Text */}
-                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      {/* Left: Large 1:1 Image Box + Text */}
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
                         {val.imageUrl ? (
-                          <div className="relative size-14 rounded-xl border border-border/80 bg-muted/20 overflow-hidden shrink-0 group/img shadow-2xs">
-                            <img
-                              src={resolveImageUrl(val.imageUrl)}
-                              alt={val.name}
-                              className="h-full w-full object-cover"
-                            />
+                          <div className="relative size-20 shrink-0 group/img">
+                            <div className="size-20 rounded-2xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
+                              <img
+                                src={resolveImageUrl(val.imageUrl)}
+                                alt={val.name}
+                                className="h-full w-full object-cover rounded-xl group-hover/img:scale-105 transition-transform duration-200"
+                              />
+                            </div>
+                            {/* Bordered Cross Button on Top Right Corner */}
                             <button
                               type="button"
                               onClick={() => handleRemoveExistingValueImage(idx)}
-                              className="absolute inset-0 bg-black/70 text-white flex flex-col items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer text-[10px] font-semibold gap-0.5"
+                              className="absolute -top-2 -right-2 size-6 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
                               title="Remove Image"
                             >
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                              <span>Remove</span>
+                              <X className="h-3.5 w-3.5 stroke-[2.5]" />
                             </button>
                           </div>
                         ) : (
                           <label
-                            className={`size-14 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-0.5 ${
+                            className={`size-20 rounded-2xl border-2 border-dashed border-primary/35 hover:border-primary hover:bg-primary/10 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-1 shadow-2xs ${
                               uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
                             }`}
                             title="Upload 1:1 Image (Max 2MB)"
                           >
-                            <Upload className="h-4 w-4 text-primary/70" />
-                            <span className="text-[10px] font-semibold">
+                            <Upload className="h-5 w-5 text-primary/80" />
+                            <span className="text-[11px] font-semibold">
                               {uploadingIndex === idx ? '...' : '+ Image'}
                             </span>
                             <input
@@ -495,11 +497,11 @@ export default function EditAttributePage() {
                           </label>
                         )}
 
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <p className="text-sm font-bold text-foreground truncate">
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <p className="text-base font-bold text-foreground truncate">
                             {val.name}
                           </p>
-                          <span className="inline-block text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50">
+                          <span className="inline-block text-xs font-mono text-muted-foreground px-2.5 py-0.5 rounded-md bg-muted/60 border border-border/60">
                             {val.slug}
                           </span>
                         </div>
@@ -510,11 +512,11 @@ export default function EditAttributePage() {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-lg transition-colors"
+                        className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-xl transition-colors"
                         title="Delete Value"
                         onClick={() => removeValue(idx)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4.5 w-4.5" />
                       </Button>
                     </div>
                   ))}

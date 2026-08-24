@@ -612,7 +612,7 @@ const AttributesPage = () => {
               </div>
 
               {/* Configured Values List */}
-              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {values.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6 border border-dashed rounded-xl">
                     No values added to this attribute yet.
@@ -621,35 +621,37 @@ const AttributesPage = () => {
                   values.map((val, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-background hover:bg-muted/30 hover:border-primary/40 transition-all gap-3.5 shadow-2xs group"
+                      className="flex items-center justify-between p-4 min-h-[96px] rounded-2xl border border-border/80 bg-background hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-xs group"
                     >
                       {/* Image Preview & Upload Trigger */}
                       <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         {val.imageUrl ? (
-                          <div className="relative size-13 rounded-xl border border-border/80 bg-muted/20 overflow-hidden shrink-0 group/img shadow-2xs">
-                            <img
-                              src={resolveImageUrl(val.imageUrl)}
-                              alt={val.name}
-                              className="h-full w-full object-cover"
-                            />
+                          <div className="relative size-16 shrink-0 group/img">
+                            <div className="size-16 rounded-xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
+                              <img
+                                src={resolveImageUrl(val.imageUrl)}
+                                alt={val.name}
+                                className="h-full w-full object-cover rounded-lg group-hover/img:scale-105 transition-transform duration-200"
+                              />
+                            </div>
+                            {/* Bordered Cross Button on Top Right Corner */}
                             <button
                               type="button"
                               onClick={() => handleRemoveExistingValueImage(idx)}
-                              className="absolute inset-0 bg-black/70 text-white flex flex-col items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer text-[10px] font-semibold gap-0.5"
+                              className="absolute -top-2 -right-2 size-6 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
                               title="Remove Image"
                             >
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                              <span>Remove</span>
+                              <X className="h-3.5 w-3.5 stroke-[2.5]" />
                             </button>
                           </div>
                         ) : (
                           <label
-                            className={`size-13 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-0.5 ${
+                            className={`size-16 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-1 ${
                               uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
                             }`}
                             title="Upload 1:1 Image (Max 2MB)"
                           >
-                            <Upload className="h-3.5 w-3.5 text-primary/70" />
+                            <Upload className="h-4.5 w-4.5 text-primary/70" />
                             <span className="text-[10px] font-semibold">
                               {uploadingIndex === idx ? '...' : '+ Image'}
                             </span>
@@ -665,11 +667,11 @@ const AttributesPage = () => {
                           </label>
                         )}
 
-                        <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="min-w-0 flex-1 space-y-1">
                           <p className="text-sm font-bold text-foreground leading-tight truncate">
                             {val.name}
                           </p>
-                          <span className="inline-block text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50">
+                          <span className="inline-block text-xs font-mono text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border/50">
                             {val.slug}
                           </span>
                         </div>
