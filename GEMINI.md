@@ -55,3 +55,16 @@ const calculateDiscount = (items) => {
   // ...
 }
 ```
+
+---
+
+## 5. Deployment Rules (STRICT — NO EXCEPTIONS)
+- **NEVER run any VPS build, `docker compose up --build`, or deployment command on `Live` branch without the user's explicit confirmation first.**
+- Before any live deploy, always stop and ask: *"Deploy করবো?"* and wait for the user to say yes.
+- This applies to ALL environments marked as live/production:
+  - `decantre-backend-live`, `decantre-dashboard-live` on `144.79.218.126`
+  - `engulfic-backend-live`, `engulfic-dashboard-live` on `144.79.218.8`
+  - Any other container with `-live` in the name.
+- **`temp` branch commits and `git push` are fine without confirmation.**
+- **Merging `temp` into `Live` and pushing to GitHub is fine without confirmation.**
+- **Only the actual VPS build/deploy step requires confirmation.**
