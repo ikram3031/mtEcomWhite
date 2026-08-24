@@ -18,7 +18,7 @@ const normalizeStatus = (status) => {
 };
 
 const mapBilling = (billing) => {
-  const order = billing.orderId || {};
+  const order = (typeof billing.orderId === 'object' && billing.orderId !== null) ? billing.orderId : {};
   const invoiceId =
     billing.did ||
     order.orderNumber ||
@@ -27,7 +27,13 @@ const mapBilling = (billing) => {
     billing._id ||
     'Unknown';
   const customerName =
+    order.billingInfo?.fullName ||
+    order.shippingInfo?.fullName ||
+    order.customerName ||
     order.customer?.fullName ||
+    order.fullName ||
+    billing.billingName ||
+    billing.customerName ||
     billing.billingEmail ||
     billing.billingPhone ||
     'Guest Customer';
@@ -36,12 +42,16 @@ const mapBilling = (billing) => {
     id: billing.id || billing._id || invoiceId,
     invoiceId,
     customerName,
-    date: formatDate(billing.billingDate || billing.createdAt || billing.updatedAt),
-    dueDate: formatDate(billing.dueDate || billing.billingDate || billing.createdAt),
+    date: formatDate(billing.billingDate || billing.createdAt || billing.updatedAt || order.createdAt),
+    dueDate: formatDate(billing.dueDate || billing.billingDate || billing.createdAt || order.createdAt),
     amount:
-      typeof billing.amount === 'number'
+      typeof billing.totalAmount === 'number' && billing.totalAmount > 0
+        ? billing.totalAmount
+        : typeof billing.amount === 'number' && billing.amount > 0
         ? billing.amount
-        : Number(billing.amount ?? billing.paidAmount ?? billing.totalAmount ?? 0),
+        : typeof order.totals?.total === 'number' && order.totals.total > 0
+        ? order.totals.total
+        : Number(billing.paidAmount ?? 0),
     status: normalizeStatus(billing.status),
   };
 };

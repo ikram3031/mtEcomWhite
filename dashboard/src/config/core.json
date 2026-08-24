@@ -28,7 +28,8 @@
         "tools",
         "tools.bulk-image-resize",
         "tools.meta-catalog",
-        "logs"
+        "logs",
+        "settings"
       ]
     },
     "Marketing Expert": {

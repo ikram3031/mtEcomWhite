@@ -8,6 +8,10 @@
     "brand": false,
     "variantImage": false
   },
+  "stockManagement": {
+    "simpleProduct": true,
+    "variableProduct": true
+  },
   "logoUrl": "/src/uploads/assets/engulfic_logo.png",
   "allowedMenus": [
     "overview",

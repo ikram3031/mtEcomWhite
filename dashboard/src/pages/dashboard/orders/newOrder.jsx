@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import { effectivePrice, formatBDT } from "@/utils/orderHelper";
+import { clientConfig } from "@/clientConfig";
 
 function ProductAddDialog({
   product,
@@ -152,12 +153,15 @@ function ProductAddDialog({
                   </p>
                 )}
             </div>
+            <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Stock Status</p>
             <Badge
               variant={(product.stock ?? 0) > 0 ? "secondary" : "destructive"}
               className="text-xs"
             >
               {(product.stock ?? 0) > 0 ? `${product.stock} in stock` : "Out of Stock"}
             </Badge>
+          </div>
           </div>
         )}
 
@@ -172,23 +176,28 @@ function ProductAddDialog({
                 .map((v) => {
                   const vPrice = effectivePrice(v.price, v.offerPrice ?? null);
                   const isSelected = selectedVariant?.size === v.size;
-                  const hasNoStock = v.stockQuantity === 0;
+                  const manageVarStock = clientConfig?.stockManagement?.variableProduct !== false;
+                  const hasNoStock = manageVarStock && (v.stockQuantity === 0 || v.stock === 0);
 
                   return (
                     <button
                       key={v.size}
                       type="button"
+                      disabled={hasNoStock}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (hasNoStock) return;
                         setSelectedVariant(isSelected ? null : v);
                       }}
                       className={`
                         w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm transition-all
                         ${
-                          isSelected
-                            ? "border-primary bg-primary/8 ring-1 ring-primary/30"
-                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"
+                          hasNoStock
+                            ? "opacity-50 cursor-not-allowed border-border bg-muted/20"
+                            : isSelected
+                            ? "border-primary bg-primary/8 ring-1 ring-primary/30 cursor-pointer"
+                            : "border-border bg-background hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
                         }
                       `}
                     >
@@ -196,20 +205,20 @@ function ProductAddDialog({
                         <span
                           className={`
                           h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                          ${isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
+                          ${hasNoStock ? "border-muted-foreground/30 bg-muted/40" : isSelected ? "border-primary bg-primary" : "border-muted-foreground/40"}
                         `}
                         >
-                          {isSelected && (
+                          {isSelected && !hasNoStock && (
                             <span className="h-1.5 w-1.5 rounded-full bg-white" />
                           )}
                         </span>
                         <span className="font-medium">{v.size}</span>
                         {hasNoStock && (
                           <Badge
-                            variant="secondary"
-                            className="text-[10px] px-1 py-0"
+                            variant="destructive"
+                            className="text-[10px] px-1.5 py-0 font-medium"
                           >
-                            Out of Stock (DB)
+                            Out of Stock
                           </Badge>
                         )}
                       </div>
@@ -297,6 +306,7 @@ const NewInStoreOrderPage = () => {
   const [completedOrder, setCompletedOrder] = useState(null);
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
 
+  const [discount, setDiscount] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -335,6 +345,20 @@ const NewInStoreOrderPage = () => {
     [cart],
   );
 
+  const discountAmount = useMemo(() => {
+    const num = Number(discount);
+    if (isNaN(num) || num < 0) return 0;
+    return Math.min(num, subtotal);
+  }, [discount, subtotal]);
+
+  const finalTotal = useMemo(
+    () => Math.max(0, subtotal - discountAmount),
+    [subtotal, discountAmount],
+  );
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailInvalid = Boolean(customerEmail.trim() && !isValidEmail(customerEmail.trim()));
+
   const handleSubmit = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty. Add at least one product.");
@@ -346,6 +370,10 @@ const NewInStoreOrderPage = () => {
     }
     if (customerPhone.trim().length !== 10) {
       toast.error("Please enter a valid 10-digit Phone Number.");
+      return;
+    }
+    if (customerEmail.trim() && !isValidEmail(customerEmail.trim())) {
+      toast.error("Please enter a valid email address.");
       return;
     }
     if (
@@ -376,6 +404,7 @@ const NewInStoreOrderPage = () => {
 
       const orderPayload = {
         orderType: "instore",
+        status: "completed",
         paymentMethod: fullPaymentMethod,
         billingInfo: billingInfo,
         shippingInfo: billingInfo,
@@ -388,9 +417,12 @@ const NewInStoreOrderPage = () => {
           concentration: "",
         })),
         subtotal,
+        discountTotalAmount: discountAmount,
         shippingFee: 0,
         tax: 0,
-        total: subtotal,
+        total: finalTotal,
+        paidAmount: finalTotal,
+        paymentStatus: "paid",
         createdBy: user?.did || "staff",
       };
 
@@ -410,8 +442,12 @@ const NewInStoreOrderPage = () => {
           paymentPhone
             ? `+880${paymentPhone}`
             : "",
-        amount: subtotal,
-        status: "completed",
+        totalAmount: finalTotal,
+        paidAmount: finalTotal,
+        pendingAmount: 0,
+        amount: finalTotal,
+        paymentStatus: "paid",
+        status: "paid",
       });
 
       const invoiceUrl = `https://decantre.com/invoice/${orderNumber}`;
@@ -430,7 +466,9 @@ const NewInStoreOrderPage = () => {
         customerEmail: customerEmail.trim() || "instore@decantre.com",
         customerPhone: `+880${customerPhone.trim()}`,
         customerAddress: customerAddress.trim() || "In-Store",
-        totalAmount: subtotal,
+        subtotalAmount: subtotal,
+        discountAmount: discountAmount,
+        totalAmount: finalTotal,
         paymentMethod: paymentMethod,
         paymentPhone:
           (paymentMethod === "bkash" || paymentMethod === "nagad") &&
@@ -475,9 +513,9 @@ const NewInStoreOrderPage = () => {
         paymentMethod: completedOrder.paymentMethod,
         paymentReference: completedOrder.orderNumber,
         items: completedOrder.items,
-        subtotal: formatBDT(completedOrder.totalAmount),
+        subtotal: formatBDT(completedOrder.subtotalAmount || completedOrder.totalAmount),
         taxes: "৳0",
-        discount: "৳0",
+        discount: completedOrder.discountAmount ? formatBDT(completedOrder.discountAmount) : "৳0",
         total: formatBDT(completedOrder.totalAmount),
         invoiceUrl: completedOrder.invoiceUrl,
         notes: "Thank you for shopping with Decantre.",
@@ -734,13 +772,22 @@ const NewInStoreOrderPage = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Email
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground block">
+                    Email
+                  </label>
+                  {isEmailInvalid && (
+                    <span className="text-[11px] text-destructive font-medium">
+                      Invalid email address
+                    </span>
+                  )}
+                </div>
                 <Input
+                  type="email"
                   placeholder="email@example.com"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
+                  className={isEmailInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <div>
@@ -833,18 +880,39 @@ const NewInStoreOrderPage = () => {
             )}
 
             {cart.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-border space-y-1.5">
+              <div className="mt-4 pt-3 border-t border-border space-y-2">
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Subtotal</span>
                   <span>{formatBDT(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
+
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <span className="text-xs text-muted-foreground font-medium">Discount (৳)</span>
+                  <div className="w-28">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={discount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setDiscount(val);
+                      }}
+                      className="h-8 text-xs text-right font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
                 </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-xs text-emerald-600 font-medium">
+                    <span>Discount Applied</span>
+                    <span>- {formatBDT(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-border">
                   <span>Total</span>
-                  <span className="text-primary">{formatBDT(subtotal)}</span>
+                  <span className="text-primary">{formatBDT(finalTotal)}</span>
                 </div>
               </div>
             )}
@@ -903,21 +971,27 @@ const NewInStoreOrderPage = () => {
           </div>
 
           <div className="bg-muted/50 border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-foreground">Payment:</span>{" "}
+                <span className="capitalize font-medium">{paymentMethod}</span>
+                {(paymentMethod === "bkash" || paymentMethod === "nagad") &&
+                  paymentPhone && (
+                    <span className="text-muted-foreground ml-1">
+                      (+880{paymentPhone})
+                    </span>
+                  )}
+              </p>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px] font-semibold">
+                Paid (In-Store)
+              </Badge>
+            </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">Payment:</span>{" "}
-              <span className="capitalize">{paymentMethod}</span>
-              {(paymentMethod === "bkash" || paymentMethod === "nagad") &&
-                paymentPhone && (
-                  <span className="text-muted-foreground ml-1">
-                    (+880{paymentPhone})
-                  </span>
-                )}
-              <br />
-              Order number prefix:{" "}
+              Order ID prefix:{" "}
               <span className="font-mono font-semibold text-primary">
-                S
+                IS
               </span>{" "}
-              (e.g. <span className="font-mono text-primary">S2607001</span>)
+              (e.g. <span className="font-mono text-primary">IS26080001</span>)
             </p>
           </div>
 
