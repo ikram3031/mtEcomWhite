@@ -447,17 +447,17 @@ export default function EditAttributePage() {
                   <p className="text-xs text-muted-foreground mt-1">Use the form above to add attribute values and upload optional 1:1 images.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
                   {values.map((val, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-5 min-h-[128px] rounded-2xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-xs group"
+                      className="flex items-center justify-between p-4 min-h-[160px] rounded-2xl border border-border/80 bg-card hover:bg-muted/30 hover:border-primary/40 transition-all gap-4 shadow-xs group"
                     >
                       {/* Left: Large 1:1 Image Box + Text */}
                       <div className="flex items-center gap-4 min-w-0 flex-1">
                         {val.imageUrl ? (
-                          <div className="relative size-20 shrink-0 group/img">
-                            <div className="size-20 rounded-2xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
+                          <div className="relative size-32 shrink-0 group/img">
+                            <div className="size-32 rounded-2xl border border-border/80 bg-muted/20 overflow-hidden shadow-xs">
                               <img
                                 src={resolveImageUrl(val.imageUrl)}
                                 alt={val.name}
@@ -468,23 +468,21 @@ export default function EditAttributePage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveExistingValueImage(idx)}
-                              className="absolute -top-2 -right-2 size-6 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
+                              className="absolute -top-2 -right-2 size-7 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md hover:scale-115 flex items-center justify-center cursor-pointer transition-all z-20"
                               title="Remove Image"
                             >
-                              <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                              <X className="h-4 w-4 stroke-[2.5]" />
                             </button>
                           </div>
                         ) : (
                           <label
-                            className={`size-20 rounded-2xl border-2 border-dashed border-primary/35 hover:border-primary hover:bg-primary/10 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-1 shadow-2xs ${
+                            className={`size-32 rounded-2xl border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 flex flex-col items-center justify-center text-muted-foreground hover:text-primary cursor-pointer shrink-0 transition-all gap-2 shadow-2xs ${
                               uploadingIndex === idx ? 'opacity-50 pointer-events-none' : ''
                             }`}
                             title="Upload 1:1 Image (Max 2MB)"
                           >
-                            <Upload className="h-5 w-5 text-primary/80" />
-                            <span className="text-[11px] font-semibold">
-                              {uploadingIndex === idx ? '...' : '+ Image'}
-                            </span>
+                            <Upload className="h-7 w-7 text-primary/80" />
+                            <span className="text-xs font-bold">+ Image</span>
                             <input
                               type="file"
                               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -497,11 +495,11 @@ export default function EditAttributePage() {
                           </label>
                         )}
 
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <p className="text-base font-bold text-foreground truncate">
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <p className="text-lg sm:text-xl font-bold text-foreground truncate">
                             {val.name}
                           </p>
-                          <span className="inline-block text-xs font-mono text-muted-foreground px-2.5 py-0.5 rounded-md bg-muted/60 border border-border/60">
+                          <span className="inline-block text-xs font-mono text-muted-foreground px-3 py-1 rounded-md bg-muted/70 border border-border/60">
                             {val.slug}
                           </span>
                         </div>
@@ -512,11 +510,11 @@ export default function EditAttributePage() {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-xl transition-colors"
+                        className="h-10 w-10 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-xl transition-colors"
                         title="Delete Value"
                         onClick={() => removeValue(idx)}
                       >
-                        <Trash2 className="h-4.5 w-4.5" />
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
                   ))}
