@@ -27,7 +27,7 @@ import {
   HardDrive,
   FileText,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/error-handler';
 
@@ -77,7 +77,7 @@ export default function AllMediaPage() {
 
   const handleCopyLink = (url) => {
     if (!url) return;
-    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+    const fullUrl = resolveImageUrl(url);
     navigator.clipboard.writeText(fullUrl);
     setCopied(true);
     toast.success('Media link copied to clipboard!');
@@ -154,7 +154,7 @@ export default function AllMediaPage() {
               <div className="relative aspect-square w-full bg-muted/20 flex items-center justify-center overflow-hidden border-b">
                 {item.url.match(/\.(jpeg|jpg|png|webp|gif|svg|avif)$/i) ? (
                   <img
-                    src={item.url}
+                    src={resolveImageUrl(item.url)}
                     alt={item.filename}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -253,7 +253,7 @@ export default function AllMediaPage() {
               <div className="relative max-h-72 w-full rounded-xl border bg-muted/20 flex items-center justify-center overflow-hidden p-2">
                 {selectedMedia.url.match(/\.(jpeg|jpg|png|webp|gif|svg|avif)$/i) ? (
                   <img
-                    src={selectedMedia.url}
+                    src={resolveImageUrl(selectedMedia.url)}
                     alt={selectedMedia.filename}
                     className="max-h-64 max-w-full object-contain rounded-lg shadow-xs"
                   />
@@ -294,7 +294,7 @@ export default function AllMediaPage() {
                   <Input
                     readOnly
                     disabled
-                    value={selectedMedia.url}
+                    value={resolveImageUrl(selectedMedia.url)}
                     className="font-mono text-xs text-foreground bg-muted/40 border-border select-all cursor-text disabled:opacity-90 flex-1"
                   />
                   <Button

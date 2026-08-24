@@ -4,6 +4,13 @@ import clientConfig from '@/clientConfig';
 
 export const baseURL = import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
 
+export const resolveImageUrl = (raw) => {
+  if (!raw) return '';
+  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('blob:') || raw.startsWith('data:')) return raw;
+  const cleanBase = (baseURL || '').replace(/\/$/, '');
+  return `${cleanBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
+
 export const apiClient = axios.create({
   baseURL,
   headers: {
