@@ -22,11 +22,13 @@ import subscriberRouter from "./routes/SubscriberRoute.js";
 import contactRouter from "./routes/ContactRoute.js";
 import storeUtilsRouter from "./routes/StoreUtilsRoute.js";
 import reportsRouter from "./routes/ReportsRoute.js";
+import dashProductRouter from "./dashboard/routes/dashProduct.route.js";
 import express from "express";
 import { searchProducts } from "./controllers/SearchController.js";
 
 const coreRouter = Router();
 
+coreRouter.use("/dash/products", dashProductRouter);
 coreRouter.use("/products", productsRouter);
 coreRouter.use("/reviews", reviewRouter);
 coreRouter.use("/images", imagesRouter);
