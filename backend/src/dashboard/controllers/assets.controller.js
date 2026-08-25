@@ -5,11 +5,11 @@ import fs from "fs";
 
 const storage = multer.memoryStorage();
 
-// Middleware: Restricts upload size strictly to 2MB as per system rules
+// Middleware: Restricts upload size up to 5MB for slider and banner assets
 export const assetUploadMiddleware = multer({
   storage,
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB max upload limit
   },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/") && !file.originalname.endsWith(".ico")) {
@@ -27,6 +27,35 @@ const formatBytes = (bytes, decimals = 2) => {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+};
+
+// Helper: Compresses image buffer to WebP targeting <= 230KB while preserving 100% original resolution
+const compressToTargetWebP = async (inputBuffer, targetMaxBytes = 230 * 1024) => {
+  let quality = 85;
+
+  let outputBuffer = await sharp(inputBuffer)
+    .webp({
+      quality,
+      effort: 6,
+      smartSubsample: true,
+      reductionEffort: 6,
+    })
+    .toBuffer();
+
+  // If output exceeds target size, iteratively optimize quality while keeping 100% full pixel resolution
+  while (outputBuffer.length > targetMaxBytes && quality > 45) {
+    quality -= 6;
+    outputBuffer = await sharp(inputBuffer)
+      .webp({
+        quality,
+        effort: 6,
+        smartSubsample: true,
+        reductionEffort: 6,
+      })
+      .toBuffer();
+  }
+
+  return outputBuffer;
 };
 
 // Helper: Resolves absolute filesystem path of uploads/assets directory
@@ -116,10 +145,9 @@ export const uploadSlotAsset = async (req, res, next) => {
       // Direct write for ICO / SVG vectors
       await fs.promises.writeFile(destinationPath, req.file.buffer);
     } else {
-      // Convert to WebP with optimized compression
-      await sharp(req.file.buffer)
-        .webp({ quality: 85, effort: 4 })
-        .toFile(destinationPath);
+      // Convert to WebP targeting <= 230KB while preserving full resolution
+      const webpBuffer = await compressToTargetWebP(req.file.buffer, 230 * 1024);
+      await fs.promises.writeFile(destinationPath, webpBuffer);
     }
 
     const stats = await fs.promises.stat(destinationPath);
