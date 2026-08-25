@@ -43,6 +43,7 @@ import Billings from './pages/dashboard/billing/billings';
 import BulkImageResize from './pages/dashboard/tools/bulkImageResize';
 import MetaCatalog from './pages/dashboard/tools/metaCatalog';
 import SystemLogs from './pages/dashboard/tools/systemLogs';
+import AssetsManager from './pages/dashboard/tools/assetsManager';
 
 // AI Studio
 import Studio from './pages/dashboard/studio/index';
@@ -152,7 +153,15 @@ export const router = createBrowserRouter([
       {
         path: 'tools',
         children: [
-          { path: '', element: <Navigate to="bulk-image-resize" replace /> },
+          { path: '', element: <Navigate to="assets" replace /> },
+          {
+            path: 'assets',
+            element: (
+              <RoleGuard menuKey="tools.assets">
+                <AssetsManager />
+              </RoleGuard>
+            ),
+          },
           {
             path: 'bulk-image-resize',
             element: (

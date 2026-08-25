@@ -449,6 +449,17 @@ export function AppSidebar({ ...props }) {
               </SidebarMenuButton>
               {openMenu === "tools" && (
                 <SidebarMenuSub>
+                  {isAllowed("tools.assets") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/assets"}
+                        render={<Link to="/dashboard/tools/assets" />}
+                      >
+                        <ImageIcon className="h-3.5 w-3.5" />
+                        <span>Assets Manager</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                   {isAllowed("tools.bulk-image-resize") && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
