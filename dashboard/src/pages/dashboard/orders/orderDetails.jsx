@@ -428,6 +428,7 @@ const OrderDetailsPage = () => {
         subtotal,
         shippingFee,
         discountAmount,
+        couponCode: order?.couponCode || undefined,
         total,
         user,
       });
@@ -495,9 +496,15 @@ const OrderDetailsPage = () => {
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Order {order.orderNumber}
               </h2>
-              <div className="flex gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {getFulfillmentBadge(order.status || order.orderStatus || "")}
                 {getPaymentBadge(order.paymentStatus || (effectivePending === 0 && effectiveTotal > 0 ? "Paid" : effectivePaid > 0 ? "Partial" : "Pending"))}
+                {order.couponCode && (
+                  <Badge variant="outline" className="gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-mono font-bold text-xs py-1 px-2.5">
+                    <Tag className="h-3 w-3 text-emerald-500" />
+                    Coupon: {order.couponCode}
+                  </Badge>
+                )}
               </div>
             </div>
             <p className="text-muted-foreground text-xs mt-1 flex items-center gap-1.5">
@@ -600,7 +607,17 @@ const OrderDetailsPage = () => {
                   <span>Shipping Fee</span>
                   <span className="font-medium text-foreground">{formatBDT(order.totals?.shippingFee ?? order.shippingTotalAmount ?? 0)}</span>
                 </div>
-                {order.discountTotalAmount ? (
+                {order.couponCode ? (
+                  <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-medium py-1.5 px-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold">
+                      <Tag className="h-3.5 w-3.5 text-emerald-500" />
+                      Coupon Applied (<span className="font-mono uppercase font-bold">{order.couponCode}</span>)
+                    </span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      -{formatBDT(order.discountTotalAmount || order.totals?.discount || 0)}
+                    </span>
+                  </div>
+                ) : order.discountTotalAmount ? (
                   <div className="flex justify-between text-red-600 font-medium">
                     <span>Discount</span>
                     <span>-{formatBDT(order.discountTotalAmount)}</span>
@@ -685,6 +702,20 @@ const OrderDetailsPage = () => {
                     <span className="font-semibold text-primary flex items-center gap-1.5 mt-0.5">
                       <Phone className="h-4 w-4 text-primary" />
                       {paymentPhone ? `+880${paymentPhone}` : (order.paymentMethod.match(/\+880?\d+/)?.[0] || "N/A")}
+                    </span>
+                  </div>
+                )}
+                {order.couponCode && (
+                  <div>
+                    <span className="text-xs text-muted-foreground block">Applied Coupon</span>
+                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-0.5">
+                      <Tag className="h-4 w-4 text-emerald-500" />
+                      {order.couponCode}
+                      {(order.discountTotalAmount || 0) > 0 && (
+                        <span className="text-xs font-normal text-muted-foreground">
+                          (-{formatBDT(order.discountTotalAmount)} discount)
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}
@@ -912,7 +943,15 @@ const OrderDetailsPage = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 items-center gap-2">
-                    <span className="text-muted-foreground">Discount</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-muted-foreground">Discount</span>
+                      {order?.couponCode && (
+                        <Badge variant="outline" className="text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 px-1.5 py-0">
+                          <Tag className="h-2.5 w-2.5 mr-0.5" />
+                          {order.couponCode}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex justify-end">
                       <Input type="number" className="w-24 text-right h-7 px-2 text-xs" value={discountAmount} min={0} onChange={(e) => setDiscountAmount(Number(e.target.value || 0))} />
                     </div>
