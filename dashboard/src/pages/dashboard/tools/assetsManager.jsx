@@ -25,14 +25,14 @@ import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import clientConfig from '@/clientConfig';
 import { toast } from 'sonner';
 
-const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB strict limit
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB max upload limit (compressed to <230KB)
 
 // Fallback sections if clientConfig does not specify assetsConfig
 const DEFAULT_ASSET_SECTIONS = [
   {
     id: 'hero-sliders',
     title: 'Hero Slider Carousel',
-    description: 'Main sliding banner carousel displayed on homepage (Recommended: 1920x650 px, max 2MB)',
+    description: 'Main sliding banner carousel displayed on homepage (Recommended: 1920x650 px, max 5MB, optimized to < 230KB)',
     slots: [
       { key: 'slider-1', label: 'Slide 1', filename: 'slider-1.webp', recommendedSize: '1920x650' },
       { key: 'slider-2', label: 'Slide 2', filename: 'slider-2.webp', recommendedSize: '1920x650' },
@@ -185,10 +185,10 @@ export default function AssetsManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Strict 2MB size limit check
+    // Strict 5MB size limit check
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast.error(
-        `File size (${formatBytes(file.size)}) exceeds the maximum 2MB limit. Please select an image under 2MB.`
+        `File size (${formatBytes(file.size)}) exceeds the maximum 5MB limit. Please select an image under 5MB.`
       );
       e.target.value = '';
       return;
@@ -244,7 +244,7 @@ export default function AssetsManager() {
             <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-primary">
               /uploads/assets
             </code>
-            . All uploaded images are automatically converted to WebP with a strict 2MB limit.
+            . Upload up to 5MB images with automatic lossless WebP compression to ~230KB keeping 100% full resolution.
           </p>
         </div>
 
@@ -342,7 +342,7 @@ export default function AssetsManager() {
                         <div className="flex flex-col items-center justify-center p-4 text-center gap-2">
                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
                           <span className="text-xs font-medium text-muted-foreground">
-                            Converting to WebP & saving...
+                            Compressing to WebP (&lt;230KB) & saving...
                           </span>
                         </div>
                       ) : isAssetsLoading ? (
@@ -373,7 +373,7 @@ export default function AssetsManager() {
                             Click to upload {slot.label}
                           </p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Max 2MB • Auto-converts to WebP
+                            Max 5MB • Compresses to &lt;230KB WebP
                           </p>
                         </div>
                       )}
