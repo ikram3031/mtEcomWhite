@@ -126,10 +126,32 @@ export const buildProductFilter = async (input = {}) => {
     });
 
     const resolved = [];
+    const resolvedSet = new Set();
+
+    const addResolved = (id) => {
+      if (!id) return;
+      const idStr = id.toString();
+      if (!resolvedSet.has(idStr)) {
+        resolvedSet.add(idStr);
+        resolved.push(id);
+      }
+    };
 
     for (const categoryValue of categoryValues) {
       if (Types.ObjectId.isValid(categoryValue)) {
-        resolved.push(categoryValue);
+        addResolved(categoryValue);
+        let currentParentIds = [categoryValue];
+        while (currentParentIds.length > 0) {
+          const children = await CategoryModel.find({ parent: { $in: currentParentIds } }).select('_id').lean();
+          const nextParentIds = [];
+          for (const child of children) {
+            if (child?._id && !resolvedSet.has(child._id.toString())) {
+              addResolved(child._id);
+              nextParentIds.push(child._id);
+            }
+          }
+          currentParentIds = nextParentIds;
+        }
         continue;
       }
 
@@ -142,18 +164,30 @@ export const buildProductFilter = async (input = {}) => {
             $or: [
               { slug: normalizedCategory },
               { slug: { $regex: `^${normalizedCategory}$`, $options: "i" } },
-              { slug: { $regex: normalizedCategory, $options: "i" } },
               { name: normalizedCategory },
               { name: { $regex: `^${normalizedCategory}$`, $options: "i" } },
-              { name: { $regex: normalizedCategory, $options: "i" } },
             ],
           };
 
       const categoryDocs = await CategoryModel.find(categoryQuery).lean();
+      let currentParentIds = [];
       for (const categoryDoc of categoryDocs) {
-        if (categoryDoc?._id) {
-          resolved.push(categoryDoc._id);
+        if (categoryDoc?._id && !resolvedSet.has(categoryDoc._id.toString())) {
+          addResolved(categoryDoc._id);
+          currentParentIds.push(categoryDoc._id);
         }
+      }
+
+      while (currentParentIds.length > 0) {
+        const children = await CategoryModel.find({ parent: { $in: currentParentIds } }).select('_id').lean();
+        const nextParentIds = [];
+        for (const child of children) {
+          if (child?._id && !resolvedSet.has(child._id.toString())) {
+            addResolved(child._id);
+            nextParentIds.push(child._id);
+          }
+        }
+        currentParentIds = nextParentIds;
       }
     }
 

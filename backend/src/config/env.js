@@ -24,6 +24,16 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().min(1, "SMTP_PASSWORD is required"),
   SMTP_FROM_NAME: z.string().default("Decantre BD"),
   SMTP_FROM: z.string().optional(),
+  R2_ACCOUNT_ID: z.string().optional().default(""),
+  R2_ACCESS_KEY_ID: z.string().optional().default(""),
+  R2_SECRET_ACCESS_KEY: z.string().optional().default(""),
+  R2_BUCKET_NAME: z.string().optional().default(""),
+  R2_PUBLIC_URL: z.string().optional().default(""),
+  R2_SYNC_INTERVAL_DAYS: z.coerce.number().int().positive().default(2),
+  R2_SYNC_ENABLED: z.coerce.boolean().default(false),
+  FB_PIXEL_ID: z.string().optional().default(""),
+  FB_ACCESS_TOKEN: z.string().optional().default(""),
+  FB_TEST_EVENT_CODE: z.string().optional().default(""),
 });
 
 const parsed = envSchema.safeParse(process.env);

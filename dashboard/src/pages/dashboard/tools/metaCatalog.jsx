@@ -2,11 +2,8 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   Download,
   Copy,
-  CheckCircle2,
-  AlertTriangle,
   Search,
   Settings2,
-  RefreshCw,
   Table as TableIcon,
   ShoppingBag,
   Plus,
@@ -16,10 +13,6 @@ import {
   Check,
   CheckSquare,
   Square,
-  Sparkles,
-  Layers,
-  ExternalLink,
-  Filter,
   CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -79,6 +72,7 @@ const META_CSV_COLUMNS = [
   'style[0]',
 ];
 
+// Helper to strip HTML tags from product descriptions
 const stripHtml = (html) => {
   if (!html) return '';
   const tmp = document.createElement('DIV');
@@ -88,6 +82,7 @@ const stripHtml = (html) => {
     .trim();
 };
 
+// Helper to escape values for RFC 4180 CSV compliance
 const escapeCsvCell = (str) => {
   if (str === null || str === undefined) return '';
   const s = String(str);
@@ -98,9 +93,24 @@ const escapeCsvCell = (str) => {
 };
 
 const LOCAL_STORAGE_STAGED_KEY = 'meta_catalog_staged_products_v2';
-const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v2';
+const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v3';
 
-export default function MetaCatalogGenerator() {
+// Restores persisted feed configuration with default single-product variable export
+const getSavedSettings = () => {
+  try {
+    const savedV3 = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+    if (savedV3) return JSON.parse(savedV3);
+    const savedV2 = localStorage.getItem('meta_catalog_settings_v2');
+    if (savedV2) {
+      const parsed = JSON.parse(savedV2);
+      return { ...parsed, includeVariants: false };
+    }
+  } catch (_) {}
+  return {};
+};
+
+// Main Meta Catalog Feed Generator and CSV Builder component
+const MetaCatalogGenerator = () => {
   const { data: dbCategories = [] } = useCategories();
 
   // Products & Infinite Scroll State
@@ -120,70 +130,20 @@ export default function MetaCatalogGenerator() {
       ? 'https://toyoland.shop'
       : 'https://decantrebd.com';
 
-  const [siteUrl, setSiteUrl] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).siteUrl || defaultDomain;
-    } catch (_) {}
-    return defaultDomain;
-  });
+  const savedSettings = useMemo(() => getSavedSettings(), []);
 
-  const [productPathPrefix, setProductPathPrefix] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).productPathPrefix || '/products/';
-    } catch (_) {}
-    return '/products/';
-  });
-
-  const [imageBaseUrl, setImageBaseUrl] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '');
-    } catch (_) {}
-    return (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '');
-  });
+  const [siteUrl, setSiteUrl] = useState(() => savedSettings.siteUrl || defaultDomain);
+  const [productPathPrefix, setProductPathPrefix] = useState(() => savedSettings.productPathPrefix || '/products/');
+  const [imageBaseUrl, setImageBaseUrl] = useState(
+    () => savedSettings.imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '')
+  );
 
   const currency = 'BDT';
-  const [idMapping, setIdMapping] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).idMapping || 'did';
-    } catch (_) {}
-    return 'did';
-  });
-
-  const [defaultCondition, setDefaultCondition] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).defaultCondition || 'new';
-    } catch (_) {}
-    return 'new';
-  });
-
-  const [googleCategory, setGoogleCategory] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).googleCategory || '';
-    } catch (_) {}
-    return '';
-  });
-
-  const [customLabel0, setCustomLabel0] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).customLabel0 || '';
-    } catch (_) {}
-    return '';
-  });
-
-  const [includeVariants, setIncludeVariants] = useState(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-      if (saved) return JSON.parse(saved).includeVariants ?? true;
-    } catch (_) {}
-    return true;
-  });
+  const [idMapping, setIdMapping] = useState(() => savedSettings.idMapping || 'did');
+  const [defaultCondition, setDefaultCondition] = useState(() => savedSettings.defaultCondition || 'new');
+  const [googleCategory, setGoogleCategory] = useState(() => savedSettings.googleCategory || '');
+  const [customLabel0, setCustomLabel0] = useState(() => savedSettings.customLabel0 || '');
+  const [includeVariants, setIncludeVariants] = useState(() => savedSettings.includeVariants ?? false);
 
   // Staged Catalog State (with LocalStorage restore)
   const [stagedMap, setStagedMap] = useState(() => {
@@ -701,7 +661,7 @@ export default function MetaCatalogGenerator() {
           quantity_to_sell_on_facebook: p.stockAmount ?? 50,
           sale_price: hasDiscount ? `${rawSalePrice.toFixed(2)} ${currency}` : '',
           sale_price_effective_date: '',
-          item_group_id: p.hasVariants ? contentId : '',
+          item_group_id: '',
           gender: 'unisex',
           color: '',
           size: '',
@@ -739,6 +699,7 @@ export default function MetaCatalogGenerator() {
     includeVariants,
   ]);
 
+  // Generates serialized CSV content according to Meta Commerce feed specification
   const generateCsvString = () => {
     const header = META_CSV_COLUMNS.join(',');
     const dataLines = catalogRows.map((row) =>
@@ -747,6 +708,7 @@ export default function MetaCatalogGenerator() {
     return [header, ...dataLines].join('\r\n');
   };
 
+  // Triggers browser download for Meta catalog CSV file
   const handleDownloadCsv = () => {
     if (catalogRows.length === 0) {
       toast.error('No products added to catalog feed.');
@@ -767,6 +729,7 @@ export default function MetaCatalogGenerator() {
     toast.success(`Meta Catalog CSV (${catalogRows.length} rows) downloaded successfully!`);
   };
 
+  // Copies generated CSV text directly to clipboard
   const handleCopyCsv = () => {
     if (catalogRows.length === 0) {
       toast.error('No products in catalog feed.');
@@ -1527,17 +1490,22 @@ export default function MetaCatalogGenerator() {
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-2 border-t">
+            <div className="flex items-start gap-2.5 pt-3 border-t">
               <input
                 type="checkbox"
                 id="incVarModal"
                 checked={includeVariants}
                 onChange={(e) => setIncludeVariants(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                className="h-4 w-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
               />
-              <label htmlFor="incVarModal" className="cursor-pointer font-medium select-none text-xs">
-                Export each variant as an individual row with <code>item_group_id</code>
-              </label>
+              <div>
+                <label htmlFor="incVarModal" className="cursor-pointer font-medium select-none text-xs block">
+                  Export each variation as separate product row
+                </label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Default: off (recommended). Variable products are exported as 1 single product entry matching Meta Pixel IDs. Enable only if you want individual rows for every variant with <code>item_group_id</code>.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1550,4 +1518,6 @@ export default function MetaCatalogGenerator() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default MetaCatalogGenerator;

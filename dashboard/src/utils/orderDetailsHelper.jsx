@@ -163,6 +163,7 @@ export const buildUpdatePayload = ({
   subtotal,
   shippingFee,
   discountAmount,
+  couponCode,
   total,
   user,
 }) => {
@@ -205,6 +206,7 @@ export const buildUpdatePayload = ({
       total,
     },
     discountTotalAmount: discountAmount,
+    couponCode: couponCode ? String(couponCode).trim().toUpperCase() : undefined,
     shippingTotalAmount: shippingFee,
     updatedBy: user?.did || user?.id || user?._id || undefined,
   };

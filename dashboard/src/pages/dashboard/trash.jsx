@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -511,7 +511,7 @@ const TrashPage = () => {
                       <TableCell>
                         <div className="h-10 w-10 rounded-md border bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
                           {img ? (
-                            <img src={img} alt={product.name} className="h-full w-full object-cover" />
+                            <img src={resolveImageUrl(img)} alt={product.name} className="h-full w-full object-cover" />
                           ) : (
                             <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
                           )}

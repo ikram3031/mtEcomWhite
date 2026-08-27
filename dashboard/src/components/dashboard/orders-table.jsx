@@ -19,9 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, AlertCircle, Tag } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -247,7 +246,15 @@ export function OrdersTable({
                 <TableCell className="w-[110px] text-muted-foreground whitespace-nowrap">
                   {new Date(order.date).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="w-[120px] font-medium whitespace-nowrap">৳{order.totalAmount.toFixed(2)}</TableCell>
+                <TableCell className="w-[120px] font-medium whitespace-nowrap">
+                  <span>৳{order.totalAmount.toFixed(2)}</span>
+                  {order.couponCode && (
+                    <span className="flex items-center gap-0.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                      <Tag className="h-2.5 w-2.5" />
+                      {order.couponCode}
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell className="w-[100px]">{getPaymentBadge(order.paymentStatus)}</TableCell>
                 <TableCell className="w-[120px]">{getFulfillmentBadge(order.orderStatus)}</TableCell>
                 <TableCell className="text-right w-[60px]">

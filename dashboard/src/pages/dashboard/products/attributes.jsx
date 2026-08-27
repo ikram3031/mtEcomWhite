@@ -444,7 +444,7 @@ const AttributesPage = () => {
                           >
                             {v.imageUrl ? (
                               <img
-                                src={v.imageUrl}
+                                src={resolveImageUrl(v.imageUrl)}
                                 alt={v.name}
                                 className="h-7 w-7 rounded object-cover border shrink-0"
                               />

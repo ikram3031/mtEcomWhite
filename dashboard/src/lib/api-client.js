@@ -4,10 +4,28 @@ import clientConfig from '@/clientConfig';
 
 export const baseURL = import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
 
+// Resolves media asset paths to absolute URLs matching active Dev or Live environment endpoints
 export const resolveImageUrl = (raw) => {
-  if (!raw) return '';
-  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('blob:') || raw.startsWith('data:')) return raw;
+  if (!raw || typeof raw !== 'string') return '';
+  if (raw.startsWith('blob:') || raw.startsWith('data:')) return raw;
+
   const cleanBase = (baseURL || '').replace(/\/$/, '');
+
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    try {
+      const urlObj = new URL(raw);
+      const isRawLocalhost = urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1';
+      const isBaseLocalhost = cleanBase.includes('localhost') || cleanBase.includes('127.0.0.1');
+
+      if (isBaseLocalhost && !isRawLocalhost && urlObj.pathname.startsWith('/uploads')) {
+        return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+      } else if (!isBaseLocalhost && isRawLocalhost && urlObj.pathname.startsWith('/uploads')) {
+        return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+      }
+    } catch (_) {}
+    return raw;
+  }
+
   return `${cleanBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
 };
 

@@ -33,14 +33,14 @@ The Dev environment runs isolated from the production environment on dedicated p
 - **Host Port:** `27018` (Exposed publicly / Whitelisted IP)
 - **Internal Port:** `27017`
 - **Root Username:** `admin`
-- **Root Password:** `11223345`
+- **Root Password:** `[REDACTED]`
 - **Internal Connection URI (Container-to-Container):**
   ```
-  mongodb://admin:11223345@devtest-mongodb:27017/Perfume?authSource=admin
+  mongodb://admin:[REDACTED]@devtest-mongodb:27017/Perfume?authSource=admin
   ```
 - **External Connection URI (Mongo Compass / Remote):**
   ```
-  mongodb://admin:11223345@144.79.218.126:27018/Perfume?authSource=admin
+  mongodb://admin:[REDACTED]@144.79.218.126:27018/Perfume?authSource=admin
   ```
 - **Cloned Data:** 8,812 total documents (including 456 full product documents, categories, users, reviews, and logs cloned from live).
 
@@ -89,8 +89,8 @@ docker logs devtest-mongodb --tail 50 -f
 ### Refreshing Data from Live Database
 To re-clone the latest data from `decantre-mongodb-live` into the dev `Perfume` database:
 ```bash
-docker exec decantre-mongodb-live mongodump -u admin -p 11223345 --authenticationDatabase admin --db DecantreBD --archive | \
-docker exec -i devtest-mongodb mongorestore -u admin -p 11223345 --authenticationDatabase admin --drop --nsFrom='DecantreBD.*' --nsTo='Perfume.*' --archive
+docker exec decantre-mongodb-live mongodump -u admin -p [REDACTED] --authenticationDatabase admin --db DecantreBD --archive | \
+docker exec -i devtest-mongodb mongorestore -u admin -p [REDACTED] --authenticationDatabase admin --drop --nsFrom='DecantreBD.*' --nsTo='Perfume.*' --archive
 ```
 
 ---
