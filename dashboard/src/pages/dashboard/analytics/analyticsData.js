@@ -4,7 +4,7 @@ export const getGA4Settings = (brandName = 'Decantre') => {
     ? 'G-ENGUL72901'
     : brandName.toLowerCase().includes('toyoland')
     ? 'G-TOYO338102'
-    : 'G-DECN883194';
+    : 'G-95TCXBZG7W';
 
   const defaultGTM = brandName.toLowerCase().includes('engulfic')
     ? 'GTM-ENG772X'
