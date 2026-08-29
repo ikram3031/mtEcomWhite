@@ -14,15 +14,15 @@ import { toast } from 'sonner';
 import { generateGtagScript, getGA4Settings, saveGA4Settings } from '../analyticsData';
 
 // Modal component for viewing and managing client Google Analytics 4 integration credentials
-export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Decantre', onSettingsSaved }) => {
-  const [config, setConfig] = useState(() => getGA4Settings(brandName));
+export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSettingsSaved }) => {
+  const [config, setConfig] = useState(() => getGA4Settings());
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setConfig(getGA4Settings(brandName));
+      setConfig(getGA4Settings());
     }
-  }, [open, brandName]);
+  }, [open]);
 
   // Handles copying the generated gtag.js script snippet to system clipboard
   const handleCopySnippet = async () => {
@@ -39,7 +39,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Decantre', onS
 
   // Persists the updated GA4 configuration parameters
   const handleSave = () => {
-    saveGA4Settings(brandName, config);
+    saveGA4Settings(config);
     toast.success('Google Analytics 4 configuration saved');
     if (onSettingsSaved) {
       onSettingsSaved(config);

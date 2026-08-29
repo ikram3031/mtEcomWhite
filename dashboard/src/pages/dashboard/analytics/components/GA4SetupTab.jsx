@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { generateGtagScript } from '../analyticsData';
 
 // Tab component detailing GA4 tag setup, script integration, and event specifications
-export const GA4SetupTab = ({ config, brandName = 'Decantre', onOpenConfigModal }) => {
+export const GA4SetupTab = ({ config, brandName = 'Store', onOpenConfigModal }) => {
   const [copied, setCopied] = useState(false);
 
   // Handles copying the generated gtag.js script snippet to clipboard
@@ -80,7 +80,7 @@ export const GA4SetupTab = ({ config, brandName = 'Decantre', onOpenConfigModal 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-500/20 text-xs">
             <div>
               <p className="text-[11px] text-muted-foreground">Measurement ID</p>
-              <p className="font-mono font-bold text-foreground">{config.measurementId || 'G-DECN883194'}</p>
+              <p className="font-mono font-bold text-foreground">{config.measurementId || 'G-95TCXBZG7W'}</p>
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Google Tag Manager</p>

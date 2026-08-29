@@ -50,14 +50,14 @@ import { GA4SetupTab } from './components/GA4SetupTab';
 // Main Google Analytics dashboard page component
 const AnalyticsPage = () => {
   const { theme, systemTheme } = useTheme();
-  const brandName = clientConfig?.brandName || 'Decantre';
+  const brandName = clientConfig?.brandName || 'Store';
 
   const [range, setRange] = useState('30days');
   const [activeTab, setActiveTab] = useState('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [pageSearch, setPageSearch] = useState('');
-  const [ga4Config, setGa4Config] = useState(() => getGA4Settings(brandName));
+  const [ga4Config, setGa4Config] = useState(() => getGA4Settings());
   const [realtimeCount, setRealtimeCount] = useState(34);
 
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
