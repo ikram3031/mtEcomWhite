@@ -9,6 +9,7 @@ import InvitePage from './pages/invite';
 
 // Dashboard
 import Overview from './pages/dashboard/overview';
+import Analytics from './pages/dashboard/analytics';
 import Users from './pages/dashboard/users';
 import Reports from './pages/dashboard/reportsV2';
 import Members from './pages/dashboard/members';
@@ -96,6 +97,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleGuard menuKey="reports">
             <Reports />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'analytics',
+        element: (
+          <RoleGuard menuKey="analytics">
+            <Analytics />
           </RoleGuard>
         ),
       },

@@ -69,6 +69,7 @@
     "billing.billings",
     "billing.payments",
     "reports",
+    "analytics",
     "users",
     "developer",
     "tools",

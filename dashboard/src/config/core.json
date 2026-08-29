@@ -25,6 +25,7 @@
         "products.attributes",
         "products.coupons",
         "reviews",
+        "analytics",
         "tools",
         "tools.messages",
         "tools.assets",
@@ -43,6 +44,7 @@
         "products.brands",
         "products.attributes",
         "products.coupons",
+        "analytics",
         "tools",
         "tools.bulk-image-resize",
         "tools.meta-catalog"

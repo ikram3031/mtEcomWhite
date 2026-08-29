@@ -31,6 +31,7 @@ import {
   ChevronRight,
   Mail,
   Image as ImageIcon,
+  LineChart,
 } from "lucide-react"
 
 import {
@@ -335,12 +336,13 @@ export function AppSidebar({ ...props }) {
           )}
 
           {/* Admin Menu */}
-          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("reviews") || isAllowed("trash")) && (
+          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("analytics") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("reviews") || isAllowed("trash")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
-                  pathname.startsWith("/dashboard/members") ||
+                  pathname.startsWith("/dashboard/analytics") ||
                   pathname.startsWith("/dashboard/reports") ||
+                  pathname.startsWith("/dashboard/members") ||
                   pathname.startsWith("/dashboard/activity-logs") ||
                   pathname.startsWith("/dashboard/users") ||
                   pathname.startsWith("/dashboard/reviews") ||
@@ -362,14 +364,14 @@ export function AppSidebar({ ...props }) {
               </SidebarMenuButton>
               {openMenu === "admin" && (
                 <SidebarMenuSub>
-                  {isAllowed("members") && (
+                  {isAllowed("analytics") && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/members")}
-                        render={<Link to="/dashboard/members" />}
+                        isActive={pathname.startsWith("/dashboard/analytics")}
+                        render={<Link to="/dashboard/analytics" />}
                       >
-                        <Users className="h-3.5 w-3.5" />
-                        <span>Members</span>
+                        <LineChart className="h-3.5 w-3.5" />
+                        <span>Analytics</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
@@ -381,6 +383,17 @@ export function AppSidebar({ ...props }) {
                       >
                         <BarChart3 className="h-3.5 w-3.5" />
                         <span>Reports</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("members") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/members")}
+                        render={<Link to="/dashboard/members" />}
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        <span>Members</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
