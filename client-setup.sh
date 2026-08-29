@@ -33,13 +33,18 @@ echo "║      White-Label Client Setup Tool       ║"
 echo "╚══════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# ── Step 1: Create required directories ──────────────────────
+# ── Step 1: Create required directories & set client marker ──
 echo -e "${YELLOW}[1/4] Creating config and upload directories for $CLIENT_NAME...${NC}"
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$UPLOAD_DIR"
-chmod 700 "$CONFIG_DIR"    # শুধু root পড়তে পারবে
+chmod 700 "$CONFIG_DIR"
 chmod 755 "$UPLOAD_DIR"
-echo -e "${GREEN}✓ Directories ready at /opt/$CLIENT_NAME${NC}"
+
+echo "$CLIENT_NAME" > .client
+if [ -d "/opt/live" ]; then
+    echo "$CLIENT_NAME" > /opt/live/.client
+fi
+echo -e "${GREEN}✓ Directories ready at /opt/$CLIENT_NAME and active marker set (.client: $CLIENT_NAME)${NC}"
 
 # ── Step 2: Generate backend.env ─────────────────────────────
 BACKEND_ENV="$CONFIG_DIR/backend.env"

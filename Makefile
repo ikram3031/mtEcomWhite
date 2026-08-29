@@ -3,12 +3,17 @@
 # ── Dynamic Client Configuration Detection ────────────────────
 # Accepts CLIENT from command line (e.g. make deploy CLIENT=engulfic)
 # Or auto-detects from existing VPS directories (/opt/<client>)
-CLIENT ?= $(shell if [ -f .client ]; then cat .client; \
-	elif [ -d /opt/engulfic ]; then echo engulfic; \
-	elif [ -d /opt/decantre ]; then echo decantre; \
-	elif [ -d /opt/toyoland ]; then echo toyoland; \
+CLIENT ?= $(shell if [ -f .client ]; then cat .client | tr -d ' \r\n'; \
+	elif [ -n "$$CLIENT_NAME" ]; then echo "$$CLIENT_NAME"; \
+	elif [ -n "$$CLIENT" ]; then echo "$$CLIENT"; \
+	elif [ -f configs/$$(hostname 2>/dev/null).json ]; then hostname 2>/dev/null; \
+	elif [ -f /etc/hostname ] && [ -f configs/$$(cat /etc/hostname 2>/dev/null | tr -d ' \r\n').json ]; then cat /etc/hostname | tr -d ' \r\n'; \
+	elif [ -d /opt/$$(hostname 2>/dev/null)/configs ]; then hostname 2>/dev/null; \
+	elif [ -f /opt/decantre/configs/backend.env ]; then echo decantre; \
+	elif [ -f /opt/engulfic/configs/backend.env ]; then echo engulfic; \
+	elif [ -f /opt/toyoland/configs/backend.env ]; then echo toyoland; \
 	elif [ -f .env ]; then echo local; \
-	else echo engulfic; fi)
+	else node scripts/sync-config.js --detect-only 2>/dev/null || echo decantre; fi)
 
 # Resolve the config env file path
 ENV_FILE ?= $(shell if [ -f /opt/$(CLIENT)/configs/backend.env ]; then echo /opt/$(CLIENT)/configs/backend.env; \

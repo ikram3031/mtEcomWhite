@@ -1,8 +1,10 @@
-# Environment files
+# Environment files & server markers
 .env
 .env.*
 **/.env
 **/.env.*
+.client
+.client.*
 
 # Node / package managers
 node_modules/
