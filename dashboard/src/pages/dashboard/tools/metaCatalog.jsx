@@ -93,17 +93,25 @@ const escapeCsvCell = (str) => {
 };
 
 const LOCAL_STORAGE_STAGED_KEY = 'meta_catalog_staged_products_v2';
-const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v3';
+const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v4';
 
 // Restores persisted feed configuration with default single-product variable export
 const getSavedSettings = () => {
   try {
-    const savedV3 = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-    if (savedV3) return JSON.parse(savedV3);
+    const savedV4 = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+    if (savedV4) return JSON.parse(savedV4);
+    const savedV3 = localStorage.getItem('meta_catalog_settings_v3');
+    if (savedV3) {
+      const parsed = JSON.parse(savedV3);
+      if (!parsed.productPathPrefix || parsed.productPathPrefix === '/products/' || parsed.productPathPrefix === '/products') {
+        parsed.productPathPrefix = '/product/';
+      }
+      return parsed;
+    }
     const savedV2 = localStorage.getItem('meta_catalog_settings_v2');
     if (savedV2) {
       const parsed = JSON.parse(savedV2);
-      return { ...parsed, includeVariants: false };
+      return { ...parsed, includeVariants: false, productPathPrefix: '/product/' };
     }
   } catch (_) {}
   return {};
@@ -133,7 +141,13 @@ const MetaCatalogGenerator = () => {
   const savedSettings = useMemo(() => getSavedSettings(), []);
 
   const [siteUrl, setSiteUrl] = useState(() => savedSettings.siteUrl || defaultDomain);
-  const [productPathPrefix, setProductPathPrefix] = useState(() => savedSettings.productPathPrefix || '/product/');
+  const [productPathPrefix, setProductPathPrefix] = useState(() => {
+    const prefix = savedSettings.productPathPrefix;
+    if (!prefix || prefix === '/products/' || prefix === '/products') {
+      return '/product/';
+    }
+    return prefix;
+  });
   const [imageBaseUrl, setImageBaseUrl] = useState(
     () => savedSettings.imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '')
   );
