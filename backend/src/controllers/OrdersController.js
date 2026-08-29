@@ -54,15 +54,45 @@ export const createOrder = async (req, res, next) => {
       }
     }
 
+    // Backend validation: Verify product exists and is in stock
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    if (items.length > 0) {
+      for (const item of items) {
+        const productRef = item.productId || item.productDid || item.id || item._id;
+        const productName = item.name || item.productName || 'Product';
+        
+        let productDoc = null;
+        if (productRef) {
+          if (mongoose.Types.ObjectId.isValid(productRef)) {
+            productDoc = await ProductModel.findById(productRef).select('name stockStatus isActive').lean();
+          }
+          if (!productDoc) {
+            productDoc = await ProductModel.findOne({ did: productRef }).select('name stockStatus isActive').lean();
+          }
+        }
+        if (!productDoc && productName) {
+          productDoc = await ProductModel.findOne({ name: productName }).select('name stockStatus isActive').lean();
+        }
+
+        if (productDoc) {
+          if (productDoc.isActive === false) {
+            validationErrors.push(`"${productDoc.name || productName}" is currently unavailable.`);
+          } else if (String(productDoc.stockStatus || '').toLowerCase().trim() === 'outofstock') {
+            validationErrors.push(`"${productDoc.name || productName}" is currently out of stock.`);
+          }
+        }
+      }
+    }
+
     if (validationErrors.length > 0) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid order payload',
+        message: validationErrors.join(', '),
         errors: validationErrors,
       });
     }
 
-        const orderData = await buildOrderDocument(payload);
+    const orderData = await buildOrderDocument(payload);
     const createdOrder = await OrderModel.create(orderData);
 
     await syncPaymentDocument(createdOrder, payload);
