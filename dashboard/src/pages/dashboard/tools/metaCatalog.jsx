@@ -133,7 +133,7 @@ const MetaCatalogGenerator = () => {
   const savedSettings = useMemo(() => getSavedSettings(), []);
 
   const [siteUrl, setSiteUrl] = useState(() => savedSettings.siteUrl || defaultDomain);
-  const [productPathPrefix, setProductPathPrefix] = useState(() => savedSettings.productPathPrefix || '/products/');
+  const [productPathPrefix, setProductPathPrefix] = useState(() => savedSettings.productPathPrefix || '/product/');
   const [imageBaseUrl, setImageBaseUrl] = useState(
     () => savedSettings.imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '')
   );
