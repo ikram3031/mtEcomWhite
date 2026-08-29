@@ -34,6 +34,9 @@ const envSchema = z.object({
   FB_PIXEL_ID: z.string().optional().default(""),
   FB_ACCESS_TOKEN: z.string().optional().default(""),
   FB_TEST_EVENT_CODE: z.string().optional().default(""),
+  CENTRAL_HUB_URL: z.string().optional().default(""),
+  CENTRAL_HUB_SECRET: z.string().optional().default(""),
+  VPS_IP: z.string().optional().default(""),
 });
 
 const parsed = envSchema.safeParse(process.env);

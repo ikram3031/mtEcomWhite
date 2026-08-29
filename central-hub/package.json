@@ -1,0 +1,19 @@
+{
+  "name": "wlecom-central-hub",
+  "version": "1.0.0",
+  "description": "Serverless Central Fleet Telemetry & Documentation Portal for WL-Ecom Multi-Tenant Stores",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "d1:init": "wrangler d1 execute wlecom-hub-db --local --file=./schema.sql",
+    "d1:init:prod": "wrangler d1 execute wlecom-hub-db --remote --file=./schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.5.8"
+  },
+  "devDependencies": {
+    "wrangler": "^3.72.0"
+  }
+}

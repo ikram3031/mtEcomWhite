@@ -18,12 +18,37 @@ try {
   console.error('Failed to read backend package.json version:', err);
 }
 
+import mongoose from 'mongoose';
+import { config } from '../config/index.js';
+
+// Returns public health check and fleet discovery telemetry
+export const getHealthCheck = async (req, res, next) => {
+  try {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    return res.status(isDbConnected ? 200 : 503).json({
+      status: isDbConnected ? 'healthy' : 'degraded',
+      clientKey: config.clientKey || 'decantre',
+      brandName: config.brandName || 'Decantre',
+      policies: config.policies || {},
+      backendVersion,
+      uptimeSeconds: Math.floor(process.uptime()),
+      dbStatus: isDbConnected ? 'connected' : 'disconnected',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Return system runtime info, backend version, Node.js version, and environment
 export const getSystemInfo = async (req, res, next) => {
   try {
     return res.json({
       status: 'success',
       data: {
+        clientKey: config.clientKey || 'decantre',
+        brandName: config.brandName || 'Decantre',
+        policies: config.policies || {},
         backendVersion,
         nodeVersion: process.version,
         environment: process.env.NODE_ENV || 'development',

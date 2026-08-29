@@ -1,0 +1,22 @@
+name = "wlecom-fleet-hub"
+main = "src/index.js"
+compatibility_date = "2024-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+HUB_SECRET = "wlecom-fleet-secret"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "wlecom-hub-db"
+database_id = "local-d1-hub"
+
+# Static Assets / Dashboard Portal UI
+[site]
+bucket = "./portal/dist"
+
+# Scheduled Cron for health and uptime probing (Every 2 minutes)
+[triggers]
+crons = ["*/2 * * * *"]

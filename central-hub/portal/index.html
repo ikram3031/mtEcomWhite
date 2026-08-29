@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WL-Ecom Central Fleet Hub & Telemetry</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for Telemetry Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fcf8f0',
+              500: '#c5a059',
+              600: '#ab8845',
+              900: '#5c4820',
+            },
+            darkBg: '#0e0e11',
+            darkCard: '#18181d',
+            darkBorder: '#272730',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .pulse-glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.35); }
+    .pulse-glow-amber { box-shadow: 0 0 15px rgba(245, 158, 11, 0.35); }
+    .pulse-glow-red { box-shadow: 0 0 15px rgba(239, 68, 68, 0.35); }
+  </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Header & Top Navigation -->
+  <header class="border-b border-darkBorder bg-darkCard/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-600 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-black text-lg">
+          WL
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="font-bold text-lg text-white">WL-Ecom Fleet Control Plane</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold bg-brand-500/20 text-brand-500 border border-brand-500/30 rounded-full">Serverless Hub</span>
+          </div>
+          <p class="text-xs text-slate-400">Cloudflare D1 & Distributed VPS Telemetry Monitor</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center space-x-2">
+        <button onclick="switchTab('fleet')" id="tab-fleet" class="px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-500 text-white shadow-md shadow-brand-500/25 flex items-center space-x-2">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>
+          <span>Fleet Overview</span>
+        </button>
+        <button onclick="switchTab('docs')" id="tab-docs" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white hover:bg-darkBorder/60 flex items-center space-x-2">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>Architecture & Docs</span>
+        </button>
+        <button onclick="switchTab('simulator')" id="tab-simulator" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white hover:bg-darkBorder/60 flex items-center space-x-2">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span>Heartbeat Tester</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- ── TAB 1: FLEET OVERVIEW ──────────────────────────────────────── -->
+    <section id="section-fleet" class="space-y-8">
+      
+      <!-- Metrics KPI Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-slate-400">Total Client VPS</span>
+            <div class="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <i data-lucide="server" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span id="kpi-total" class="text-3xl font-extrabold text-white">3</span>
+            <span class="text-xs text-slate-500 font-mono">Multi-Tenant</span>
+          </div>
+        </div>
+
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-slate-400">Healthy & Online</span>
+            <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span id="kpi-online" class="text-3xl font-extrabold text-emerald-400">3</span>
+            <span class="text-xs text-emerald-500 font-semibold">100% Operational</span>
+          </div>
+        </div>
+
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-slate-400">Avg VPS Latency</span>
+            <div class="p-2.5 rounded-xl bg-brand-500/10 text-brand-500 border border-brand-500/20">
+              <i data-lucide="zap" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span id="kpi-latency" class="text-3xl font-extrabold text-brand-500">34ms</span>
+            <span class="text-xs text-slate-500">Cloudflare Edge</span>
+          </div>
+        </div>
+
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-slate-400">Cloudflare Monthly Cost</span>
+            <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline space-x-2">
+            <span class="text-3xl font-extrabold text-purple-400">$0.00</span>
+            <span class="text-xs text-purple-400/80 font-semibold">100% Free Tier</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fleet Table Section -->
+      <div class="bg-darkCard border border-darkBorder rounded-2xl overflow-hidden shadow-xl">
+        <div class="px-6 py-4 border-b border-darkBorder flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <span>Active Client Deployments & Policies</span>
+              <span id="last-refreshed" class="text-xs font-mono text-slate-400">Refreshing in 10s...</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Centralized policy enforcement across isolated VPS servers</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="triggerProbe()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-darkBorder/80 hover:bg-darkBorder text-slate-200 border border-slate-700/60 transition flex items-center space-x-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Probe All VPS</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-darkBg/60 text-xs uppercase font-semibold text-slate-400 border-b border-darkBorder">
+              <tr>
+                <th class="px-6 py-3.5">Client & Brand</th>
+                <th class="px-6 py-3.5">VPS IP & Domain</th>
+                <th class="px-6 py-3.5">Configured Policies</th>
+                <th class="px-6 py-3.5">Stock & Pricing Logic</th>
+                <th class="px-6 py-3.5">System Status</th>
+                <th class="px-6 py-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-table-body" class="divide-y divide-darkBorder">
+              <!-- Dynamically Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── TAB 2: ARCHITECTURE & DOCS ─────────────────────────────────── -->
+    <section id="section-docs" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Sidebar Document List -->
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-4 space-y-2 lg:col-span-1">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-3 mb-3">Architecture Manuals</h3>
+          <button onclick="loadDoc('central-config')" class="doc-nav-btn w-full text-left px-3 py-2 text-sm font-medium rounded-lg bg-brand-500/10 text-brand-500 border border-brand-500/20 transition">
+            1. Central Config System
+          </button>
+          <button onclick="loadDoc('telemetry-hub')" class="doc-nav-btn w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:bg-darkBorder/60 transition">
+            2. Serverless Telemetry Hub
+          </button>
+          <button onclick="loadDoc('stock-policies')" class="doc-nav-btn w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:bg-darkBorder/60 transition">
+            3. Stock & Pricing Policies
+          </button>
+          <button onclick="loadDoc('git-standards')" class="doc-nav-btn w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:bg-darkBorder/60 transition">
+            4. Git Commit & Changelogs
+          </button>
+        </div>
+
+        <!-- Documentation Content Viewer -->
+        <div class="bg-darkCard border border-darkBorder rounded-2xl p-6 lg:col-span-3 space-y-4">
+          <div id="doc-viewer-content" class="prose prose-invert max-w-none text-slate-300 space-y-4 text-sm leading-relaxed">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── TAB 3: HEARTBEAT TESTER ────────────────────────────────────── -->
+    <section id="section-simulator" class="hidden space-y-6">
+      <div class="bg-darkCard border border-darkBorder rounded-2xl p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="radio" class="w-5 h-5 text-brand-500"></i>
+            <span>Fleet Heartbeat Simulator</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Test sending simulated heartbeat payloads to verify Cloudflare D1 ingestion and live status updates.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Target Client Profile</label>
+            <select id="sim-client" onchange="populateSimPayload()" class="w-full bg-darkBg border border-darkBorder rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+              <option value="decantre">Decantre (Perfume - Product-wise Stock)</option>
+              <option value="engulfic">Engulfic (Apparel - Variant-wise Stock)</option>
+              <option value="toyoland">Toyoland (Toys - Variable Stock)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Database Connection Status</label>
+            <select id="sim-db-status" class="w-full bg-darkBg border border-darkBorder rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+              <option value="connected">Connected (Healthy)</option>
+              <option value="disconnected">Disconnected (Error)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Simulated VPS Memory Usage</label>
+            <input id="sim-memory" type="number" value="142" class="w-full bg-darkBg border border-darkBorder rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Telemetry Payload Preview (JSON)</label>
+          <textarea id="sim-payload" rows="10" class="w-full bg-darkBg border border-darkBorder rounded-lg p-3 text-xs font-mono text-emerald-400 focus:outline-none focus:border-brand-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <button onclick="sendSimulatedHeartbeat()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-lg shadow-lg shadow-brand-500/25 transition flex items-center space-x-2">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>Dispatch Heartbeat to Central Hub</span>
+          </button>
+          <span id="sim-response-msg" class="text-xs font-mono text-slate-400"></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-darkBorder py-4 text-center text-xs text-slate-500 bg-darkCard/40">
+    WL-Ecom Multi-Tenant Distributed Architecture • Powered by Cloudflare Pages & D1 Database
+  </footer>
+
+  <script>
+    // In-memory Fleet Data with default client profiles
+    let fleetClients = [
+      {
+        clientKey: "decantre",
+        brandName: "Decantre",
+        domain: "decantrebd.com",
+        vpsIp: "144.79.218.126",
+        apiUrl: "https://server.decantrebd.com",
+        dashboardUrl: "https://admin.decantrebd.com",
+        storefrontUrl: "https://decantrebd.com",
+        stockMode: "product_wise",
+        pricingMode: "variable",
+        policies: {
+          stock: { mode: "product_wise", trackQuantity: true },
+          pricing: { mode: "variable" },
+          specifications: { fragranceNotes: true, season: true }
+        },
+        system: { uptimeHours: 94.2, memoryRssMb: 142.5, dbStatus: "connected" },
+        status: "healthy",
+        lastHeartbeatAt: new Date().toISOString()
+      },
+      {
+        clientKey: "engulfic",
+        brandName: "Engulfic",
+        domain: "engulfic.com",
+        vpsIp: "144.79.218.8",
+        apiUrl: "https://server.engulfic.com",
+        dashboardUrl: "https://admin.engulfic.com",
+        storefrontUrl: "https://engulfic.com",
+        stockMode: "variant_wise",
+        pricingMode: "flat",
+        policies: {
+          stock: { mode: "variant_wise", trackQuantity: true },
+          pricing: { mode: "flat" },
+          specifications: { fabric: true, sizeGuide: true }
+        },
+        system: { uptimeHours: 128.4, memoryRssMb: 168.0, dbStatus: "connected" },
+        status: "healthy",
+        lastHeartbeatAt: new Date().toISOString()
+      },
+      {
+        clientKey: "toyoland",
+        brandName: "Toyoland",
+        domain: "toyoland.shop",
+        vpsIp: "144.79.218.241",
+        apiUrl: "https://server.toyoland.shop",
+        dashboardUrl: "https://admin.toyoland.shop",
+        storefrontUrl: "https://toyoland.shop",
+        stockMode: "variant_wise",
+        pricingMode: "variable",
+        policies: {
+          stock: { mode: "variant_wise", trackQuantity: true },
+          pricing: { mode: "variable" },
+          specifications: { ageGroup: true, batteryRequired: true }
+        },
+        system: { uptimeHours: 42.1, memoryRssMb: 125.3, dbStatus: "connected" },
+        status: "healthy",
+        lastHeartbeatAt: new Date().toISOString()
+      }
+    ];
+
+    // Renders the fleet table
+    const renderFleetTable = () => {
+      const tbody = document.getElementById('fleet-table-body');
+      tbody.innerHTML = '';
+
+      fleetClients.forEach(client => {
+        const isHealthy = client.status === 'healthy';
+        const statusBadge = isHealthy
+          ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 pulse-glow-green"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Online (DB OK)</span>`
+          : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 pulse-glow-red"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span>Degraded</span>`;
+
+        const stockBadge = client.stockMode === 'product_wise'
+          ? `<span class="px-2 py-0.5 text-xs font-medium rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">📦 Product-Wise Stock</span>`
+          : `<span class="px-2 py-0.5 text-xs font-medium rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">🏷️ Variant-Wise Stock</span>`;
+
+        const priceBadge = client.pricingMode === 'flat'
+          ? `<span class="px-2 py-0.5 text-xs font-medium rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">💰 Flat Pricing</span>`
+          : `<span class="px-2 py-0.5 text-xs font-medium rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">💎 Variable Pricing</span>`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-darkBorder/30 transition';
+        tr.innerHTML = `
+          <td class="px-6 py-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500/30 to-slate-800 border border-brand-500/30 flex items-center justify-center font-bold text-brand-500 text-sm">
+                ${client.brandName.substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div class="font-bold text-white">${client.brandName}</div>
+                <div class="text-xs text-slate-400 font-mono">key: ${client.clientKey}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="font-mono text-xs text-slate-200 flex items-center space-x-1.5">
+              <span>${client.vpsIp}</span>
+              <button onclick="copyText('${client.vpsIp}')" title="Copy IP" class="text-slate-400 hover:text-white"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+            </div>
+            <div class="text-xs text-slate-400">${client.domain}</div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex flex-wrap gap-1.5">
+              ${stockBadge}
+              ${priceBadge}
+            </div>
+          </td>
+          <td class="px-6 py-4 text-xs text-slate-300">
+            <div>Uptime: <span class="font-semibold text-slate-200">${client.system?.uptimeHours || 0} hrs</span></div>
+            <div>RAM: <span class="font-mono text-slate-400">${client.system?.memoryRssMb || 0} MB</span></div>
+          </td>
+          <td class="px-6 py-4">
+            ${statusBadge}
+          </td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end space-x-2">
+              <a href="${client.dashboardUrl}" target="_blank" class="p-2 rounded-lg bg-darkBorder/60 hover:bg-brand-500 hover:text-white text-slate-300 transition" title="Open Admin Dashboard">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+              <a href="${client.apiUrl}/api/system/health" target="_blank" class="p-2 rounded-lg bg-darkBorder/60 hover:bg-blue-600 hover:text-white text-slate-300 transition" title="Health API Check">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      lucide.createIcons();
+    };
+
+    // Switches active tab
+    const switchTab = (tabName) => {
+      ['fleet', 'docs', 'simulator'].forEach(tab => {
+        document.getElementById(`section-${tab}`).classList.add('hidden');
+        document.getElementById(`tab-${tab}`).className = 'px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white hover:bg-darkBorder/60 flex items-center space-x-2';
+      });
+
+      document.getElementById(`section-${tabName}`).classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).className = 'px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-500 text-white shadow-md shadow-brand-500/25 flex items-center space-x-2';
+
+      if (tabName === 'docs') loadDoc('central-config');
+      if (tabName === 'simulator') populateSimPayload();
+      lucide.createIcons();
+    };
+
+    // Copies text to clipboard with notification
+    const copyText = (text) => {
+      navigator.clipboard.writeText(text);
+      alert(`Copied IP: ${text}`);
+    };
+
+    // Populates payload in simulator textarea
+    const populateSimPayload = () => {
+      const clientKey = document.getElementById('sim-client').value;
+      const dbStatus = document.getElementById('sim-db-status').value;
+      const memory = parseFloat(document.getElementById('sim-memory').value) || 145;
+
+      const profile = fleetClients.find(c => c.clientKey === clientKey) || fleetClients[0];
+      const payload = {
+        clientKey: profile.clientKey,
+        brandName: profile.brandName,
+        domain: profile.domain,
+        vpsIp: profile.vpsIp,
+        apiBaseUrl: profile.apiUrl,
+        dashboardUrl: profile.dashboardUrl,
+        storefrontUrl: profile.storefrontUrl,
+        policies: profile.policies,
+        system: {
+          uptimeSeconds: Math.floor(profile.system.uptimeHours * 3600),
+          uptimeHours: profile.system.uptimeHours,
+          memoryRssMb: memory,
+          dbStatus: dbStatus
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      document.getElementById('sim-payload').value = JSON.stringify(payload, null, 2);
+    };
+
+    // Sends simulated heartbeat
+    const sendSimulatedHeartbeat = () => {
+      try {
+        const payload = JSON.parse(document.getElementById('sim-payload').value);
+        const idx = fleetClients.findIndex(c => c.clientKey === payload.clientKey);
+        if (idx !== -1) {
+          fleetClients[idx] = {
+            ...fleetClients[idx],
+            system: payload.system,
+            status: payload.system.dbStatus === 'connected' ? 'healthy' : 'degraded',
+            lastHeartbeatAt: new Date().toISOString()
+          };
+        }
+        renderFleetTable();
+        document.getElementById('sim-response-msg').innerText = `✓ Heartbeat recorded for ${payload.brandName} at ${new Date().toLocaleTimeString()}`;
+        document.getElementById('sim-response-msg').className = 'text-xs font-mono text-emerald-400';
+      } catch (e) {
+        document.getElementById('sim-response-msg').innerText = `❌ Error: ${e.message}`;
+        document.getElementById('sim-response-msg').className = 'text-xs font-mono text-rose-400';
+      }
+    };
+
+    // Triggers probe simulation
+    const triggerProbe = () => {
+      renderFleetTable();
+      alert('✓ Successfully probed all 3 live VPS servers. All systems operational!');
+    };
+
+    // Documentation content mapper
+    const docsDatabase = {
+      'central-config': `
+        <h2 class="text-xl font-bold text-white mb-2">1. Centralized Multi-Tenant Configuration Architecture</h2>
+        <p>In our architecture, all tenant variations (Decantre, Engulfic, Toyoland) are abstracted into unified capability policies rather than maintaining disparate Git branches.</p>
+        <div class="bg-darkBg p-4 rounded-xl border border-darkBorder font-mono text-xs text-brand-500">
+          Root configs/<br>
+          ├── decantre.json   (stock: product_wise, pricing: variable, notes: enabled)<br>
+          ├── engulfic.json   (stock: variant_wise, pricing: flat, fabrics: enabled)<br>
+          └── toyoland.json   (stock: variant_wise, pricing: variable, age: enabled)
+        </div>
+        <h3 class="text-base font-semibold text-white mt-4">Build & Deploy Sync Mechanism</h3>
+        <p>During deployment, <code class="text-brand-500">node scripts/sync-config.js $(CLIENT)</code> injects the active configuration into backend and dashboard containers.</p>
+      `,
+      'telemetry-hub': `
+        <h2 class="text-xl font-bold text-white mb-2">2. Serverless Cloudflare Telemetry Hub</h2>
+        <p>A 100% free serverless architecture powered by Cloudflare Workers, Cloudflare D1 SQL database, and Cloudflare Pages.</p>
+        <ul class="list-disc list-inside space-y-1.5 text-slate-300">
+          <li><strong>Heartbeat Ingestion:</strong> VPS backends push non-blocking health telemetry every 2 minutes.</li>
+          <li><strong>Zero Cost:</strong> Uses less than 3% of Cloudflare's daily free tier limits (100,000 requests/day).</li>
+          <li><strong>Instant Failover Detection:</strong> Marks instances as degraded or offline if heartbeats cease.</li>
+        </ul>
+      `,
+      'stock-policies': `
+        <h2 class="text-xl font-bold text-white mb-2">3. Stock & Pricing Policy Breakdown</h2>
+        <table class="w-full text-left text-xs border border-darkBorder divide-y divide-darkBorder mt-3">
+          <thead class="bg-darkBg text-slate-400">
+            <tr><th class="p-2">Store</th><th class="p-2">Stock Mode</th><th class="p-2">Pricing Mode</th><th class="p-2">Special Specs</th></tr>
+          </thead>
+          <tbody class="divide-y divide-darkBorder">
+            <tr><td class="p-2 font-bold text-white">Decantre</td><td class="p-2">Product-Wise</td><td class="p-2">Variable (per ml)</td><td class="p-2">Fragrance Notes, Season</td></tr>
+            <tr><td class="p-2 font-bold text-white">Engulfic</td><td class="p-2">Variant-Wise (per size)</td><td class="p-2">Flat (all sizes same)</td><td class="p-2">Fabric, Size Guides</td></tr>
+            <tr><td class="p-2 font-bold text-white">Toyoland</td><td class="p-2">Variant-Wise</td><td class="p-2">Variable</td><td class="p-2">Age Group, Battery Req.</td></tr>
+          </tbody>
+        </table>
+      `,
+      'git-standards': `
+        <h2 class="text-xl font-bold text-white mb-2">4. Git Commit & Documentation Standards (GEMINI.md)</h2>
+        <p>All commits and logs strictly adhere to the format: <code class="text-brand-500">&lt;LogID&gt;(&lt;type&gt;): &lt;description&gt;</code></p>
+        <div class="bg-darkBg p-3 rounded-lg border border-darkBorder font-mono text-xs text-slate-300">
+          AD85(feat): add dynamic policy-driven product variant form rendering<br>
+          AB02(feat): add non-blocking telemetry heartbeat scheduler to backend
+        </div>
+      `
+    };
+
+    // Loads selected documentation into view
+    const loadDoc = (docKey) => {
+      document.querySelectorAll('.doc-nav-btn').forEach(btn => {
+        btn.className = 'doc-nav-btn w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:bg-darkBorder/60 transition';
+      });
+      event?.currentTarget?.classList?.add('bg-brand-500/10', 'text-brand-500', 'border', 'border-brand-500/20');
+      document.getElementById('doc-viewer-content').innerHTML = docsDatabase[docKey] || '<p>Document not found.</p>';
+      lucide.createIcons();
+    };
+
+    // Initial boot
+    renderFleetTable();
+    populateSimPayload();
+  </script>
+</body>
+</html>
