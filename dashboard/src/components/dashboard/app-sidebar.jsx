@@ -75,27 +75,9 @@ export function AppSidebar({ ...props }) {
   const { state, setOpen } = useSidebar()
   const { brandName, features } = clientConfig
 
-  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : (pkg?.version || "3.2.5")
-
+  // Single-open accordion state: only one parent submenu open at a time
   const [openMenu, setOpenMenu] = React.useState(null)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = React.useState(false)
-
-  // Ensure current submenus are automatically expanded on page load
-  React.useEffect(() => {
-    if (pathname.startsWith("/dashboard/orders")) setOpenMenu("orders")
-    else if (pathname.startsWith("/dashboard/products")) setOpenMenu("products")
-    else if (pathname.startsWith("/dashboard/billing")) setOpenMenu("billing")
-    else if (pathname.startsWith("/dashboard/tools")) setOpenMenu("tools")
-    else if (
-      pathname.startsWith("/dashboard/analytics") ||
-      pathname.startsWith("/dashboard/reports") ||
-      pathname.startsWith("/dashboard/members") ||
-      pathname.startsWith("/dashboard/activity-logs") ||
-      pathname.startsWith("/dashboard/users") ||
-      pathname.startsWith("/dashboard/reviews") ||
-      pathname.startsWith("/dashboard/trash")
-    ) setOpenMenu("admin")
-  }, [pathname])
 
   const toggleMenu = (menuKey) => {
     setOpenMenu((prev) => (prev === menuKey ? null : menuKey))
@@ -106,26 +88,14 @@ export function AppSidebar({ ...props }) {
     logout()
   }
 
-  const userRole = user?.role || "Admin"
-
+  const userRole = user?.role || "Marketing Expert"
 
   const isAllowed = (menuKey) => {
-    // 1. Admin and Owner always have full access to all menus
-    const normalized = String(userRole || "").toLowerCase().trim();
-    if (normalized === "owner" || normalized === "admin" || normalized === "superadmin" || normalized === "administrator") {
-      return true;
-    }
-
-    // 2. Check feature flags first
+    // 1. Check feature flags first
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
 
-    // 3. Check clientConfig.allowedMenus if defined
-    if (clientConfig?.allowedMenus && !clientConfig.allowedMenus.includes('*') && !clientConfig.allowedMenus.includes(menuKey)) {
-      return false
-    }
-
-    // 4. Check RBAC role permissions
+    // 2. Check RBAC role permissions
     return hasMenuAccess(userRole, menuKey)
   }
 
@@ -135,33 +105,28 @@ export function AppSidebar({ ...props }) {
         <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center">
           {state === "expanded" ? (
             <>
-              <div className="flex flex-col items-start gap-0.5 min-w-0 pr-2 overflow-hidden">
-                <DecantreLogo className="h-6 w-auto text-primary shrink-0" iconOnly={false} />
-                <span className="text-[10px] font-mono font-bold text-muted-foreground/90 tracking-wider pl-0.5">
-                  v{appVersion}
+              <div className="flex flex-col items-start gap-0.5 overflow-hidden">
+                <DecantreLogo className="h-5 w-auto max-w-[115px] text-primary shrink-0" iconOnly={false} />
+                <span className="text-[10px] font-mono font-medium text-muted-foreground/75 tracking-wider pl-0.5">
+                  v{pkg.version || "3.2.2"}
                 </span>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
                 title="Close Sidebar"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </>
           ) : (
-            <div className="flex flex-col items-center gap-1">
-              <button
-                onClick={() => setOpen(true)}
-                className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0 cursor-pointer"
-                title="Open Sidebar"
-              >
-                <Menu className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-[9px] font-mono font-bold text-muted-foreground/80 tracking-tighter">
-                v{appVersion}
-              </span>
-            </div>
+            <button
+              onClick={() => setOpen(true)}
+              className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center shrink-0"
+              title="Open Sidebar"
+            >
+              <Menu className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
       </SidebarHeader>
@@ -594,15 +559,8 @@ export function AppSidebar({ ...props }) {
                     {user?.role || 'Admin'}
                   </span>
                 </div>
-                <div className="pt-1 border-t border-border/60 flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-muted-foreground">App Version:</span>
-                  <span className="text-[11px] font-mono font-bold text-primary">
-                    v{appVersion}
-                  </span>
-                </div>
               </div>
             </DropdownMenuContent>
-
           </DropdownMenu>
 
           {/* 2. All Media Icon Button (Hidden when collapsed) */}

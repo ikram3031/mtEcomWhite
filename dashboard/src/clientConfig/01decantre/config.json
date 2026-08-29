@@ -52,7 +52,6 @@
     ]
   },
   "allowedMenus": [
-    "*",
     "overview",
     "orders",
     "orders.new",
@@ -74,17 +73,14 @@
     "users",
     "developer",
     "tools",
-    "tools.messages",
     "tools.assets",
     "tools.bulk-image-resize",
     "tools.meta-catalog",
     "studio",
     "studio.batch-images",
     "activity-logs",
-    "trash",
-    "settings"
+    "trash"
   ],
-
   "theme": {
     "light": {
       "--background": "#ffffff",

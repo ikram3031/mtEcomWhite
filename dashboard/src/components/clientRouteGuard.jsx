@@ -27,19 +27,6 @@ const getRequiredPermission = (pathname) => {
   if (cleanPath.startsWith('/dashboard/users')) return 'users';
   if (cleanPath.startsWith('/dashboard/developer')) return 'developer';
 
-  if (cleanPath === '/dashboard/tools/messages') return 'tools.messages';
-  if (cleanPath === '/dashboard/tools/assets') return 'tools.assets';
-  if (cleanPath === '/dashboard/tools/bulk-image-resize') return 'tools.bulk-image-resize';
-  if (cleanPath === '/dashboard/tools/meta-catalog') return 'tools.meta-catalog';
-  if (cleanPath.startsWith('/dashboard/tools')) return 'tools';
-
-  if (cleanPath.startsWith('/dashboard/studio')) return 'studio';
-  if (cleanPath.startsWith('/dashboard/activity-logs')) return 'activity-logs';
-  if (cleanPath.startsWith('/dashboard/reviews')) return 'reviews';
-  if (cleanPath.startsWith('/dashboard/trash')) return 'trash';
-  if (cleanPath.startsWith('/dashboard/settings')) return 'settings';
-  if (cleanPath.startsWith('/dashboard/analytics')) return 'analytics';
-
   return null; // Public or root dashboard path
 };
 
@@ -47,13 +34,8 @@ export const ClientRouteGuard = ({ children }) => {
   const location = useLocation();
   const requiredPermission = getRequiredPermission(location.pathname);
   
-  const allowedMenus = clientConfig?.allowedMenus || [];
+  const allowedMenus = clientConfig.allowedMenus || [];
   
-  // Wildcard allowed
-  if (allowedMenus.includes('*')) {
-    return children;
-  }
-
   if (requiredPermission && !allowedMenus.includes(requiredPermission)) {
     // Redirect to dashboard root if client lacks permission
     return <Navigate to="/dashboard" replace />;
@@ -63,4 +45,3 @@ export const ClientRouteGuard = ({ children }) => {
 };
 
 export default ClientRouteGuard;
-
