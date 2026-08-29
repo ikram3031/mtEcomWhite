@@ -79,8 +79,11 @@
     "tools.bulk-image-resize",
     "tools.meta-catalog",
     "trash",
+    "logs",
+    "system-logs",
     "settings"
   ],
+
 
   "theme": {
     "light": {
