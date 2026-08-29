@@ -1,4 +1,4 @@
-﻿import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
@@ -81,9 +81,10 @@ export function initWebSocketServer(httpServer) {
 
     // Send initial notification snapshot upon connection
     try {
+      const notificationFilter = { active: true, type: { $in: ["newOrder", "contactMessage"] } };
       const [topLogs, unreadCount] = await Promise.all([
-        LogModel.find({ active: true, type: "newOrder" }).sort({ createdAt: -1 }).limit(5).lean(),
-        LogModel.countDocuments({ active: true, type: "newOrder", readStatus: false }),
+        LogModel.find(notificationFilter).sort({ createdAt: -1 }).limit(10).lean(),
+        LogModel.countDocuments({ ...notificationFilter, readStatus: false }),
       ]);
 
       ws.send(
@@ -154,7 +155,11 @@ export async function broadcastLiveNotification(logEntry) {
   if (!authenticatedClients.size) return;
 
   try {
-    const unreadCount = await LogModel.countDocuments({ active: true, type: "newOrder", readStatus: false });
+    const unreadCount = await LogModel.countDocuments({
+      active: true,
+      type: { $in: ["newOrder", "contactMessage"] },
+      readStatus: false,
+    });
 
     const payload = JSON.stringify({
       event: "NEW_NOTIFICATION",

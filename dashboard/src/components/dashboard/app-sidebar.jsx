@@ -29,6 +29,7 @@ import {
   LogOut,
   User,
   ChevronRight,
+  Mail,
   Image as ImageIcon,
 } from "lucide-react"
 
@@ -449,6 +450,17 @@ export function AppSidebar({ ...props }) {
               </SidebarMenuButton>
               {openMenu === "tools" && (
                 <SidebarMenuSub>
+                  {isAllowed("tools.messages") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/messages" || pathname.startsWith("/dashboard/tools/messages")}
+                        render={<Link to="/dashboard/tools/messages" />}
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>Messages</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                   {isAllowed("tools.assets") && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton

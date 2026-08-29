@@ -7,14 +7,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, ShoppingBag, CheckCheck, Clock, ArrowRight } from 'lucide-react';
+import { Bell, ShoppingBag, Mail, CheckCheck, Clock, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+// Renders the real-time notification bell and dropdown list
 export const NotificationBell = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -30,13 +30,14 @@ export const NotificationBell = () => {
       return res.data;
     },
     enabled: Boolean(user),
-    refetchInterval: 120000, // 2 minutes polling
+    refetchInterval: 120000, // 2 minutes polling fallback
     refetchOnWindowFocus: true,
   });
 
   const logs = notificationData?.data || [];
   const unreadCount = notificationData?.unreadCount || 0;
 
+  // Marks all unread notifications as read
   const handleMarkAllRead = async (e) => {
     e?.stopPropagation();
     setIsMarkingRead(true);
@@ -52,6 +53,7 @@ export const NotificationBell = () => {
     }
   };
 
+  // Handles clicking a notification item and redirects to the appropriate dashboard view
   const handleNotificationClick = async (log) => {
     if (!log.readStatus) {
       try {
@@ -63,9 +65,14 @@ export const NotificationBell = () => {
       }
     }
     setIsOpen(false);
-    navigate('/dashboard/orders');
+    if (log.type === 'contactMessage') {
+      navigate('/dashboard/tools/messages');
+    } else {
+      navigate('/dashboard/orders');
+    }
   };
 
+  // Calculates and formats relative time string
   const formatTimeAgo = (dateStr) => {
     if (!dateStr) return '';
     const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -85,7 +92,7 @@ export const NotificationBell = () => {
             variant="outline"
             size="icon"
             className="relative cursor-pointer hover:bg-muted/60 transition-colors"
-            title="Order Notifications"
+            title="Notifications"
           >
             <Bell className="h-4 w-4 text-foreground" />
             {unreadCount > 0 && (
@@ -102,8 +109,8 @@ export const NotificationBell = () => {
         {/* Header */}
         <div className="flex items-center justify-between p-3.5 border-b bg-muted/20">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4 text-primary" />
-            <h4 className="text-xs font-bold text-foreground">Order Notifications</h4>
+            <Bell className="h-4 w-4 text-primary" />
+            <h4 className="text-xs font-bold text-foreground">Notifications</h4>
             {unreadCount > 0 && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                 {unreadCount} new
@@ -128,13 +135,15 @@ export const NotificationBell = () => {
         <div className="max-h-[320px] overflow-y-auto divide-y divide-border/40 py-1">
           {logs.length === 0 ? (
             <div className="py-8 text-center text-xs text-muted-foreground space-y-1">
-              <ShoppingBag className="h-6 w-6 mx-auto text-muted-foreground/40 mb-1.5" />
-              <p className="font-semibold text-foreground">No new order notifications</p>
-              <p className="text-[11px]">When customers place orders, they will appear here.</p>
+              <Bell className="h-6 w-6 mx-auto text-muted-foreground/40 mb-1.5" />
+              <p className="font-semibold text-foreground">No new notifications</p>
+              <p className="text-[11px]">When customers place orders or send messages, they will appear here.</p>
             </div>
           ) : (
             logs.map((log) => {
               const isUnread = !log.readStatus;
+              const isContact = log.type === 'contactMessage';
+
               return (
                 <DropdownMenuItem
                   key={log.id || log._id}
@@ -143,14 +152,28 @@ export const NotificationBell = () => {
                     isUnread ? 'bg-primary/[0.04]' : 'opacity-80'
                   }`}
                 >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    isUnread ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    <ShoppingBag className="h-4 w-4" />
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      isUnread
+                        ? isContact
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                          : 'bg-primary/15 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {isContact ? (
+                      <Mail className="h-4 w-4" />
+                    ) : (
+                      <ShoppingBag className="h-4 w-4" />
+                    )}
                   </div>
 
                   <div className="flex-1 space-y-1 overflow-hidden">
-                    <p className={`text-xs leading-snug truncate ${isUnread ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
+                    <p
+                      className={`text-xs leading-snug truncate ${
+                        isUnread ? 'font-semibold text-foreground' : 'text-foreground/80'
+                      }`}
+                    >
                       {log.description}
                     </p>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -186,3 +209,4 @@ export const NotificationBell = () => {
     </DropdownMenu>
   );
 };
+

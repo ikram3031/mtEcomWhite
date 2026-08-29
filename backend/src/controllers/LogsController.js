@@ -54,17 +54,14 @@ export const listLogs = async (req, res, next) => {
   }
 };
 
-/**
- * Get top 5 newOrder notification logs and total unread count
- * GET /api/v1/logs/notifications
- */
+// Get top 10 notification logs and total unread count
 export const getNotificationLogs = async (req, res, next) => {
   try {
-    const filter = { active: true, type: "newOrder" };
+    const filter = { active: true, type: { $in: ["newOrder", "contactMessage"] } };
 
     const [logs, unreadCount] = await Promise.all([
-      LogModel.find(filter).sort({ createdAt: -1 }).limit(5).lean(),
-      LogModel.countDocuments({ active: true, type: "newOrder", readStatus: false }),
+      LogModel.find(filter).sort({ createdAt: -1 }).limit(10).lean(),
+      LogModel.countDocuments({ ...filter, readStatus: false }),
     ]);
 
     return res.json({
@@ -77,10 +74,7 @@ export const getNotificationLogs = async (req, res, next) => {
   }
 };
 
-/**
- * Create a new log entry
- * POST /api/v1/logs
- */
+// Create a new log entry
 export const createLog = async (req, res, next) => {
   try {
     const { type = "created", description, readStatus = false } = req.body;
@@ -120,10 +114,7 @@ export const createLog = async (req, res, next) => {
   }
 };
 
-/**
- * Mark logs as read (set readStatus: true)
- * PUT /api/v1/logs/mark-read
- */
+// Mark logs as read (set readStatus: true)
 export const markLogsRead = async (req, res, next) => {
   try {
     const { ids } = req.body;
@@ -140,7 +131,7 @@ export const markLogsRead = async (req, res, next) => {
         ),
       };
     } else {
-      filter.type = "newOrder";
+      filter.type = { $in: ["newOrder", "contactMessage"] };
       filter.readStatus = false;
     }
 
@@ -148,7 +139,11 @@ export const markLogsRead = async (req, res, next) => {
       $set: { readStatus: true, updatedBy: userDid },
     });
 
-    const unreadCount = await LogModel.countDocuments({ active: true, type: "newOrder", readStatus: false });
+    const unreadCount = await LogModel.countDocuments({
+      active: true,
+      type: { $in: ["newOrder", "contactMessage"] },
+      readStatus: false,
+    });
     broadcastNotificationReadState(unreadCount).catch((err) => {
       console.error("Non-blocking WS read state broadcast error:", err);
     });

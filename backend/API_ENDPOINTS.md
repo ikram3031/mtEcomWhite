@@ -11,10 +11,14 @@ Base API Address: `https://server.decantrebd.com`
 - **GET `/`** - List products with rich query filtering (`q`, `category`, `brand`, `stockStatus`, `type`, `season`, `minPrice`, `maxPrice`, `sortBy`, `order`, `limit`, `skip`).
 - **POST `/search`** - List/search products using JSON payload filters.
 - **GET `/:identifier`** - Fetch details of a single product using MongoDB `_id`, `slug`, or `did`.
-- **POST `/`** - Create a new product _(Requires JWT: Owner, Admin)_.
+- **POST `/`** - Create a new product _(Requires JWT: Owner, Admin, Manager)_.
 - **PUT `/:id`** - Update an existing product _(Requires JWT: Owner, Admin, Manager)_.
 - **DELETE `/:id`** - Delete a product _(Requires JWT: Owner, Admin, Manager)_.
 - **GET `/api/v1/search-products`** - Root alias for autocomplete and live search.
+
+### Dashboard Deep Faceted Product Search
+**Base Prefix:** `/api/v1/dash/products` _(Requires JWT: Owner, Admin, Manager, Marketing Expert)_
+- **POST `/`** - Faceted aggregation search across products, categories, brands, and variations with dynamic metadata counts.
 
 ---
 
@@ -128,17 +132,63 @@ Base API Address: `https://server.decantrebd.com`
 
 ---
 
-## 10. Dashboard Analytics
+## 10. Dashboard Analytics & Reports
 
 **Base Prefix:** `/api/v1/dashboard`
-
 - **GET `/orders/daily`** - Daily order counts for custom day ranges (default 30 days, BD Time).
 - **GET `/kpi`** - KPI metrics (Sales, Completed Orders, AOV, Members) with trend comparisons.
 - **GET `/orders/status-distribution`** - Order distribution counts by status.
 
+**Base Prefix:** `/api/v1/reports` _(Requires JWT: Owner, Admin, Manager)_
+- **GET `/summary`** - High-level summary (Gross, Net, Discounts, AOV, POS vs Online).
+- **GET `/sales-timeline`** - Daily financial timeseries grouping for chart visualizers.
+- **GET `/top-products`** - Best-selling product performance rankings.
+- **GET `/payment-methods`** - Transaction volume breakdowns by payment gateway.
+- **GET `/inventory`** - Real-time inventory valuation and low stock alerts.
+
 ---
 
-## 11. AI Product Image Studio
+## 11. Assets & Media Management
+
+**Base Prefix:** `/api/v1/images`
+- **GET `/`** - List all uploaded media files with pagination and search _(Requires JWT)_.
+- **GET `/resize`** - Image URL redirection.
+- **POST `/upload`** - Upload product, attribute, or general image with automatic WebP conversion _(Requires JWT: Owner, Admin, Manager)_.
+
+**Base Prefix:** `/api/v1/dash/assets` _(Requires JWT: Owner, Admin)_
+- **GET `/`** - List slot asset files (banners, sliders, icons).
+- **POST `/upload-slot`** - Upload, compress (<= 230KB WebP), and overwrite asset slot file.
+- **GET `/download/:filename`** - Download asset file.
+- **DELETE `/:filename`** - Delete asset file.
+
+**Base Prefix:** `/api/v1/assets` _(Requires JWT)_
+- Core asset collection CRUD endpoints.
+
+---
+
+## 12. Media Storage Audit & Cloudflare R2 Sync
+
+**Base Prefix:** `/api/v1/admin/media-audit` _(Requires JWT: Owner, Admin)_
+
+- **GET `/summary`** - Storage metrics, orphan counts, and R2 sync status.
+- **GET `/orphans`** - Paginated list of unreferenced orphan images.
+- **POST `/scan`** - Trigger on-demand filesystem vs DB orphan scan.
+- **POST `/r2-sync`** - Trigger Cloudflare R2 cloud backup synchronization.
+- **POST `/whitelist`** - Whitelist protected files from cleanup.
+- **DELETE `/confirm`** - Confirm and permanently delete orphan files from disk.
+
+---
+
+## 13. Store Utilities Showcases
+
+**Base Prefix:** `/api/v1/store-utils`
+
+- **GET `/`** - Get configured Featured and Best Seller products showcase lists.
+- **PUT `/`** - Update Featured and Best Seller product arrays _(Requires JWT: Owner, Admin, Manager)_.
+
+---
+
+## 14. AI Product Image Studio
 
 **Base Prefix:** `/api/v1/studio` _(Requires JWT, payload up to 60MB)_
 
@@ -150,14 +200,12 @@ Base API Address: `https://server.decantrebd.com`
 
 ---
 
-## 12. Email, Subscribers, Contact & System
+## 15. Email, Subscribers, Contact & System
 
 - **Email:** `GET|POST /api/v1/sendEmail`, `POST /api/v1/sendEmail/invoice`
 - **Subscribers:** `POST /api/v1/subscribers`
-- **Contact:** `POST /api/v1/contact`
-- **Images:** `GET /api/v1/images/resize`, `POST /api/v1/images/upload` _(Requires JWT: Owner, Admin)_
+- **Contact & Messages:** `POST /api/v1/contact`, `GET /api/v1/contact/messages`, `GET /api/v1/contact/messages/:id`, `POST /api/v1/contact/messages/:id/reply`, `PATCH /api/v1/contact/messages/:id/status`, `DELETE /api/v1/contact/messages/:id`, `POST /api/v1/contact/messages/bulk-delete` _(Requires JWT for message management)_
 - **System Metadata:** `GET /api/v1/system/metadata`, `GET /api/v1/system/info` _(Requires JWT)_
 - **Version:** `GET /api/v1/version` _(Requires JWT: Owner, Admin)_
 - **Logs:** `GET /api/v1/logs`, `GET /api/v1/logs/notifications`, `POST /api/v1/logs`, `PUT /api/v1/logs/mark-read`, `PUT /api/v1/logs/mark-unread`, `DELETE /api/v1/logs/:id`, `POST /api/v1/logs/bulk-delete`
 - **Developer Tools:** `GET /api/v1/developer/logs`, `GET /api/v1/developer/logs/stream` (SSE), `GET /api/v1/developer/docs` (Scalar UI), `GET /api/v1/developer/db-backup` (Gzip backup)
-

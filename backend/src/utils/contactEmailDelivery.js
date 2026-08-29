@@ -48,60 +48,78 @@ const lightThemeHtml = (title, body) => `
 </html>
 `;
 
-export async function sendContactEmails({ name, email, phone, message }) {
+// Sends acknowledgment email to the customer who submitted the contact form
+export const sendContactAcknowledgment = async ({ name, email, message }) => {
   try {
-    if (!env.SMTP_USER || !env.SMTP_PASSWORD) return;
+    if (!env.SMTP_USER || !env.SMTP_PASSWORD || !email) return;
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Store Contact";
     const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
 
-    // 1. Find all owners
-    const owners = await UserModel.find({ role: "Owner" }).select("email");
-    const ownerEmails = owners.map((o) => o.email).filter(Boolean);
+    const customerHtml = lightThemeHtml(
+      "Thank you for contacting us!",
+      `<p>Hi ${name || "Valued Customer"},</p>
+       <p>We have received your message and our support team will get back to you as soon as possible.</p>
+       <p><strong>Your Message:</strong></p>
+       <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; color: #475569; border-left: 4px solid #0284c7;">
+         ${(message || "").replace(/\n/g, "<br>")}
+       </div>
+       <p style="margin-top: 20px;">Best regards,<br>The ${fromName} Team</p>`
+    );
 
-    // 2. Send to Owners
-    if (ownerEmails.length > 0) {
-      const adminHtml = lightThemeHtml(
-        "New Contact Form Submission",
-        `<p><strong>Name:</strong> ${name}</p>
-         <p><strong>Email:</strong> ${email}</p>
-         <p><strong>Phone:</strong> ${phone || "N/A"}</p>
-         <p><strong>Message:</strong></p>
-         <div style="background: #f1f5f9; padding: 15px; border-radius: 6px;">
-           ${message.replace(/\n/g, "<br>")}
-         </div>`
-      );
-
-      await transport.sendMail({
-        from: fromAddress,
-        to: ownerEmails.join(", "),
-        subject: `New Contact Submission from ${name}`,
-        html: adminHtml,
-      });
-    }
-
-    // 3. Send Thank You to Customer
-    if (email) {
-      const customerHtml = lightThemeHtml(
-        "Thank you for contacting us!",
-        `<p>Hi ${name},</p>
-         <p>We have received your message and our team will get back to you as soon as possible.</p>
-         <p><strong>Your Message:</strong></p>
-         <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; color: #64748b;">
-           ${message.replace(/\n/g, "<br>")}
-         </div>
-         <p>Best regards,<br>The ${fromName} Team</p>`
-      );
-
-      await transport.sendMail({
-        from: fromAddress,
-        to: email,
-        subject: `Thank you for contacting ${fromName}`,
-        html: customerHtml,
-      });
-    }
+    await transport.sendMail({
+      from: fromAddress,
+      to: email,
+      subject: `Thank you for contacting ${fromName}`,
+      html: customerHtml,
+    });
   } catch (error) {
-    console.error("Error sending contact emails:", error);
+    console.error("Error sending contact acknowledgment email:", error);
   }
-}
+};
+
+// Sends an email reply from the dashboard admin to the customer
+export const sendContactReplyEmail = async ({
+  toEmail,
+  customerName,
+  originalMessage,
+  replyMessage,
+  adminName,
+}) => {
+  try {
+    if (!env.SMTP_USER || !env.SMTP_PASSWORD || !toEmail) {
+      throw new Error("SMTP credentials or recipient email missing");
+    }
+
+    const transport = getTransport();
+    const fromName = env.SMTP_FROM_NAME || "Customer Support";
+    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+
+    const replyHtml = lightThemeHtml(
+      `Response to your inquiry`,
+      `<p>Hi ${customerName || "there"},</p>
+       <div style="font-size: 15px; line-height: 1.6; color: #0f172a; margin: 15px 0;">
+         ${(replyMessage || "").replace(/\n/g, "<br>")}
+       </div>
+       <p style="color: #64748b; font-size: 13px; margin-top: 25px;">— ${adminName || "Support Team"}, ${fromName}</p>
+       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0 15px 0;" />
+       <p style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;"><strong>Your Original Message:</strong></p>
+       <blockquote style="font-size: 13px; color: #64748b; margin: 0; padding: 10px 15px; background: #f8fafc; border-left: 3px solid #cbd5e1; border-radius: 4px;">
+         ${(originalMessage || "").replace(/\n/g, "<br>")}
+       </blockquote>`
+    );
+
+    const info = await transport.sendMail({
+      from: fromAddress,
+      to: toEmail,
+      subject: `Re: Your inquiry on ${fromName}`,
+      html: replyHtml,
+    });
+
+    return info;
+  } catch (error) {
+    console.error("Error sending contact reply email:", error);
+    throw error;
+  }
+};

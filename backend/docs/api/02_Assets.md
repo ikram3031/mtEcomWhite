@@ -1,4 +1,6 @@
-# Assets API
+# Assets & Dashboard Slot Asset Manager API Documentation
+
+This document describes both the Core Assets metadata management endpoints (`/api/v1/assets`) and the Dashboard Slot Asset Manager endpoints (`/api/v1/dash/assets`) for banners, sliders, and logos.
 
 ## Base URL
 
@@ -6,196 +8,136 @@
 https://server.decantrebd.com/api/v1
 ```
 
-## Base Path
+---
 
-`/api/v1/assets`
+## 1. Dashboard Slot Asset Manager
 
-## Notes
+**Base Path:** `/api/v1/dash/assets`  
+**Authentication:** Required (`Owner`, `Admin`)  
+**Header:** `Authorization: Bearer <accessToken>`
 
-- All assets endpoints require authentication.
-- Include the access token in the `Authorization` header:
+Provides high-performance asset slot management for frontend banners, promo sliders, logos, and favicons with automated lossless WebP compression targeting `<= 230 KB` at 100% full pixel resolution.
 
-```http
-Authorization: Bearer <accessToken>
-```
+### 1.1 List Slot Assets
+Retrieves all asset files located in `/uploads/assets/` sorted by latest modified date.
 
-- The GET endpoints are available to any authenticated user.
-- The POST, PUT, and DELETE endpoints require `Owner` or `Admin` role privileges.
+- **Method:** `GET`
+- **URL:** `/api/v1/dash/assets`
 
-## Endpoints
-
-### List Assets
-
-- **Method:** GET
-- **URL:** `/api/v1/assets`
-
-#### Success Response
-
+#### Success Response (200 OK):
 ```json
 {
+  "status": "success",
   "data": [
     {
-      "_id": "64b1e0d7a6d02d37c2be1f3a",
-      "name": "Laptop",
-      "did": "asset-did-123",
-      "createdBy": "64b1e0a1a6d02d37c2be1f39",
-      "metadata": {},
-      "createdAt": "2026-07-29T12:34:56.789Z",
-      "updatedAt": "2026-07-29T12:34:56.789Z"
+      "filename": "hero_banner_desktop.webp",
+      "relativePath": "/uploads/assets/hero_banner_desktop.webp",
+      "url": "/uploads/assets/hero_banner_desktop.webp?v=1724912345678",
+      "size": 184320,
+      "sizeFormatted": "180 KB",
+      "updatedAt": "2026-08-29T10:15:30.000Z"
     }
   ]
 }
 ```
 
-### Get Asset by ID
+---
 
-- **Method:** GET
-- **URL:** `/api/v1/assets/:assetId`
+### 1.2 Upload / Overwrite Slot Asset
+Uploads an image file up to 5MB, adaptively compresses it to WebP targeting `<= 230KB` (or preserves `.svg` / `.ico` formats), and replaces/overwrites the target slot file in `/uploads/assets/`.
 
-#### Success Response
+- **Method:** `POST`
+- **URL:** `/api/v1/dash/assets/upload-slot`
+- **Content-Type:** `multipart/form-data`
+- **Max Upload Limit:** `5 MB`
 
+#### Form Data Parameters:
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `file` | File | Yes | Image file (JPG, PNG, WebP, SVG, ICO) up to 5MB |
+| `targetFilename` / `slotKey` | String | Yes | Name of target slot file (e.g. `main_slider_1`, `hero_banner_desktop.webp`, `favicon.ico`) |
+
+#### Success Response (200 OK):
 ```json
 {
+  "status": "success",
+  "message": "Asset hero_banner_desktop.webp saved successfully!",
   "data": {
-    "_id": "64b1e0d7a6d02d37c2be1f3a",
-    "name": "Laptop",
-    "did": "asset-did-123",
-    "createdBy": "64b1e0a1a6d02d37c2be1f39",
-    "metadata": {},
-    "createdAt": "2026-07-29T12:34:56.789Z",
-    "updatedAt": "2026-07-29T12:34:56.789Z"
+    "filename": "hero_banner_desktop.webp",
+    "relativePath": "/uploads/assets/hero_banner_desktop.webp",
+    "url": "/uploads/assets/hero_banner_desktop.webp?v=1724912345678",
+    "size": 192450,
+    "sizeFormatted": "187.94 KB",
+    "updatedAt": "2026-08-29T10:15:30.000Z"
   }
 }
 ```
 
-### Create Asset
+---
 
-- **Method:** POST
-- **URL:** `/api/v1/assets`
+### 1.3 Download Slot Asset
+Downloads the specified asset file from `/uploads/assets/` as an attachment.
 
-#### Request Body
+- **Method:** `GET`
+- **URL:** `/api/v1/dash/assets/download/:filename`
 
+---
+
+### 1.4 Delete Slot Asset
+Deletes an asset file from `/uploads/assets/`.
+
+- **Method:** `DELETE`
+- **URL:** `/api/v1/dash/assets/:filename`
+
+#### Success Response (200 OK):
 ```json
 {
-  "name": "Laptop",
+  "status": "success",
+  "message": "Asset hero_banner_desktop.webp deleted successfully"
+}
+```
+
+---
+
+## 2. Core Assets Metadata API
+
+**Base Path:** `/api/v1/assets`  
+**Authentication:** Required (`Authorization: Bearer <accessToken>`)
+
+Manages general entity assets stored in MongoDB.
+
+- `GET /api/v1/assets` - List all assets (Authenticated users)
+- `GET /api/v1/assets/:assetId` - Get asset details by ID (Authenticated users)
+- `POST /api/v1/assets` - Create asset record (`Owner`, `Admin`)
+- `PUT /api/v1/assets/:assetId` - Update asset record (`Owner`, `Admin`)
+- `DELETE /api/v1/assets/:assetId` - Delete asset record (`Owner`, `Admin`)
+
+### Request Example (Create / Update Asset):
+```json
+{
+  "name": "Office Equipment",
   "metadata": {
-    "serial": "ABC123",
-    "location": "Dhaka Office"
+    "category": "Hardware",
+    "serial": "SN-987654"
   }
 }
 ```
 
-#### Success Response
-
+### Success Response:
 ```json
 {
   "status": "success",
   "data": {
     "_id": "64b1e0d7a6d02d37c2be1f3a",
-    "name": "Laptop",
+    "name": "Office Equipment",
     "did": "asset-did-123",
     "createdBy": "64b1e0a1a6d02d37c2be1f39",
     "metadata": {
-      "serial": "ABC123",
-      "location": "Dhaka Office"
+      "category": "Hardware",
+      "serial": "SN-987654"
     },
     "createdAt": "2026-07-29T12:34:56.789Z",
     "updatedAt": "2026-07-29T12:34:56.789Z"
   }
 }
 ```
-
-### Update Asset
-
-- **Method:** PUT
-- **URL:** `/api/v1/assets/:assetId`
-
-#### Request Body
-
-```json
-{
-  "name": "Updated Laptop",
-  "metadata": {
-    "serial": "ABC123",
-    "location": "Dhaka Warehouse"
-  }
-}
-```
-
-#### Success Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "_id": "64b1e0d7a6d02d37c2be1f3a",
-    "name": "Updated Laptop",
-    "did": "asset-did-123",
-    "createdBy": "64b1e0a1a6d02d37c2be1f39",
-    "metadata": {
-      "serial": "ABC123",
-      "location": "Dhaka Warehouse"
-    },
-    "createdAt": "2026-07-29T12:34:56.789Z",
-    "updatedAt": "2026-07-29T12:45:00.123Z"
-  }
-}
-```
-
-### Delete Asset
-
-- **Method:** DELETE
-- **URL:** `/api/v1/assets/:assetId`
-
-#### Success Response
-
-```json
-{
-  "status": "success",
-  "message": "Asset deleted"
-}
-```
-
-## Error Responses
-
-### Missing or invalid token
-
-```json
-{
-  "status": "error",
-  "message": "Authorization header missing"
-}
-```
-
-### Validation error
-
-```json
-{
-  "status": "error",
-  "message": "Asset name is required"
-}
-```
-
-### Resource not found
-
-```json
-{
-  "status": "error",
-  "message": "Asset not found"
-}
-```
-
-### Forbidden for insufficient role
-
-```json
-{
-  "status": "error",
-  "message": "Forbidden"
-}
-```
-
-## Notes
-
-- `createdBy` is set from the authenticated user who made the request.
-- Any authenticated user can list and view assets.
-- Only `Owner` and `Admin` roles can create, update, or delete assets.

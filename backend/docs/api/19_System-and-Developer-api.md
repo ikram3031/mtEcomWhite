@@ -1,6 +1,6 @@
-﻿# System & Infrastructure API Documentation
+# System & Infrastructure API Documentation
 
-This document describes internal and developer system infrastructure endpoints.
+This document describes internal, health check, version inspection, Scalar interactive documentation, and developer system infrastructure endpoints.
 
 ## Base URL
 
@@ -57,28 +57,39 @@ Public/Protected version check endpoint mounted directly on `/api/v1/version`.
 
 ---
 
-## 3. Developer Realtime Telemetry Logs
+## 3. Interactive Developer API Reference (Scalar UI)
+
+Provides a modern, high-performance Stripe/Vercel-style interactive API reference and live endpoint sandbox powered by Scalar OpenAPI 3.0.
+
+- **Method:** `GET`
+- **URL:** `/api/v1/developer/docs`
+- **Authentication:** Not required (Public Developer Explorer)
+- **Response Format:** Interactive HTML (`text/html`)
+
+---
+
+## 4. Developer Realtime Telemetry Logs
 
 Provides real-time streaming (SSE) and buffered access to HTTP request logs. Access is strictly restricted to the authorized developer account (`ikramul.web@gmail.com`).
 
-### 3.1 Recent Logs Buffer (Polling)
+### 4.1 Recent Logs Buffer (Polling)
 - **Method:** `GET`
 - **URL:** `/api/v1/developer/logs`
-- **Authentication:** Required (Developer email verified)
+- **Authentication:** Required (`ikramul.web@gmail.com` verified)
 
-### 3.2 Real-time Logs Event Stream (SSE)
+### 4.2 Real-time Logs Event Stream (SSE)
 - **Method:** `GET`
 - **URL:** `/api/v1/developer/logs/stream`
-- **Authentication:** Required (Developer email verified)
+- **Authentication:** Required (`ikramul.web@gmail.com` verified)
 - **Content-Type:** `text/event-stream`
 
 ---
 
-## 4. Developer Database Compressed Backup
+## 5. Developer Database Compressed Backup
 
 Generates and downloads a Gzip-compressed JSON snapshot (`mongodb_backup_<timestamp>.json.gz`) of all MongoDB database collections.
 
 - **Method:** `GET`
 - **URL:** `/api/v1/developer/db-backup`
-- **Authentication:** Required (Developer email verified)
+- **Authentication:** Required (`ikramul.web@gmail.com` verified)
 - **Response:** `application/gzip` binary attachment

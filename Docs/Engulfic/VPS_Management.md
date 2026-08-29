@@ -54,7 +54,7 @@ Whenever new code is merged into the `Live` branch on GitHub, follow these exact
 
 ```bash
 # 1. Login to the VPS
-ssh -i "C:\Users\mdikr\.ssh\engulfic" root@144.79.218.8
+ssh -i "C:\Users\dev\.ssh\engulfic" root@144.79.218.8
 
 # 2. Go to the live codebase directory
 cd /opt/live

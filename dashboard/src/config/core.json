@@ -26,6 +26,8 @@
         "products.coupons",
         "reviews",
         "tools",
+        "tools.messages",
+        "tools.assets",
         "tools.bulk-image-resize",
         "tools.meta-catalog",
         "logs",

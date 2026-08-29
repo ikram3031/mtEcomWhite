@@ -8,6 +8,7 @@ export const LOG_TYPES = {
   CREATED: "created",
   UPDATED: "updated",
   DELETED: "deleted",
+  CONTACT_MESSAGE: "contactMessage",
 };
 
 export const LOG_TYPE_DIDS = {
@@ -15,6 +16,7 @@ export const LOG_TYPE_DIDS = {
   created: "110",
   updated: "121",
   deleted: "666",
+  contactMessage: "112",
 };
 
 const logSchema = new Schema(
@@ -28,7 +30,7 @@ const logSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["newOrder", "created", "updated", "deleted"],
+      enum: ["newOrder", "created", "updated", "deleted", "contactMessage"],
       default: "created",
       index: true,
     },

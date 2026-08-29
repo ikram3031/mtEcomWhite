@@ -40,6 +40,7 @@ import Payments from './pages/dashboard/billing/payments';
 import Billings from './pages/dashboard/billing/billings';
 
 // Tools
+import MessagesManager from './pages/dashboard/tools/messagesManager';
 import BulkImageResize from './pages/dashboard/tools/bulkImageResize';
 import MetaCatalog from './pages/dashboard/tools/metaCatalog';
 import SystemLogs from './pages/dashboard/tools/systemLogs';
@@ -153,7 +154,15 @@ export const router = createBrowserRouter([
       {
         path: 'tools',
         children: [
-          { path: '', element: <Navigate to="assets" replace /> },
+          { path: '', element: <Navigate to="messages" replace /> },
+          {
+            path: 'messages',
+            element: (
+              <RoleGuard menuKey="tools.messages">
+                <MessagesManager />
+              </RoleGuard>
+            ),
+          },
           {
             path: 'assets',
             element: (
@@ -181,6 +190,7 @@ export const router = createBrowserRouter([
           { path: 'logs', element: <Navigate to="/dashboard/logs" replace /> },
         ],
       },
+      { path: 'messages', element: <Navigate to="/dashboard/tools/messages" replace /> },
       {
         path: 'developer',
         children: [

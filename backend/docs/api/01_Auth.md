@@ -284,4 +284,3 @@ api.interceptors.response.use(
   }
 );
 ```
-```
