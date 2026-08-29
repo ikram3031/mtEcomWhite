@@ -7,16 +7,55 @@ import {
 } from "../utils/contactEmailDelivery.js";
 import { broadcastLiveNotification } from "../websocket.js";
 
+// Helper to verify reCAPTCHA token with Google API
+const verifyRecaptchaToken = async (token) => {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secretKey) {
+    // If not configured, pass verification in development
+    return true;
+  }
+  if (!token) {
+    return false;
+  }
+  try {
+    const params = new URLSearchParams({
+      secret: secretKey,
+      response: token,
+    });
+    const verifyRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const verifyData = await verifyRes.json();
+    return Boolean(verifyData && verifyData.success);
+  } catch (err) {
+    console.error('reCAPTCHA verification error:', err);
+    return false;
+  }
+};
+
 // Public endpoint for submitting messages from website contact form
 export const submitContact = async (req, res) => {
   try {
-    const { name, email, phone = "", subject = "Website Contact Form", message } = req.body;
+    const { name, email, phone = "", subject = "Website Contact Form", message, recaptchaToken } = req.body;
 
     if (!name?.trim() || !email?.trim() || !message?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Name, email, and message are required.",
       });
+    }
+
+    // Verify reCAPTCHA token if secret key is present
+    if (process.env.RECAPTCHA_SECRET_KEY) {
+      const isValidCaptcha = await verifyRecaptchaToken(recaptchaToken);
+      if (!isValidCaptcha) {
+        return res.status(400).json({
+          success: false,
+          message: "reCAPTCHA verification failed. Please try again.",
+        });
+      }
     }
 
     // 1. Save contact message to database
