@@ -73,14 +73,19 @@
     "users",
     "developer",
     "tools",
+    "tools.messages",
     "tools.assets",
     "tools.bulk-image-resize",
     "tools.meta-catalog",
     "studio",
     "studio.batch-images",
     "activity-logs",
-    "trash"
+    "logs",
+    "system-logs",
+    "trash",
+    "settings"
   ],
+
   "theme": {
     "light": {
       "--background": "#ffffff",
