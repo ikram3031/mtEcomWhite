@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { validateOrderPayload } from '../helper/orderHelper.js';
 import { OrderModel } from '../models/order.model.js';
+import { ProductModel } from '../models/product.model.js';
 import { MemberModel } from '../models/member.model.js';
 import { CouponModel } from '../models/coupon.model.js';
 import { PaymentModel } from '../models/payment.model.js';
