@@ -42,28 +42,25 @@ Every commit message must strictly follow this structure:
 
 ---
 
-## 4. Code Style & Commenting Standards
+## 4. Code Style, Commenting & Core Logic Guardrails
 - **Arrow Functions**: Always use arrow functions (`const myFunc = () => {}`) for functional components and all custom logic/handlers. Do not use standard `function` declarations.
-- **Function Comments Only**: Relative comments should only be placed on functions. 
-- **Comment Placement**: Comments must be placed exactly on the line immediately preceding the function declaration. Avoid random inline comments or scattered block comments inside the code logic unless absolutely necessary. 
+- **No Inline Comments**: NEVER put inline comments inside code bodies, loops, conditions, or JSX blocks. Keep internal logic clean.
+- **Single-Line Preceding Function Comment Only**: Place exactly one concise, single-line relative comment on the line immediately preceding the function declaration.
+- **Core Logic Verification**: Always clarify and verify with the user before modifying core architectural, multi-tenant, inventory deduction, or payment logic.
 
 **Example**:
 ```javascript
-// Calculates and returns the discounted total for cart items
+// Calculates and returns total discount applied across cart items
 const calculateDiscount = (items) => {
-  // ...
-}
+  return items.reduce((acc, item) => acc + (item.price - item.discount), 0);
+};
 ```
 
 ---
 
 ## 5. Deployment Rules (STRICT — NO EXCEPTIONS)
-- **NEVER run any VPS build, `docker compose up --build`, or deployment command on `Live` branch without the user's explicit confirmation first.**
-- Before any live deploy, always stop and ask: *"Deploy করবো?"* and wait for the user to say yes.
-- This applies to ALL environments marked as live/production:
-  - `decantre-backend-live`, `decantre-dashboard-live` on `144.79.218.126`
-  - `engulfic-backend-live`, `engulfic-dashboard-live` on `144.79.218.8`
-  - Any other container with `-live` in the name.
+- **NEVER run any VPS build, `docker compose up --build`, or deployment command without user instruction.**
+- When user instructs *"ডিপ্লয় দাও"*, execute the deployment commands directly using tools instead of outputting code text.
 - **`temp` branch commits and `git push` are fine without confirmation.**
 - **Merging `temp` into `Live` and pushing to GitHub is fine without confirmation.**
-- **Only the actual VPS build/deploy step requires confirmation.**
+- **Only the actual VPS build/deploy step requires explicit user command.**
