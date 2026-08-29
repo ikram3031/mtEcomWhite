@@ -1,15 +1,13 @@
 import decantreConfig from './01decantre/config.json';
 import engulficConfig from './02engulfic/config.json';
 import toyolandConfig from './03toyoland/config.json';
+import activeSyncedConfig from './activeConfig.json';
 
 const clientConfigs = {
   decantre: decantreConfig,
   engulfic: engulficConfig,
   toyoland: toyolandConfig,
 };
-
-// Resolve the active client identifier
-const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
 
 // Fallback to hostname detection
 const getClientFromHostname = () => {
@@ -19,8 +17,25 @@ const getClientFromHostname = () => {
   return matchedKey || 'decantre';
 };
 
-const activeKey = envClient || getClientFromHostname();
+const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
+const activeKey = envClient || activeSyncedConfig?.clientKey || getClientFromHostname();
 
-export const clientConfig = clientConfigs[activeKey] || decantreConfig;
+export const clientConfig = activeSyncedConfig?.clientKey === activeKey
+  ? activeSyncedConfig
+  : (clientConfigs[activeKey] || activeSyncedConfig || decantreConfig);
+
+// Helper to inspect active policy options safely
+export const getPolicy = (policyPath, defaultValue = null) => {
+  const parts = policyPath.split('.');
+  let current = clientConfig.policies;
+  for (const part of parts) {
+    if (current === undefined || current === null) return defaultValue;
+    current = current[part];
+  }
+  return current !== undefined ? current : defaultValue;
+};
+
+// Returns active client key string
 export const getActiveClientKey = () => activeKey;
+
 export default clientConfig;

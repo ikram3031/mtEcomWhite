@@ -6,8 +6,10 @@ import { logger } from "./config/logger.js";
 import { createShutdownHandler } from "./helper/sutdownHelper.js";
 import { initWebSocketServer } from "./websocket.js";
 import { initMediaSchedulers, stopMediaSchedulers } from "./schedulers/mediaScheduler.js";
+import { initHeartbeatScheduler, stopHeartbeatScheduler } from "./schedulers/heartbeat.scheduler.js";
 
-async function bootstrap() {
+// Bootstraps backend server, database connections, and background schedulers
+const bootstrap = async () => {
   // await connectMySQL();
   await connectDatabase();
 
@@ -24,7 +26,11 @@ async function bootstrap() {
   // Initialize Cloudflare R2 Sync & Orphan Image Cleanup Background Schedulers
   initMediaSchedulers();
 
+  // Initialize Fleet Telemetry Heartbeat Scheduler
+  initHeartbeatScheduler();
+
   const shutdown = (signal) => {
+    stopHeartbeatScheduler();
     stopMediaSchedulers();
     const handler = createShutdownHandler(server);
     return handler(signal);
@@ -40,6 +46,7 @@ async function bootstrap() {
     logger.fatal({ err: reason }, "Unhandled rejection");
     void shutdown("unhandledRejection");
   });
-}
+};
 
 void bootstrap();
+

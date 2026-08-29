@@ -1,4 +1,4 @@
-.PHONY: deploy build build-backend build-dashboard build-bg build-dash logs logs-backend logs-dashboard status down help
+.PHONY: deploy build build-backend build-dashboard build-bg build-dash sync-config logs logs-backend logs-dashboard status down help
 
 # ── Dynamic Client Configuration Detection ────────────────────
 # Accepts CLIENT from command line (e.g. make deploy CLIENT=engulfic)
@@ -26,9 +26,10 @@ help:
 	@echo "Env File:      $(ENV_FILE)"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make deploy             Pull latest & rebuild both backend + dashboard"
-	@echo "  make build-backend      Pull latest & rebuild backend container"
-	@echo "  make build-dashboard    Pull latest & rebuild dashboard container"
+	@echo "  make sync-config        Sync centralized client config to backend & dashboard"
+	@echo "  make deploy             Pull latest, sync config & rebuild both backend + dashboard"
+	@echo "  make build-backend      Pull latest, sync config & rebuild backend container"
+	@echo "  make build-dashboard    Pull latest, sync config & rebuild dashboard container"
 	@echo "  make status             Show running container status"
 	@echo "  make logs               View all container logs"
 	@echo "  make logs-backend       View backend container logs"
@@ -39,9 +40,13 @@ help:
 	@echo "  make deploy CLIENT=engulfic"
 	@echo "  make deploy CLIENT=decantre"
 
+sync-config:
+	@node scripts/sync-config.js $(CLIENT)
+
 deploy:
 	@echo "🚀 Deploying for client [$(CLIENT)] using config [$(ENV_FILE)]..."
 	git pull origin Live
+	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache
 	$(COMPOSE) up -d
 	@echo "✓ Deployment complete for [$(CLIENT)]!"
@@ -51,6 +56,7 @@ build: deploy
 build-backend:
 	@echo "🚀 Rebuilding Backend for client [$(CLIENT)]..."
 	git pull origin Live
+	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache backend
 	$(COMPOSE) up -d backend
 	@echo "✓ Backend rebuild complete!"
@@ -60,6 +66,7 @@ build-bg: build-backend
 build-dashboard:
 	@echo "🚀 Rebuilding Dashboard for client [$(CLIENT)]..."
 	git pull origin Live
+	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache dashboard
 	$(COMPOSE) up -d dashboard
 	@echo "✓ Dashboard rebuild complete!"

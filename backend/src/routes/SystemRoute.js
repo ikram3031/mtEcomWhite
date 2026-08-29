@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { getSystemInfo, getMetadata } from "../controllers/SystemController.js";
+import { getSystemInfo, getMetadata, getHealthCheck } from "../controllers/SystemController.js";
 import { authenticateToken, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const systemRouter = Router();
+
+// Public health check endpoint for uptime and fleet monitoring
+systemRouter.get("/health", getHealthCheck);
 
 // Protected endpoint for retrieving system & version information
 systemRouter.get(
