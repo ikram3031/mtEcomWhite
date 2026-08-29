@@ -1,52 +1,42 @@
-// Retrieves the persistent GA4 settings for the active client or defaults
-export const getGA4Settings = (brandName = 'Decantre') => {
-  const defaultId = brandName.toLowerCase().includes('engulfic')
-    ? 'G-ENGUL72901'
-    : brandName.toLowerCase().includes('toyoland')
-    ? 'G-TOYO338102'
-    : 'G-95TCXBZG7W';
+import { clientConfig, getActiveClientKey } from '@/clientConfig';
 
-  const defaultGTM = brandName.toLowerCase().includes('engulfic')
-    ? 'GTM-ENG772X'
-    : brandName.toLowerCase().includes('toyoland')
-    ? 'GTM-TOY441Y'
-    : 'GTM-DEC883Z';
+// Retrieves the persistent GA4 settings for the active client or config defaults
+export const getGA4Settings = () => {
+  const clientGA = clientConfig?.googleAnalytics || {};
+  const clientKey = getActiveClientKey() || 'default';
+  const brandName = clientConfig?.brandName || 'Store';
+
+  const defaults = {
+    measurementId: clientGA.measurementId || 'G-XXXXXXXXXX',
+    gtmId: clientGA.gtmId || '',
+    streamName: clientGA.streamName || `${brandName} Web Stream`,
+    propertyId: clientGA.propertyId || '',
+    isVerified: clientGA.isVerified ?? true,
+    enhancedMeasurement: clientGA.enhancedMeasurement ?? true,
+  };
 
   if (typeof window === 'undefined') {
-    return {
-      measurementId: defaultId,
-      gtmId: defaultGTM,
-      streamName: `${brandName} Web Stream`,
-      propertyId: '419823412',
-      isVerified: true,
-      enhancedMeasurement: true,
-    };
+    return defaults;
   }
 
   try {
-    const raw = localStorage.getItem(`ga4_config_${brandName.toLowerCase()}`);
+    const raw = localStorage.getItem(`ga4_config_${clientKey}`);
     if (raw) {
-      return JSON.parse(raw);
+      return { ...defaults, ...JSON.parse(raw) };
     }
   } catch {
     // fallback to defaults on storage access error
   }
 
-  return {
-    measurementId: defaultId,
-    gtmId: defaultGTM,
-    streamName: `${brandName} Web Stream`,
-    propertyId: '419823412',
-    isVerified: true,
-    enhancedMeasurement: true,
-  };
+  return defaults;
 };
 
 // Saves persistent GA4 settings to local storage
-export const saveGA4Settings = (brandName, settings) => {
+export const saveGA4Settings = (settings) => {
   if (typeof window === 'undefined') return;
+  const clientKey = getActiveClientKey() || 'default';
   try {
-    localStorage.setItem(`ga4_config_${brandName.toLowerCase()}`, JSON.stringify(settings));
+    localStorage.setItem(`ga4_config_${clientKey}`, JSON.stringify(settings));
   } catch (error) {
     console.error('Failed to save GA4 settings', error);
   }

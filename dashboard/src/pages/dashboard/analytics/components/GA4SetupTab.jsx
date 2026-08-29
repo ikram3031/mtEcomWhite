@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { generateGtagScript } from '../analyticsData';
 
 // Tab component detailing GA4 tag setup, script integration, and event specifications
-export const GA4SetupTab = ({ config, brandName = 'Decantre', onOpenConfigModal }) => {
+export const GA4SetupTab = ({ config, brandName = 'Store', onOpenConfigModal }) => {
   const [copied, setCopied] = useState(false);
 
   // Handles copying the generated gtag.js script snippet to clipboard

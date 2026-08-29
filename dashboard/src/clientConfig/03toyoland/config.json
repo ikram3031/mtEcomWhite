@@ -17,6 +17,14 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "googleAnalytics": {
+    "measurementId": "G-TOYO338102",
+    "gtmId": "GTM-TOY441Y",
+    "propertyId": "419823414",
+    "streamName": "Toyoland Web Stream",
+    "isVerified": true,
+    "enhancedMeasurement": true
+  },
   "logoUrl": "/src/uploads/assets/toyoland_logo.png",
   "siteIconUrl": "/src/uploads/assets/toyoland_logo.png",
   "assetsConfig": {
