@@ -8,7 +8,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-11223345}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-perfume-store}
     ports:
-      - "0.0.0.0:27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb-data-dev:/data/db
     networks:
@@ -25,7 +25,7 @@ services:
     environment:
       PORT: ${BACKEND_PORT:-5092}
     ports:
-      - "${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
+      - "127.0.0.1:${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
     volumes:
       - /decantre/uploads:/app/uploads
     depends_on:
@@ -42,7 +42,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${FRONTEND_PORT:-8001}:8001"
+      - "127.0.0.1:${FRONTEND_PORT:-8001}:8001"
     networks:
       - decantre-network
 
@@ -57,7 +57,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${DASHBOARD_PORT:-8005}:8005"
+      - "127.0.0.1:${DASHBOARD_PORT:-8005}:8005"
     networks:
       - decantre-network
 
