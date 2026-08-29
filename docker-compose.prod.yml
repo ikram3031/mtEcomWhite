@@ -7,9 +7,9 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
-    # MongoDB exposed publicly on dynamic MONGODB_PORT
+    # MongoDB exposed strictly on localhost (127.0.0.1) for local backup scripts and SSH tunnels
     ports:
-      - "${MONGODB_PORT:-27017}:27017"
+      - "127.0.0.1:${MONGODB_PORT:-27017}:27017"
     volumes:
       - mongodb-data:/data/db
     networks:
@@ -27,8 +27,9 @@ services:
       - ${PUBLIC_UPLOADS_PATH:-/var/www/uploads}:/app/uploads
     environment:
       PORT: ${BACKEND_PORT:-5092}
+    # Backend bound to localhost only (reverse proxied via Nginx)
     ports:
-      - "${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
+      - "127.0.0.1:${BACKEND_PORT:-5092}:${BACKEND_PORT:-5092}"
     depends_on:
       - mongodb
     networks:
@@ -45,8 +46,9 @@ services:
     # dashboard এর .env ও dynamically specified path বা default path থেকে mount
     volumes:
       - ${CLIENT_CONFIG_PATH:-/opt/${CLIENT_NAME}/configs}/dashboard.env:/app/.env:ro
+    # Dashboard bound to localhost only (reverse proxied via Nginx)
     ports:
-      - "${DASHBOARD_PORT:-8005}:8005"
+      - "127.0.0.1:${DASHBOARD_PORT:-8005}:8005"
     networks:
       - client-network
 

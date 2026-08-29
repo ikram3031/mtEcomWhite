@@ -73,12 +73,13 @@ docker compose --env-file /opt/toyoland-dev/configs/backend.env -f docker-compos
 ---
 
 ## 5. Docker Containers & Ports
+All containers bind strictly to `127.0.0.1` (localhost) to prevent direct public exposure and bypass of Nginx reverse proxy / Cloudflare.
 
-| Service | Container Name | Internal Port | Host Port | Connected Domain / IP |
-| :--- | :--- | :--- | :--- | :--- |
-| **Backend** | `toyoland-backend-dev` | `5092` | `5092` | Direct access or reverse proxy to domain later |
-| **Dashboard** | `toyoland-dashboard-dev` | `8005` | `8005` | Direct access or reverse proxy to domain later |
-| **Database** | `toyoland-mongodb-dev` | `27017` | `27018` (Host) | Direct IP (Port `27018`) via Firewall Rules |
+| Service | Container Name | Internal Port | Host Port Binding | Connected Domain / Routing | Exposure Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Backend** | `toyoland-backend-dev` | `5092` | `127.0.0.1:5092` | Reverse Proxied via Nginx / Localhost | Localhost Only |
+| **Dashboard** | `toyoland-dashboard-dev` | `8005` | `127.0.0.1:8005` | Reverse Proxied via Nginx / Localhost | Localhost Only |
+| **Database** | `toyoland-mongodb-dev` | `27017` | `127.0.0.1:27018` | `N/A` (Internal Docker network only) | **Localhost Only** (Blocked from Public) |
 
 ---
 
@@ -115,3 +116,33 @@ If the backend fails to start because it cannot read `.env`, verify permissions:
 # The files must be readable by the Node.js user inside the container
 chmod 644 /opt/toyoland-dev/configs/*.env
 ```
+
+---
+
+## 8. Database Security & Firewall Hardening (CRITICAL)
+
+### A. Why 0.0.0.0 Port Binding is Dangerous
+- By default, Docker injects `PREROUTING` rules into Linux `iptables` that **bypass standard UFW firewall rules**.
+- In `docker-compose.prod.yml`, all database and application ports are strictly bound to `127.0.0.1`:
+  ```yaml
+  ports:
+    - "127.0.0.1:${MONGODB_PORT:-27018}:27017"
+  ```
+
+### B. Connecting to MongoDB Remotely via MongoDB Compass (SSH Tunnel)
+Because port `27018` is blocked from the public internet, connect securely through an encrypted SSH tunnel.
+
+#### Configuration in MongoDB Compass:
+1. **Connection String / Host**: `mongodb://localhost:27018`
+2. **Authentication Tab**:
+   - Authentication: `Username / Password`
+   - Username: `<MONGO_INITDB_ROOT_USERNAME>`
+   - Password: `<MONGO_INITDB_ROOT_PASSWORD>`
+   - Authentication DB: `admin`
+3. **Proxy / SSH Tunnel Tab**:
+   - Proxy Method: `SSH with Password` (or `SSH with Identity File`)
+   - SSH Hostname: `144.79.218.8`
+   - SSH Port: `22`
+   - SSH Username: `root`
+   - SSH Password or Key File: *(Your VPS SSH credential)*
+4. Click **Connect**.

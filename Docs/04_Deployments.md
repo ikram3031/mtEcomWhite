@@ -13,14 +13,14 @@ This document serves as the master record of all white-label clients deployed on
 - **Uploads/Assets Directory:** `/var/www/uploads/` & `/opt/decantre/uploads/`
 
 ### B. Active Containers & Port Routing
-| Container Name | Service / Role | Host Port | Internal Port | Domain / Routing | Firewall Rule |
+| Container Name | Service / Role | Host Port Binding | Internal Port | Domain / Routing | Exposure Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`decantre-backend-live`** | Express Node.js API | `5093` | `5093` | `https://service.decantrebd.com` & `https://server.decantrebd.com` | Allowed publicly |
-| **`decantre-dashboard-live`** | Next.js Dashboard | `8015` | `8005` | `https://v2.decantrebd.com` | Allowed publicly |
-| **`decantre-mongodb-live`** | MongoDB Engine | `27017` | `27017` | Direct Access / Local IP | Whitelisted IP only |
-| **`devtest-backend`** | DevTest Express API (`/opt/dev`) | `5092` | `5092` | Direct Access (Port `5092`) | Allowed publicly |
-| **`devtest-mongodb`** | DevTest MongoDB (`/opt/dev`) | `27018` | `27017` | Direct Access (Port `27018`) | Whitelisted IP only |
-| **`decantre-frontend-live`** | Production Frontend | `8001` | `8001` | `https://decantrebd.com` | Allowed publicly |
+| **`decantre-backend-live`** | Express Node.js API | `127.0.0.1:5093` | `5093` | `https://service.decantrebd.com` & `https://server.decantrebd.com` | Reverse Proxied via Nginx |
+| **`decantre-dashboard-live`** | React/Vite Dashboard | `127.0.0.1:8015` | `8005` | `https://v2.decantrebd.com` | Reverse Proxied via Nginx |
+| **`decantre-mongodb-live`** | MongoDB Engine | `127.0.0.1:27017` | `27017` | Direct Access / Local IP | **Localhost Only (SSH Tunnel)** |
+| **`devtest-backend`** | DevTest Express API (`/opt/dev`) | `127.0.0.1:5092` | `5092` | Reverse Proxied / Localhost | Localhost Only |
+| **`devtest-mongodb`** | DevTest MongoDB (`/opt/dev`) | `127.0.0.1:27018` | `27017` | Direct Access (Port `27018`) | Localhost Only |
+| **`decantre-frontend-live`** | Production Frontend | `127.0.0.1:8001` | `8001` | `https://decantrebd.com` | Reverse Proxied via Nginx |
 
 ---
 
@@ -35,16 +35,16 @@ This document serves as the master record of all white-label clients deployed on
 - **Toyoland Uploads:** `/ikram/caution/uploads/`
 
 ### B. Active Containers & Port Routing
-| Container Name | Client / Service | Host Port | Internal Port | Domain / Routing | Firewall Rule |
+| Container Name | Client / Service | Host Port Binding | Internal Port | Domain / Routing | Exposure Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`engulfic-backend-live`** | Engulfic Live API | `5094` | `5092` | `https://server.engulfic.com` | Allowed publicly |
-| **`engulfic-dashboard-live`** | Engulfic Live Dashboard | `8015` | `8005` | `https://dashboard.engulfic.com` | Allowed publicly |
-| **`engulfic-mongodb-live`** | Engulfic MongoDB | `27017` | `27017` | Direct Access | Whitelisted IP only |
-| **`engulfic-frontend`** | Engulfic Legacy Frontend | `8001` | `8001` | `https://engulfic.com` | Allowed publicly |
-| **`toyoland-backend-dev`** | Toyoland Dev API | `5092` | `5092` | Direct Access / Local IP | Allowed publicly |
-| **`toyoland-dashboard-dev`** | Toyoland Dev Dashboard | `8005` | `8005` | Direct Access / Local IP | Allowed publicly |
-| **`toyoland-frontend`** | Toyoland Dev Frontend | `8006` | `8006` | Direct Access (Port `8006`) | Allowed publicly |
-| **`toyoland-mongodb-dev`** | Toyoland MongoDB | `27018` | `27017` | Direct Access | Whitelisted IP only |
+| **`engulfic-backend-live`** | Engulfic Live API | `127.0.0.1:5094` | `5092` | `https://server.engulfic.com` | Reverse Proxied via Nginx |
+| **`engulfic-dashboard-live`** | Engulfic Live Dashboard | `127.0.0.1:8015` | `8005` | `https://dashboard.engulfic.com` | Reverse Proxied via Nginx |
+| **`engulfic-mongodb-live`** | Engulfic MongoDB | `127.0.0.1:27017` | `27017` | Direct Access | **Localhost Only (SSH Tunnel)** |
+| **`engulfic-frontend`** | Engulfic Legacy Frontend | `127.0.0.1:8001` | `8001` | `https://engulfic.com` | Reverse Proxied via Nginx |
+| **`toyoland-backend-dev`** | Toyoland Dev API | `127.0.0.1:5092` | `5092` | Direct Access / Local IP | Localhost Only |
+| **`toyoland-dashboard-dev`** | Toyoland Dev Dashboard | `127.0.0.1:8005` | `8005` | Direct Access / Local IP | Localhost Only |
+| **`toyoland-frontend`** | Toyoland Dev Frontend | `127.0.0.1:8006` | `8006` | Direct Access (Port `8006`) | Localhost Only |
+| **`toyoland-mongodb-dev`** | Toyoland MongoDB | `127.0.0.1:27018` | `27017` | Direct Access | **Localhost Only (SSH Tunnel)** |
 
 ---
 
