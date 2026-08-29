@@ -50,6 +50,7 @@
     ]
   },
   "allowedMenus": [
+    "*",
     "overview",
     "orders",
     "orders.new",
@@ -65,16 +66,23 @@
     "studio.batch-images",
     "products.brands",
     "members",
+    "billing",
+    "billing.billings",
+    "billing.payments",
     "reports",
     "analytics",
     "activity-logs",
     "users",
+    "developer",
     "tools",
+    "tools.messages",
     "tools.assets",
     "tools.bulk-image-resize",
     "tools.meta-catalog",
-    "trash"
+    "trash",
+    "settings"
   ],
+
   "theme": {
     "light": {
       "--background": "oklch(1.0000 0 0)",

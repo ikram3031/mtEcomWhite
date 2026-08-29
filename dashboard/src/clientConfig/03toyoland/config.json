@@ -49,6 +49,7 @@
     ]
   },
   "allowedMenus": [
+    "*",
     "overview",
     "orders",
     "orders.new",
@@ -62,18 +63,25 @@
     "products.coupons",
     "reviews",
     "members",
+    "billing",
+    "billing.billings",
+    "billing.payments",
     "reports",
     "analytics",
     "studio",
     "studio.batch-images",
     "activity-logs",
     "users",
+    "developer",
     "tools",
+    "tools.messages",
     "tools.assets",
     "tools.bulk-image-resize",
     "tools.meta-catalog",
-    "trash"
+    "trash",
+    "settings"
   ],
+
   "theme": {
     "light": {
       "--background": "oklch(1 0 0)",
