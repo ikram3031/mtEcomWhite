@@ -95,6 +95,7 @@ export function AppSidebar({ ...props }) {
     // 1. Check feature flags first
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
+    if (menuKey === "tools.messages" && features?.webmail === false) return false
 
     // 2. Check RBAC role permissions
     return hasMenuAccess(userRole, menuKey)

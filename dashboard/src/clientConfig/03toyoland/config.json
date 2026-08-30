@@ -6,7 +6,8 @@
   "features": {
     "season": true,
     "brand": true,
-    "variantImage": false
+    "variantImage": false,
+    "webmail": true
   },
   "stockManagement": {
     "simpleProduct": true,

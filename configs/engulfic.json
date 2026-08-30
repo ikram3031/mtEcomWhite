@@ -34,7 +34,8 @@
   "features": {
     "season": false,
     "brand": false,
-    "variantImage": false
+    "variantImage": false,
+    "webmail": true
   },
   "stockManagement": {
     "simpleProduct": true,
