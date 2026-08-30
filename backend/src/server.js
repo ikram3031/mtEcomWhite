@@ -29,6 +29,19 @@ const bootstrap = async () => {
   // Initialize Fleet Telemetry Heartbeat Scheduler
   initHeartbeatScheduler();
 
+  // Initialize Real-time IMAP Webmail Synchronizer
+  if (env.IMAP_SYNC_ENABLED) {
+    import("./services/imapSync.service.js")
+      .then(({ startImapIdleListener }) => {
+        startImapIdleListener().catch((err) => {
+          logger.error({ err }, "Failed to start IMAP IDLE listener");
+        });
+      })
+      .catch((err) => {
+        logger.error({ err }, "Could not load IMAP service");
+      });
+  }
+
   const shutdown = (signal) => {
     stopHeartbeatScheduler();
     stopMediaSchedulers();

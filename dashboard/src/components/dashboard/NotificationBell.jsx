@@ -65,7 +65,7 @@ export const NotificationBell = () => {
       }
     }
     setIsOpen(false);
-    if (log.type === 'contactMessage') {
+    if (log.type === 'contactMessage' || log.type === 'webmailMessage') {
       navigate('/dashboard/tools/messages');
     } else {
       navigate('/dashboard/orders');
@@ -142,7 +142,7 @@ export const NotificationBell = () => {
           ) : (
             logs.map((log) => {
               const isUnread = !log.readStatus;
-              const isContact = log.type === 'contactMessage';
+              const isMail = log.type === 'contactMessage' || log.type === 'webmailMessage';
 
               return (
                 <DropdownMenuItem
@@ -155,13 +155,13 @@ export const NotificationBell = () => {
                   <div
                     className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                       isUnread
-                        ? isContact
+                        ? isMail
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-primary/15 text-primary'
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {isContact ? (
+                    {isMail ? (
                       <Mail className="h-4 w-4" />
                     ) : (
                       <ShoppingBag className="h-4 w-4" />

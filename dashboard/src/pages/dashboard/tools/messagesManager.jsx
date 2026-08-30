@@ -7,13 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import {
   Mail,
+  MailOpen,
   Send,
-  CheckCheck,
-  Clock,
+  Star,
   Trash2,
+  Inbox,
+  Clock,
   User,
   Phone,
   Search,
@@ -21,12 +30,18 @@ import {
   CornerDownRight,
   MessageSquare,
   Sparkles,
-  Inbox,
   ArrowLeft,
-  CheckCircle2,
-  ExternalLink,
   ShieldCheck,
   Copy,
+  Plus,
+  Paperclip,
+  ChevronLeft,
+  ChevronRight,
+  MoreVertical,
+  CheckCircle2,
+  FileText,
+  AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -60,96 +75,204 @@ const formatDateTime = (dateStr) => {
   });
 };
 
-// Main Messages Manager Component
+// Full Webmail and Messaging Management Component
 const MessagesManager = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [statusTab, setStatusTab] = useState('all'); // 'all' | 'unread' | 'read' | 'replied'
+  const [activeFolder, setActiveFolder] = useState('INBOX');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [checkedIds, setCheckedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [composeTo, setComposeTo] = useState('');
+  const [composeCc, setComposeCc] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
+  const [showCc, setShowCc] = useState(false);
+
   const [replyText, setReplyText] = useState('');
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch messages from backend
-  const {
-    data: responseData,
-    isLoading,
-    isRefetching,
-    refetch,
-  } = useQuery({
-    queryKey: ['contact-messages', statusTab, searchQuery],
+  // Fetch folder stats
+  const { data: folderStatsResponse, refetch: refetchFolders } = useQuery({
+    queryKey: ['webmail-folders'],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (statusTab !== 'all') params.append('status', statusTab);
-      if (searchQuery.trim()) params.append('q', searchQuery.trim());
-      params.append('limit', '50');
-
-      const res = await apiClient.get(`/api/v1/contact/messages?${params.toString()}`);
+      const res = await apiClient.get('/api/v1/webmail/folders');
       return res.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
-  const messages = responseData?.data || [];
-  const stats = responseData?.stats || { total: 0, unread: 0, read: 0, replied: 0 };
+  const folderList = folderStatsResponse?.data || [
+    { id: 'INBOX', name: 'Inbox', unread: 0, total: 0 },
+    { id: 'Starred', name: 'Starred', unread: 0, total: 0 },
+    { id: 'Sent', name: 'Sent', unread: 0, total: 0 },
+    { id: 'Inquiries', name: 'Website Inquiries', unread: 0, total: 0 },
+    { id: 'Trash', name: 'Trash', unread: 0, total: 0 },
+  ];
 
-  // Fetch selected message details & mark read
-  const { data: selectedDetailResponse, isLoading: isLoadingDetail } = useQuery({
-    queryKey: ['contact-message-detail', selectedMessageId],
+  // Fetch emails or contact inquiries depending on selected folder
+  const isWebsiteInquiryFolder = activeFolder === 'Inquiries';
+
+  const {
+    data: messagesResponse,
+    isLoading: isLoadingMessages,
+    isRefetching: isRefetchingMessages,
+    refetch: refetchMessages,
+  } = useQuery({
+    queryKey: ['webmail-messages', activeFolder, searchQuery, currentPage],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('page', String(currentPage));
+      params.append('limit', '25');
+      if (searchQuery.trim()) params.append('q', searchQuery.trim());
+
+      if (isWebsiteInquiryFolder) {
+        const res = await apiClient.get(`/api/v1/contact/messages?${params.toString()}`);
+        return res.data;
+      } else {
+        params.append('folder', activeFolder);
+        const res = await apiClient.get(`/api/v1/webmail/messages?${params.toString()}`);
+        return res.data;
+      }
+    },
+  });
+
+  const messages = messagesResponse?.data || [];
+  const pagination = messagesResponse?.pagination || { page: 1, total: 0, totalPages: 1 };
+
+  // Fetch single active message details
+  const { data: activeDetailResponse, isLoading: isLoadingDetail } = useQuery({
+    queryKey: ['webmail-detail', activeFolder, selectedMessageId],
     queryFn: async () => {
       if (!selectedMessageId) return null;
-      const res = await apiClient.get(`/api/v1/contact/messages/${selectedMessageId}`);
-      // Refresh notifications and message list since message was auto-marked as read
-      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
-      return res.data;
+      if (isWebsiteInquiryFolder) {
+        const res = await apiClient.get(`/api/v1/contact/messages/${selectedMessageId}`);
+        queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+        queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+        return res.data;
+      } else {
+        const res = await apiClient.get(`/api/v1/webmail/messages/${selectedMessageId}`);
+        queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+        queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+        return res.data;
+      }
     },
     enabled: Boolean(selectedMessageId),
   });
 
-  const activeMessage = selectedDetailResponse?.data || messages.find((m) => m.id === selectedMessageId || m.did === selectedMessageId) || null;
+  const activeMessage =
+    activeDetailResponse?.data ||
+    messages.find((m) => m.id === selectedMessageId || m.did === selectedMessageId) ||
+    null;
+
+  // Trigger manual IMAP mailbox sync
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post('/api/v1/webmail/sync');
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success('Mailbox synchronized with mail server.');
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+    },
+    onError: () => {
+      toast.error('Sync failed. Please verify IMAP connection.');
+    },
+  });
+
+  // Toggle star mutation
+  const toggleStarMutation = useMutation({
+    mutationFn: async ({ id, isStarred }) => {
+      const res = await apiClient.patch(`/api/v1/webmail/messages/${id}/flags`, { isStarred });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-detail', activeFolder, selectedMessageId] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+    },
+  });
+
+  // Batch action mutation
+  const batchActionMutation = useMutation({
+    mutationFn: async ({ ids, action }) => {
+      const res = await apiClient.post('/api/v1/webmail/messages/batch', { ids, action });
+      return res.data;
+    },
+    onSuccess: () => {
+      setCheckedIds([]);
+      toast.success('Messages updated.');
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+    },
+    onError: () => {
+      toast.error('Failed to execute batch action.');
+    },
+  });
+
+  // Send new email from Compose modal
+  const composeMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await apiClient.post('/api/v1/webmail/send', payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success(`Email sent successfully to ${composeTo}!`);
+      setIsComposeOpen(false);
+      setComposeTo('');
+      setComposeCc('');
+      setComposeSubject('');
+      setComposeBody('');
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Failed to send email. Check SMTP settings.');
+    },
+  });
 
   // Send reply mutation
   const replyMutation = useMutation({
     mutationFn: async ({ id, text }) => {
-      const res = await apiClient.post(`/api/v1/contact/messages/${id}/reply`, {
-        message: text,
-      });
-      return res.data;
+      if (isWebsiteInquiryFolder) {
+        const res = await apiClient.post(`/api/v1/contact/messages/${id}/reply`, {
+          message: text,
+        });
+        return res.data;
+      } else {
+        const res = await apiClient.post('/api/v1/webmail/send', {
+          to: activeMessage.from?.address || activeMessage.from,
+          subject: activeMessage.subject?.startsWith('Re:')
+            ? activeMessage.subject
+            : `Re: ${activeMessage.subject}`,
+          bodyText: text,
+          inReplyTo: activeMessage.messageId || activeMessage.did,
+          threadId: activeMessage.threadId || activeMessage.messageId,
+        });
+        return res.data;
+      }
     },
-    onSuccess: (data) => {
-      toast.success(`Reply email sent successfully to ${activeMessage?.email || 'customer'}!`);
+    onSuccess: () => {
+      toast.success('Reply sent successfully!');
       setReplyText('');
-      queryClient.invalidateQueries({ queryKey: ['contact-message-detail', selectedMessageId] });
-      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-detail', activeFolder, selectedMessageId] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
     },
     onError: (err) => {
-      const errMsg = err?.response?.data?.message || 'Failed to send reply email. Check SMTP settings.';
-      toast.error(errMsg);
+      toast.error(err?.response?.data?.message || 'Failed to send reply email.');
     },
   });
 
-  // Toggle status mutation
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
-      const res = await apiClient.patch(`/api/v1/contact/messages/${id}/status`, { status });
-      return res.data;
-    },
-    onSuccess: (_, variables) => {
-      toast.success(`Marked as ${variables.status}.`);
-      queryClient.invalidateQueries({ queryKey: ['contact-message-detail', selectedMessageId] });
-      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
-    },
-    onError: () => {
-      toast.error('Failed to update message status.');
-    },
-  });
-
-  // Handles sending reply
+  // Handles sending direct reply
   const handleSendReply = (e) => {
     e.preventDefault();
     if (!replyText.trim() || !activeMessage) return;
@@ -159,23 +282,53 @@ const MessagesManager = () => {
     });
   };
 
-  // Handles soft delete
+  // Handles sending new composed email
+  const handleSendCompose = (e) => {
+    e.preventDefault();
+    if (!composeTo.trim()) {
+      toast.error('Recipient email is required.');
+      return;
+    }
+    composeMutation.mutate({
+      to: composeTo.trim(),
+      cc: composeCc.trim() ? composeCc.trim() : undefined,
+      subject: composeSubject.trim() || '(No Subject)',
+      bodyText: composeBody.trim(),
+      bodyHtml: `<p>${composeBody.trim().replace(/\n/g, '<br>')}</p>`,
+    });
+  };
+
+  // Handles single delete confirmation
   const handleConfirmDelete = async () => {
     if (!deleteTargetId) return;
     setIsDeleting(true);
     try {
-      await apiClient.delete(`/api/v1/contact/messages/${deleteTargetId}`);
-      toast.success('Message deleted successfully.');
+      if (isWebsiteInquiryFolder) {
+        await apiClient.delete(`/api/v1/contact/messages/${deleteTargetId}`);
+      } else {
+        await apiClient.delete(`/api/v1/webmail/messages/${deleteTargetId}`);
+      }
+      toast.success('Message moved to trash.');
       if (selectedMessageId === deleteTargetId) {
         setSelectedMessageId(null);
       }
-      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['webmail-folders'] });
       queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
     } catch {
       toast.error('Failed to delete message.');
     } finally {
       setIsDeleting(false);
       setDeleteTargetId(null);
+    }
+  };
+
+  // Select all or deselect all checkboxes
+  const handleToggleSelectAll = () => {
+    if (checkedIds.length === messages.length) {
+      setCheckedIds([]);
+    } else {
+      setCheckedIds(messages.map((m) => m.id || m.did));
     }
   };
 
@@ -188,7 +341,7 @@ const MessagesManager = () => {
 
   return (
     <div className="space-y-4">
-      {/* Page Header */}
+      {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-border/60">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
@@ -196,94 +349,204 @@ const MessagesManager = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              Messages
-              {stats.unread > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
-                  {stats.unread} unread
-                </span>
-              )}
+              Webmail & Inquiries
             </h1>
             <p className="text-xs text-muted-foreground">
-              Directly view website contact form submissions and reply to customers via email.
+              Official Hostinger IMAP mail client and website contact form inquiries.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
+            size="sm"
+            onClick={() => setIsComposeOpen(true)}
+            className="h-8.5 text-xs gap-1.5 cursor-pointer font-semibold shadow-xs"
+          >
+            <Plus className="h-4 w-4" />
+            Compose
+          </Button>
+
+          <Button
             variant="outline"
             size="sm"
-            onClick={() => refetch()}
-            disabled={isLoading || isRefetching}
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
             className="h-8.5 text-xs gap-1.5 cursor-pointer"
+            title="Sync with IMAP Mail Server"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncMutation.isPending ? 'Syncing...' : 'Sync Mailbox'}
           </Button>
         </div>
       </div>
 
-      {/* Main Inbox Master-Detail Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[620px] rounded-xl border border-border bg-card overflow-hidden shadow-xs">
-        {/* Left Pane: Message List */}
-        <div
-          className={`lg:col-span-5 xl:col-span-4 border-r border-border flex flex-col ${
-            selectedMessageId ? 'hidden lg:flex' : 'flex'
-          }`}
-        >
-          {/* Filter Tabs & Search */}
-          <div className="p-3 border-b border-border bg-muted/20 space-y-2.5">
-            {/* Status Pills */}
-            <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-lg text-xs">
-              {[
-                { key: 'all', label: 'All', count: stats.total },
-                { key: 'unread', label: 'Unread', count: stats.unread },
-                { key: 'replied', label: 'Replied', count: stats.replied },
-                { key: 'read', label: 'Read', count: stats.read },
-              ].map((tab) => (
+      {/* Main Webmail 3-Pane / Split-Pane Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-[640px] rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+        {/* Left Navigation: Folders Sidebar */}
+        <div className="lg:col-span-3 xl:col-span-2 border-r border-border bg-muted/20 p-3 flex flex-col justify-between">
+          <div className="space-y-1">
+            <Button
+              onClick={() => setIsComposeOpen(true)}
+              className="w-full justify-start gap-2 h-9 text-xs mb-3 font-semibold shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              Compose Email
+            </Button>
+
+            {folderList.map((folder) => {
+              const isActive = activeFolder === folder.id;
+              const IconComponent =
+                folder.id === 'INBOX'
+                  ? Inbox
+                  : folder.id === 'Sent'
+                  ? Send
+                  : folder.id === 'Starred'
+                  ? Star
+                  : folder.id === 'Inquiries'
+                  ? MessageSquare
+                  : Trash2;
+
+              return (
                 <button
-                  key={tab.key}
+                  key={folder.id}
                   type="button"
-                  onClick={() => setStatusTab(tab.key)}
-                  className={`flex-1 py-1.5 px-2 rounded-md font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    statusTab === tab.key
-                      ? 'bg-background text-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
+                  onClick={() => {
+                    setActiveFolder(folder.id);
+                    setSelectedMessageId(null);
+                    setCheckedIds([]);
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <span>{tab.label}</span>
-                  {tab.count > 0 && (
+                  <span className="flex items-center gap-2.5">
+                    <IconComponent className="h-4 w-4 shrink-0" />
+                    <span>{folder.name}</span>
+                  </span>
+
+                  {folder.unread > 0 && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        statusTab === tab.key
-                          ? 'bg-primary/15 text-primary font-bold'
-                          : 'bg-muted text-muted-foreground'
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                        isActive
+                          ? 'bg-primary-foreground/20 text-primary-foreground'
+                          : 'bg-primary/15 text-primary'
                       }`}
                     >
-                      {tab.count}
+                      {folder.unread}
                     </span>
                   )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
-            {/* Search Input */}
+          {/* Mailbox Status Footer */}
+          <div className="pt-4 border-t border-border/50 text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span className="truncate">SSL IMAP / Hostinger</span>
+          </div>
+        </div>
+
+        {/* Middle Pane: Email List */}
+        <div
+          className={`lg:col-span-4 xl:col-span-4 border-r border-border flex flex-col bg-background ${
+            selectedMessageId ? 'hidden lg:flex' : 'flex'
+          }`}
+        >
+          {/* List Search & Batch Action Bar */}
+          <div className="p-3 border-b border-border bg-muted/10 space-y-2.5">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or message..."
+                placeholder="Search sender, subject, keywords..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-8.5 pl-8 text-xs bg-background"
               />
             </div>
+
+            {/* Batch Toolbar */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={messages.length > 0 && checkedIds.length === messages.length}
+                  onCheckedChange={handleToggleSelectAll}
+                  aria-label="Select all"
+                />
+
+                {checkedIds.length > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => batchActionMutation.mutate({ ids: checkedIds, action: 'markRead' })}
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      title="Mark as Read"
+                    >
+                      <MailOpen className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => batchActionMutation.mutate({ ids: checkedIds, action: 'markUnread' })}
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      title="Mark as Unread"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => batchActionMutation.mutate({ ids: checkedIds, action: 'trash' })}
+                      className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                      title="Move to Trash"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {activeFolder}
+                  </span>
+                )}
+              </div>
+
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center gap-1 text-[11px]">
+                  <span>
+                    {pagination.page} / {pagination.totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="p-1 hover:text-foreground disabled:opacity-30 cursor-pointer"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentPage >= pagination.totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    className="p-1 hover:text-foreground disabled:opacity-30 cursor-pointer"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Messages Scroll List */}
+          {/* Email Item Rows */}
           <div className="flex-1 overflow-y-auto divide-y divide-border/60 max-h-[620px]">
-            {isLoading ? (
+            {isLoadingMessages ? (
               <div className="p-3 space-y-3">
-                {[1, 2, 3, 4, 5].map((n) => (
+                {[1, 2, 3, 4, 5, 6].map((n) => (
                   <div key={n} className="p-3 space-y-2 rounded-lg bg-muted/20">
                     <Skeleton className="h-4 w-1/3" />
                     <Skeleton className="h-3 w-3/4" />
@@ -292,84 +555,102 @@ const MessagesManager = () => {
                 ))}
               </div>
             ) : messages.length === 0 ? (
-              <div className="py-16 px-4 text-center space-y-2">
+              <div className="py-20 px-4 text-center space-y-2">
                 <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
-                <p className="text-sm font-semibold text-foreground">No messages found</p>
+                <p className="text-sm font-semibold text-foreground">No messages</p>
                 <p className="text-xs text-muted-foreground">
                   {searchQuery
-                    ? 'Try searching with different keywords.'
-                    : 'When visitors submit the contact form, their inquiries will appear here.'}
+                    ? 'No matching results found.'
+                    : `No emails currently in ${activeFolder}.`}
                 </p>
               </div>
             ) : (
               messages.map((msg) => {
                 const isSelected = selectedMessageId === (msg.id || msg.did);
-                const isUnread = msg.status === 'unread';
-                const isReplied = msg.status === 'replied';
+                const isUnread = isWebsiteInquiryFolder ? msg.status === 'unread' : !msg.isRead;
+                const isStarred = msg.isStarred;
+                const senderName = isWebsiteInquiryFolder
+                  ? msg.name
+                  : msg.from?.name || msg.from?.address || 'Unknown';
 
                 return (
                   <div
                     key={msg.id || msg.did}
                     onClick={() => setSelectedMessageId(msg.id || msg.did)}
-                    className={`p-3.5 cursor-pointer transition-colors relative flex flex-col gap-1.5 text-left ${
+                    className={`p-3 cursor-pointer transition-colors relative flex items-start gap-2.5 ${
                       isSelected
                         ? 'bg-primary/10 border-l-4 border-l-primary'
                         : isUnread
-                        ? 'bg-primary/[0.03] hover:bg-muted/40 font-medium'
+                        ? 'bg-primary/[0.04] hover:bg-muted/40 font-semibold'
                         : 'hover:bg-muted/30 opacity-90'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <div
-                          className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                            isUnread
-                              ? 'bg-primary/20 text-primary'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {msg.name?.charAt(0)?.toUpperCase() || 'U'}
-                        </div>
+                    {/* Select Checkbox */}
+                    <div
+                      className="pt-0.5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const id = msg.id || msg.did;
+                        setCheckedIds((prev) =>
+                          prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                        );
+                      }}
+                    >
+                      <Checkbox checked={checkedIds.includes(msg.id || msg.did)} />
+                    </div>
+
+                    {/* Star Toggle */}
+                    {!isWebsiteInquiryFolder && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleStarMutation.mutate({
+                            id: msg.id || msg.did,
+                            isStarred: !isStarred,
+                          });
+                        }}
+                        className={`pt-0.5 cursor-pointer ${
+                          isStarred ? 'text-amber-500' : 'text-muted-foreground/40 hover:text-muted-foreground'
+                        }`}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${isStarred ? 'fill-amber-500' : ''}`} />
+                      </button>
+                    )}
+
+                    {/* Content Preview */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-1">
                         <span
                           className={`text-xs truncate ${
-                            isUnread ? 'font-bold text-foreground' : 'font-medium text-foreground/90'
+                            isUnread ? 'font-bold text-foreground' : 'font-medium text-foreground/80'
                           }`}
                         >
-                          {msg.name}
+                          {senderName}
+                        </span>
+
+                        <span className="text-[10px] text-muted-foreground shrink-0 flex items-center gap-1 font-normal">
+                          {formatTimeAgo(msg.date || msg.createdAt)}
                         </span>
                       </div>
 
-                      <span className="text-[10px] text-muted-foreground shrink-0 flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5" />
-                        {formatTimeAgo(msg.createdAt)}
-                      </span>
+                      <p
+                        className={`text-xs truncate ${
+                          isUnread ? 'font-semibold text-foreground' : 'text-foreground/75 font-normal'
+                        }`}
+                      >
+                        {msg.subject || (isWebsiteInquiryFolder ? msg.subject || 'Website Inquiry' : '(No Subject)')}
+                      </p>
+
+                      <p className="text-[11px] text-muted-foreground truncate font-normal">
+                        {msg.snippet || msg.message}
+                      </p>
                     </div>
 
-                    <p className="text-xs text-foreground/80 line-clamp-2 leading-relaxed">
-                      {msg.message}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-1 text-[11px]">
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
-                        {msg.email}
-                      </span>
-
-                      <div>
-                        {isReplied ? (
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-                            Replied ({msg.replies?.length || 1})
-                          </Badge>
-                        ) : isUnread ? (
-                          <Badge className="text-[9px] px-1.5 py-0 bg-primary text-primary-foreground">
-                            New
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 text-muted-foreground">
-                            Read
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                    {/* Unread indicator dot */}
+                    {isUnread && (
+                      <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                    )}
                   </div>
                 );
               })
@@ -377,9 +658,9 @@ const MessagesManager = () => {
           </div>
         </div>
 
-        {/* Right Pane: Message Detail & Direct Reply */}
+        {/* Right Pane: Reading & Conversation Thread */}
         <div
-          className={`lg:col-span-7 xl:col-span-8 flex flex-col bg-background ${
+          className={`lg:col-span-5 xl:col-span-6 flex flex-col bg-background ${
             !selectedMessageId ? 'hidden lg:flex' : 'flex'
           }`}
         >
@@ -388,7 +669,6 @@ const MessagesManager = () => {
               {/* Message Header Bar */}
               <div className="p-4 border-b border-border flex items-start justify-between gap-3 bg-muted/10">
                 <div className="flex items-start gap-3 overflow-hidden">
-                  {/* Mobile Back Button */}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -398,64 +678,60 @@ const MessagesManager = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
 
-                  <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-base shrink-0 mt-0.5">
-                    {activeMessage.name?.charAt(0)?.toUpperCase() || 'U'}
+                  <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+                    {(isWebsiteInquiryFolder ? activeMessage.name : activeMessage.from?.name || activeMessage.from?.address || 'U')
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
 
                   <div className="space-y-1 overflow-hidden">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-sm font-bold text-foreground">
-                        {activeMessage.name}
+                        {isWebsiteInquiryFolder
+                          ? activeMessage.name
+                          : activeMessage.from?.name || activeMessage.from?.address}
                       </h2>
-                      {activeMessage.status === 'replied' ? (
-                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-                          Replied
-                        </Badge>
-                      ) : activeMessage.status === 'unread' ? (
-                        <Badge className="text-[10px] bg-primary text-primary-foreground">
-                          Unread
+
+                      {isWebsiteInquiryFolder ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-primary/10 text-primary border-primary/20"
+                        >
+                          Website Inquiry
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-[10px] text-muted-foreground">
-                          Read
+                        <Badge variant="outline" className="text-[10px]">
+                          {activeFolder}
                         </Badge>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 font-mono">
                         <Mail className="h-3 w-3" />
                         <a
-                          href={`mailto:${activeMessage.email}`}
+                          href={`mailto:${isWebsiteInquiryFolder ? activeMessage.email : activeMessage.from?.address}`}
                           className="hover:text-primary hover:underline"
                         >
-                          {activeMessage.email}
+                          {isWebsiteInquiryFolder ? activeMessage.email : activeMessage.from?.address}
                         </a>
                         <button
                           type="button"
-                          onClick={() => handleCopy(activeMessage.email, 'Email')}
+                          onClick={() =>
+                            handleCopy(
+                              isWebsiteInquiryFolder ? activeMessage.email : activeMessage.from?.address,
+                              'Email'
+                            )
+                          }
                           className="p-0.5 hover:text-foreground cursor-pointer"
-                          title="Copy Email"
                         >
                           <Copy className="h-2.5 w-2.5" />
                         </button>
                       </span>
 
-                      {activeMessage.phone && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          <a
-                            href={`tel:${activeMessage.phone}`}
-                            className="hover:text-primary hover:underline"
-                          >
-                            {activeMessage.phone}
-                          </a>
-                        </span>
-                      )}
-
                       <span className="flex items-center gap-1 text-[11px]">
                         <Clock className="h-3 w-3" />
-                        {formatDateTime(activeMessage.createdAt)}
+                        {formatDateTime(activeMessage.date || activeMessage.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -463,20 +739,21 @@ const MessagesManager = () => {
 
                 {/* Actions Toolbar */}
                 <div className="flex items-center gap-1 shrink-0">
-                  {activeMessage.status === 'read' && (
+                  {!isWebsiteInquiryFolder && (
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() =>
-                        statusMutation.mutate({
+                        toggleStarMutation.mutate({
                           id: activeMessage.id || activeMessage.did,
-                          status: 'unread',
+                          isStarred: !activeMessage.isStarred,
                         })
                       }
-                      disabled={statusMutation.isPending}
-                      className="h-8 text-xs cursor-pointer"
+                      className={`h-8 w-8 cursor-pointer ${
+                        activeMessage.isStarred ? 'text-amber-500' : 'text-muted-foreground'
+                      }`}
                     >
-                      Mark Unread
+                      <Star className={`h-4 w-4 ${activeMessage.isStarred ? 'fill-amber-500' : ''}`} />
                     </Button>
                   )}
 
@@ -492,53 +769,66 @@ const MessagesManager = () => {
                 </div>
               </div>
 
-              {/* Conversation Scroll Area */}
-              <div className="flex-1 p-5 overflow-y-auto space-y-5 max-h-[460px]">
-                {/* Original Customer Message Bubble */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                    <span className="font-semibold text-foreground flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-primary" />
-                      {activeMessage.name} (Customer)
-                    </span>
-                    <span className="text-[11px]">{formatDateTime(activeMessage.createdAt)}</span>
-                  </div>
+              {/* Message Subject and Body Content */}
+              <div className="flex-1 p-5 overflow-y-auto space-y-4 max-h-[460px]">
+                <h3 className="text-base font-bold text-foreground">
+                  {activeMessage.subject || (isWebsiteInquiryFolder ? activeMessage.subject || 'Website Inquiry' : '(No Subject)')}
+                </h3>
 
-                  <div className="p-4 rounded-xl bg-muted/40 border border-border/80 text-sm leading-relaxed text-foreground whitespace-pre-wrap shadow-xs">
-                    {activeMessage.subject && activeMessage.subject !== 'Website Contact Form' && (
-                      <p className="font-semibold text-xs text-primary mb-2">
-                        Subject: {activeMessage.subject}
-                      </p>
-                    )}
-                    {activeMessage.message}
-                  </div>
+                {/* Message Body Content */}
+                <div className="p-4 rounded-xl bg-muted/30 border border-border text-sm leading-relaxed text-foreground shadow-xs overflow-x-auto">
+                  {activeMessage.bodyHtml ? (
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none text-foreground"
+                      dangerouslySetInnerHTML={{ __html: activeMessage.bodyHtml }}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{activeMessage.bodyText || activeMessage.message}</p>
+                  )}
                 </div>
 
-                {/* Replies Thread */}
-                {activeMessage.replies && activeMessage.replies.length > 0 && (
-                  <div className="space-y-4 pt-2">
-                    <div className="relative flex items-center justify-center">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-border" />
-                      </div>
-                      <span className="relative bg-background px-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                        Replies ({activeMessage.replies.length})
-                      </span>
-                    </div>
-
-                    {activeMessage.replies.map((reply, idx) => (
-                      <div key={reply._id || reply.did || idx} className="space-y-1.5 pl-4 sm:pl-8">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                          <span className="font-semibold text-primary flex items-center gap-1.5">
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            {reply.senderName || 'Store Admin'} (via SMTP)
+                {/* Attachments list if any */}
+                {activeMessage.attachments && activeMessage.attachments.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <Paperclip className="h-3.5 w-3.5" />
+                      Attachments ({activeMessage.attachments.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {activeMessage.attachments.map((att, idx) => (
+                        <div
+                          key={att.did || idx}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/60 border border-border text-xs"
+                        >
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="font-medium truncate max-w-[150px]">{att.filename}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            ({Math.round((att.size || 0) / 1024)} KB)
                           </span>
-                          <span className="text-[11px]">{formatDateTime(reply.sentAt)}</span>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                        <div className="p-4 rounded-xl bg-primary/[0.07] border border-primary/20 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                          {reply.message}
+                {/* Thread replies history */}
+                {activeMessage.thread && activeMessage.thread.length > 0 && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Conversation History ({activeMessage.thread.length})
+                    </p>
+
+                    {activeMessage.thread.map((tMsg) => (
+                      <div key={tMsg.id || tMsg.did} className="p-3.5 rounded-lg bg-muted/20 border border-border text-xs space-y-2">
+                        <div className="flex items-center justify-between text-muted-foreground">
+                          <span className="font-semibold text-foreground">
+                            {tMsg.from?.name || tMsg.from?.address}
+                          </span>
+                          <span>{formatDateTime(tMsg.date)}</span>
                         </div>
+                        <p className="text-foreground/90 whitespace-pre-wrap">
+                          {tMsg.bodyText || tMsg.snippet}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -551,28 +841,21 @@ const MessagesManager = () => {
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5 font-medium text-foreground">
                       <CornerDownRight className="h-3.5 w-3.5 text-primary" />
-                      Reply to {activeMessage.name}
+                      Reply to {isWebsiteInquiryFolder ? activeMessage.name : activeMessage.from?.name || activeMessage.from?.address}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      Will be sent directly to <strong className="text-foreground">{activeMessage.email}</strong> via SMTP
-                    </span>
+                    <span className="text-[11px]">Delivered via Hostinger SMTP</span>
                   </div>
 
                   <Textarea
-                    placeholder={`Type your response to ${activeMessage.name}...`}
+                    placeholder="Type your response here..."
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    rows={4}
+                    rows={3}
                     disabled={replyMutation.isPending}
-                    className="text-xs bg-background resize-none focus-visible:ring-primary"
+                    className="text-xs bg-background resize-none"
                   />
 
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-amber-500" />
-                      Customer will receive your reply in their email inbox with quoted history.
-                    </p>
-
+                  <div className="flex items-center justify-end">
                     <Button
                       type="submit"
                       size="sm"
@@ -582,7 +865,7 @@ const MessagesManager = () => {
                       {replyMutation.isPending ? (
                         <>
                           <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                          Sending Email...
+                          Sending...
                         </>
                       ) : (
                         <>
@@ -599,16 +882,124 @@ const MessagesManager = () => {
             /* Empty selection placeholder */
             <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3 text-muted-foreground">
               <div className="h-16 w-16 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground/50 mb-1">
-                <MessageSquare className="h-8 w-8" />
+                <Mail className="h-8 w-8" />
               </div>
               <h3 className="text-base font-bold text-foreground">No Message Selected</h3>
               <p className="text-xs max-w-sm text-muted-foreground leading-relaxed">
-                Choose a message from the list on the left to view customer details, read the inquiry, and send a direct email reply.
+                Choose an email or inquiry from the list to view the full message body, attachments, and send replies.
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Compose Email Modal Dialog */}
+      <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+        <DialogContent className="sm:max-w-[620px]">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <Send className="h-4 w-4 text-primary" />
+              New Email Message
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSendCompose} className="space-y-3 pt-2">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-foreground">To:</label>
+                {!showCc && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCc(true)}
+                    className="text-[11px] text-primary hover:underline cursor-pointer"
+                  >
+                    + Add CC
+                  </button>
+                )}
+              </div>
+              <Input
+                type="email"
+                required
+                placeholder="recipient@example.com"
+                value={composeTo}
+                onChange={(e) => setComposeTo(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            {showCc && (
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">CC:</label>
+                <Input
+                  type="email"
+                  placeholder="cc@example.com"
+                  value={composeCc}
+                  onChange={(e) => setComposeCc(e.target.value)}
+                  className="text-xs"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">Subject:</label>
+              <Input
+                placeholder="Subject line"
+                value={composeSubject}
+                onChange={(e) => setComposeSubject(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">Message:</label>
+              <Textarea
+                placeholder="Type your email body..."
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                rows={7}
+                className="text-xs resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                Sent from official Hostinger SMTP
+              </span>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsComposeOpen(false)}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={composeMutation.isPending}
+                  className="gap-1.5 text-xs font-semibold"
+                >
+                  {composeMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      Send Email
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDeleteDialog
@@ -616,11 +1007,12 @@ const MessagesManager = () => {
         onOpenChange={(open) => !open && setDeleteTargetId(null)}
         onConfirm={handleConfirmDelete}
         loading={isDeleting}
-        title="Delete Message"
-        description="Are you sure you want to delete this message? It will be removed from your active inbox."
+        title="Move to Trash"
+        description="Are you sure you want to move this message to Trash?"
       />
     </div>
   );
 };
 
 export default MessagesManager;
+
