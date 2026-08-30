@@ -32,6 +32,7 @@ import {
   Mail,
   Image as ImageIcon,
   LineChart,
+  LifeBuoy,
 } from "lucide-react"
 
 import {
@@ -504,6 +505,17 @@ export function AppSidebar({ ...props }) {
                       >
                         <Share2 className="h-3.5 w-3.5" />
                         <span>Meta Catalog</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("tools.support") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/support" || pathname.startsWith("/dashboard/tools/support")}
+                        render={<Link to="/dashboard/tools/support" />}
+                      >
+                        <LifeBuoy className="h-3.5 w-3.5" />
+                        <span>Support</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

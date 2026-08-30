@@ -46,6 +46,7 @@ import BulkImageResize from './pages/dashboard/tools/bulkImageResize';
 import MetaCatalog from './pages/dashboard/tools/metaCatalog';
 import SystemLogs from './pages/dashboard/tools/systemLogs';
 import AssetsManager from './pages/dashboard/tools/assetsManager';
+import SupportDesk from './pages/dashboard/tools/supportDesk';
 
 // AI Studio
 import Studio from './pages/dashboard/studio/index';
@@ -193,6 +194,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleGuard menuKey="tools.meta-catalog">
                 <MetaCatalog />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'support',
+            element: (
+              <RoleGuard menuKey="tools.support">
+                <SupportDesk />
               </RoleGuard>
             ),
           },
