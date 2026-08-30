@@ -32,6 +32,11 @@ export async function createApp() {
     "https://www.toyoland.shop",
     "https://dashboard.toyoland.shop",
     "https://server.toyoland.shop",
+    "https://kawaiikutir.shop",
+    "https://www.kawaiikutir.shop",
+    "https://admin.kawaiikutir.shop",
+    "https://dashboard.kawaiikutir.shop",
+    "https://server.kawaiikutir.shop",
     "http://localhost:8001",
     "http://localhost:8005",
     "http://localhost:3000",
@@ -46,16 +51,15 @@ export async function createApp() {
 
   const corsOptions = {
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       const isAllowedExplicit = allowedOrigins.includes("*") || allowedOrigins.includes(origin);
       if (isAllowedExplicit) {
         return callback(null, true);
       }
 
-      // Check if origin matches known client domain keywords or subdomains (toyoland, engulfic, decantre, etc.)
       const isKnownClientDomain =
         origin.includes("toyoland") ||
+        origin.includes("kawaiikutir") ||
         origin.includes("engulfic") ||
         origin.includes("decantre") ||
         origin.includes("localhost") ||

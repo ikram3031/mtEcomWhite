@@ -1,12 +1,14 @@
 import decantreConfig from './01decantre/config.json';
 import engulficConfig from './02engulfic/config.json';
 import toyolandConfig from './03toyoland/config.json';
+import kawaiikutirConfig from './04kawaiikutir/config.json';
 import activeSyncedConfig from './activeConfig.json';
 
 const clientConfigs = {
   decantre: decantreConfig,
   engulfic: engulficConfig,
   toyoland: toyolandConfig,
+  kawaiikutir: kawaiikutirConfig,
 };
 
 // Fallback to hostname detection

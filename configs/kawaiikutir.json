@@ -23,12 +23,7 @@
     "variants": {
       "enabled": true,
       "allowVariantImages": true,
-      "supportedDimensions": [
-        "size",
-        "color",
-        "style",
-        "design"
-      ],
+      "supportedDimensions": ["size", "color", "style", "design"],
       "defaultUnit": "piece"
     },
     "specifications": {
@@ -50,12 +45,7 @@
   "reports": {
     "enableInStoreFilter": true,
     "enableExport": true,
-    "enabledTabs": [
-      "sales",
-      "products",
-      "payments",
-      "inventory"
-    ]
+    "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
   "logoUrl": "/src/uploads/assets/kawaiikutir_logo.png",
   "siteIconUrl": "/src/uploads/assets/kawaiikutir_logo.png",
@@ -66,18 +56,8 @@
         "title": "Hero Slider Carousel",
         "description": "Main sliding banners displayed on store homepage (Recommended: 1920x650 px, max 2MB)",
         "slots": [
-          {
-            "key": "slider-1",
-            "label": "Slide 1",
-            "filename": "slider-1.webp",
-            "recommendedSize": "1920x650"
-          },
-          {
-            "key": "slider-2",
-            "label": "Slide 2",
-            "filename": "slider-2.webp",
-            "recommendedSize": "1920x650"
-          }
+          { "key": "slider-1", "label": "Slide 1", "filename": "slider-1.webp", "recommendedSize": "1920x650" },
+          { "key": "slider-2", "label": "Slide 2", "filename": "slider-2.webp", "recommendedSize": "1920x650" }
         ]
       },
       {
@@ -85,12 +65,7 @@
         "title": "Promotional Banners",
         "description": "Special campaign and announcement banner images",
         "slots": [
-          {
-            "key": "banner-main",
-            "label": "Main Promo Banner",
-            "filename": "banner-main.webp",
-            "recommendedSize": "1200x400"
-          }
+          { "key": "banner-main", "label": "Main Promo Banner", "filename": "banner-main.webp", "recommendedSize": "1200x400" }
         ]
       },
       {
@@ -98,18 +73,8 @@
         "title": "Brand & Identity",
         "description": "Brand logo and browser favicon files",
         "slots": [
-          {
-            "key": "logo",
-            "label": "Header Logo",
-            "filename": "kawaiikutir_logo.png",
-            "recommendedSize": "500x200"
-          },
-          {
-            "key": "favicon",
-            "label": "Favicon Icon",
-            "filename": "favicon.ico",
-            "recommendedSize": "64x64"
-          }
+          { "key": "logo", "label": "Header Logo", "filename": "kawaiikutir_logo.png", "recommendedSize": "500x200" },
+          { "key": "favicon", "label": "Favicon Icon", "filename": "favicon.ico", "recommendedSize": "64x64" }
         ]
       }
     ]
