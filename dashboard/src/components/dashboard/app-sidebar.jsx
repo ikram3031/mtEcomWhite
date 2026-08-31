@@ -33,6 +33,7 @@ import {
   Image as ImageIcon,
   LineChart,
   LifeBuoy,
+  Ruler,
 } from "lucide-react"
 
 import {
@@ -98,6 +99,7 @@ export function AppSidebar({ ...props }) {
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
     if (menuKey === "tools.messages" && features?.webmail === false) return false
+    if (menuKey === "products.size-charts" && features?.sizeChart === false) return false
 
     // 2. Check RBAC role permissions
     return hasMenuAccess(userRole, menuKey)
@@ -283,6 +285,17 @@ export function AppSidebar({ ...props }) {
                       >
                         <Ticket className="h-3.5 w-3.5" />
                         <span>Coupons</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("products.size-charts") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/products/size-charts"}
+                        render={<Link to="/dashboard/products/size-charts" />}
+                      >
+                        <Ruler className="h-3.5 w-3.5" />
+                        <span>Size Charts</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

@@ -25,6 +25,7 @@ import ProductDetails from './pages/dashboard/products/productDetails';
 import AddNewProduct from './pages/dashboard/products/addNewProduct';
 // import Stock from './pages/dashboard/products/stock';
 import Coupons from './pages/dashboard/products/coupons';
+import SizeCharts from './pages/dashboard/products/sizeCharts';
 import Categories from './pages/dashboard/products/categories';
 import Brands from './pages/dashboard/products/brands';
 import Attributes from './pages/dashboard/products/attributes';
@@ -257,6 +258,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleGuard menuKey="products.coupons">
                 <Coupons />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'size-charts',
+            element: (
+              <RoleGuard menuKey="products.size-charts">
+                <SizeCharts />
               </RoleGuard>
             ),
           },
