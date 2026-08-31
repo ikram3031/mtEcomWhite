@@ -35,7 +35,8 @@
     "season": false,
     "brand": false,
     "variantImage": false,
-    "webmail": true
+    "webmail": true,
+    "sizeChart": true
   },
   "stockManagement": {
     "simpleProduct": true,
@@ -97,6 +98,7 @@
     "products.categories",
     "products.attributes",
     "products.coupons",
+    "products.size-charts",
     "reviews",
     "studio",
     "studio.batch-images",
