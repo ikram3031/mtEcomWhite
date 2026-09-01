@@ -838,11 +838,10 @@ const SizeChartsPage = () => {
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
                     onClick={() => setCurrentStep(2)}
-                    className="text-xs h-8 cursor-pointer font-semibold gap-1"
+                    className="text-xs h-8.5 px-3.5 bg-primary text-primary-foreground hover:bg-primary/90 font-bold gap-1.5 shadow-sm rounded-lg cursor-pointer transition-all"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Add / Edit Columns
+                    <Plus className="h-4 w-4" /> Add / Edit Columns
                   </Button>
                 </div>
               </div>
