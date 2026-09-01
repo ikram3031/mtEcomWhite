@@ -531,14 +531,17 @@ const SizeChartsPage = () => {
       )}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="w-[60vw] max-w-[60vw] sm:max-w-[60vw] max-h-[90vh] overflow-y-auto p-6 rounded-2xl">
+        <DialogContent
+          showCloseButton={false}
+          className="w-[60vw] max-w-[60vw] sm:max-w-[60vw] max-h-[90vh] overflow-y-auto p-6 rounded-2xl"
+        >
           <DialogHeader className="border-b pb-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Ruler className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-xl font-bold flex items-center gap-2 truncate">
+                  <Ruler className="h-5 w-5 text-primary shrink-0" />
                   {isEditingExisting ? 'Edit Size Chart' : 'Create Size Chart'} —{' '}
-                  <span className="text-primary">{activeCategory?.name}</span>
+                  <span className="text-primary truncate">{activeCategory?.name}</span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                   Configure measurement dimensions for parent category{' '}
@@ -548,37 +551,50 @@ const SizeChartsPage = () => {
                 </DialogDescription>
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs font-semibold">
-                <span
-                  onClick={() => setCurrentStep(1)}
-                  className={`px-2.5 py-1 rounded-lg cursor-pointer transition-all ${
-                    currentStep === 1
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <span
+                    onClick={() => setCurrentStep(1)}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
+                      currentStep === 1
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    1. Attribute
+                  </span>
+                  <span
+                    onClick={() => setCurrentStep(2)}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
+                      currentStep === 2
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    2. Columns
+                  </span>
+                  <span
+                    onClick={handleProceedToMatrix}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
+                      currentStep === 3
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    3. Matrix Data
+                  </span>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setModalOpen(false)}
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 cursor-pointer shrink-0 border border-border/60"
+                  title="Close modal"
                 >
-                  1. Attribute
-                </span>
-                <span
-                  onClick={() => setCurrentStep(2)}
-                  className={`px-2.5 py-1 rounded-lg cursor-pointer transition-all ${
-                    currentStep === 2
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  2. Columns
-                </span>
-                <span
-                  onClick={handleProceedToMatrix}
-                  className={`px-2.5 py-1 rounded-lg cursor-pointer transition-all ${
-                    currentStep === 3
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  3. Matrix Data
-                </span>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </DialogHeader>
