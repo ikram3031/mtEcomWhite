@@ -605,11 +605,13 @@ const SizeChartsPage = () => {
                     onValueChange={(val) => setSelectedAttributeId(val)}
                   >
                     <SelectTrigger className="w-full h-11 bg-card">
-                      <SelectValue placeholder="Select an attribute (e.g. Size)" />
+                      <SelectValue placeholder="Select an attribute (e.g. Size)">
+                        {activeAttribute?.name || 'Select an attribute (e.g. Size)'}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {attributes.map((attr) => (
-                        <SelectItem key={attr._id} value={attr._id}>
+                        <SelectItem key={attr._id || attr.id} value={attr._id || attr.id}>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold">{attr.name}</span>
                             <span className="text-xs text-muted-foreground font-mono">
@@ -636,8 +638,8 @@ const SizeChartsPage = () => {
                       {activeAttribute.values?.map((val, idx) => (
                         <Badge
                           key={idx}
-                          variant="secondary"
-                          className="font-mono text-xs px-3 py-1 bg-background border shadow-2xs"
+                          variant="outline"
+                          className="font-mono text-xs px-3 py-1 bg-background text-foreground border-border/80 shadow-2xs font-semibold"
                         >
                           {typeof val === 'string' ? val : val.name || val.slug}
                         </Badge>
@@ -786,7 +788,9 @@ const SizeChartsPage = () => {
                   onValueChange={(val) => setMeasurementUnit(val)}
                 >
                   <SelectTrigger className="w-36 h-9 bg-card">
-                    <SelectValue />
+                    <SelectValue>
+                      {measurementUnit === 'inches' ? 'Inches (in)' : measurementUnit === 'cm' ? 'Centimeters (cm)' : 'Millimeters (mm)'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="inches">Inches (in)</SelectItem>
