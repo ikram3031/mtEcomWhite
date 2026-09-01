@@ -848,25 +848,25 @@ const SizeChartsPage = () => {
               </div>
 
               <div className="rounded-xl border border-border/90 overflow-x-auto bg-card shadow-xs">
-                <table className="w-full text-xs text-left border-collapse">
+                <table className="w-full text-xs text-left border-collapse table-fixed min-w-[500px]">
                   <thead>
                     <tr className="border-b bg-muted/40 text-muted-foreground font-semibold">
-                      <th className="p-3 font-bold text-foreground uppercase tracking-wider min-w-[100px] border-r">
+                      <th className="p-3 font-bold text-foreground uppercase tracking-wider w-28 border-r text-center">
                         {activeAttribute?.name || 'Size'}
                       </th>
                       {columns.map((col) => (
                         <th
                           key={col}
-                          className="p-3 font-semibold text-foreground uppercase tracking-wider min-w-[130px] border-r"
+                          className="p-3 font-semibold text-foreground uppercase tracking-wider border-r last:border-r-0"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span>
+                            <span className="truncate">
                               {col} ({measurementUnit})
                             </span>
                             <button
                               type="button"
                               onClick={() => handleRemoveColumn(col)}
-                              className="text-muted-foreground hover:text-destructive cursor-pointer p-0.5"
+                              className="text-muted-foreground hover:text-destructive cursor-pointer p-0.5 shrink-0"
                               title={`Remove ${col}`}
                             >
                               <X className="h-3 w-3" />
@@ -884,8 +884,8 @@ const SizeChartsPage = () => {
                           rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/10'
                         } hover:bg-muted/30`}
                       >
-                        <td className="p-3 font-bold text-foreground font-mono border-r bg-muted/20">
-                          <span className="inline-block px-2.5 py-1 rounded-md bg-primary/10 text-primary border border-primary/25 font-bold text-xs">
+                        <td className="p-3 font-bold text-foreground font-mono border-r bg-muted/20 text-center w-28">
+                          <span className="inline-block px-3 py-1 rounded-md bg-primary/10 text-primary border border-primary/25 font-bold text-xs">
                             {row.size}
                           </span>
                         </td>
@@ -893,12 +893,11 @@ const SizeChartsPage = () => {
                           <td key={col} className="p-2 border-r last:border-r-0">
                             <Input
                               type="text"
-                              placeholder="e.g. 38, 40-42"
                               value={row.values?.[col] || ''}
                               onChange={(e) =>
                                 handleCellChange(row.size, col, e.target.value)
                               }
-                              className="h-9 text-xs font-mono bg-background focus:ring-1"
+                              className="h-9 w-full text-xs font-mono bg-background focus:ring-1 text-center"
                             />
                           </td>
                         ))}
