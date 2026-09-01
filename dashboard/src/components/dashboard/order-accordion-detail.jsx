@@ -123,7 +123,7 @@ export const OrderAccordionDetail = ({ order }) => {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-muted/20 border-t border-b border-border/80 space-y-5 animate-in fade-in-50 duration-200">
+    <div className="p-4 md:p-6 bg-muted/20 border-t border-b border-border/80 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
         <div className="flex items-center gap-2.5 flex-wrap">
           <Link
