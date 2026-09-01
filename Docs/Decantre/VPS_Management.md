@@ -48,9 +48,25 @@ To ensure data persistence and correct file paths, volumes are strictly mapped b
 
 ---
 
-## 4. How to Redeploy (Update Production)
+## 4. Domain & Environment Architecture
 
-Whenever new code is merged into the `Live` branch on GitHub, follow these exact steps to update the live server:
+The Decantre system is structured into two distinct operational environments:
+
+### 🛠️ Development & Staging Environment:
+- **Frontend Storefront:** `https://dev.decantrebd.com`
+- **Dashboard Management:** `https://v2.decantrebd.com`
+- **Backend API:** `https://service.decantrebd.com`
+
+### 🚀 Production & Live Environment:
+- **Frontend Storefront:** `https://decantrebd.com`
+- **Dashboard Management:** `https://dashboard.decantrebd.com`
+- **Backend API:** `https://server.decantrebd.com`
+
+---
+
+## 5. How to Redeploy (Update Live / Production)
+
+Whenever new code is committed and pushed to the `Live` branch on GitHub, follow these exact commands to update the VPS:
 
 ```bash
 # 1. Login to the VPS
@@ -59,31 +75,32 @@ ssh root@144.79.218.126
 # 2. Go to the live codebase directory
 cd /opt/live
 
-# 3. Pull the latest code from GitHub
+# 3. Pull latest code from Live branch
 git pull origin Live
 
-# 4. Set the client name environment variable
-export CLIENT_NAME=decantre
-
-# 5. Rebuild and restart the containers in the background
-docker compose -f docker-compose.prod.yml up -d --build
+# 4. Rebuild and restart the containers with explicit client configs
+CLIENT_NAME=decantre \
+CLIENT_CONFIG_PATH=/opt/decantre/configs \
+PUBLIC_UPLOADS_PATH=/opt/decantre/uploads \
+docker compose --env-file /opt/decantre/configs/backend.env -f docker-compose.prod.yml up -d --build
 ```
-*Note: We use `--build` to ensure any new `npm install` packages are baked into the fresh container images.*
+*Note: Using `--build` guarantees that all Vite frontend assets, Tailwind CSS bundles, and Node.js dependencies are freshly compiled into the Docker image.*
 
 ---
 
-## 5. Docker Containers & Ports
-All containers bind strictly to `127.0.0.1` (localhost) to prevent direct public exposure and bypass of Nginx reverse proxy / Cloudflare.
+## 6. Docker Containers, Ports & Nginx Reverse Proxy
+All application containers bind strictly to `127.0.0.1` (localhost) to prevent direct public exposure and ensure all traffic is filtered through Nginx SSL.
 
-| Service | Container Name | Internal Port | Host Port Binding | Connected Domain | Exposure Status |
+| Service | Container Name | Internal Port | Host Port Binding | Public Domains | Role |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Backend** | `decantre-backend-live` | `5093` | `127.0.0.1:5093` | `https://service.decantrebd.com` & `https://server.decantrebd.com` | Reverse Proxied via Nginx |
-| **Dashboard** | `decantre-dashboard-live` | `8005` | `127.0.0.1:8015` | `https://v2.decantrebd.com` | Reverse Proxied via Nginx |
-| **Database** | `decantre-mongodb-live` | `27017` | `127.0.0.1:27017` | `N/A` (Internal Docker network only) | **Localhost Only** (Blocked from Public) |
+| **Backend API** | `decantre-backend-live` | `5093` | `127.0.0.1:5093` | `https://server.decantrebd.com` (Prod)<br>`https://service.decantrebd.com` (Dev) | Express API, Auth, MongoDB |
+| **Dashboard** | `decantre-dashboard-live` | `8005` | `127.0.0.1:8015` | `https://dashboard.decantrebd.com` (Prod)<br>`https://v2.decantrebd.com` (Dev) | Vite + React Admin Panel |
+| **Frontend** | `decantre-frontend-live` | `8001` | `0.0.0.0:8001` | `https://decantrebd.com` (Prod)<br>`https://dev.decantrebd.com` (Dev) | Storefront UI |
+| **Database** | `decantre-mongodb-live` | `27017` | `127.0.0.1:27017` | `N/A` (Internal Docker network only) | **Localhost Only** (SSH Tunnel Access) |
 
 ---
 
-## 6. Useful Maintenance Commands
+## 7. Useful Maintenance Commands
 
 ### Check Live Logs
 If the site crashes or you need to debug API requests:
@@ -109,7 +126,7 @@ docker ps --filter name=decantre --format "table {{.Names}}\t{{.Status}}\t{{.Por
 
 ---
 
-## 7. Security & File Permissions
+## 8. Security & File Permissions
 The `.env` files contain sensitive information. They must be secured on the host machine.
 If the backend fails to start because it cannot read `.env`, verify permissions:
 ```bash
@@ -119,7 +136,7 @@ chmod 644 /opt/decantre/configs/*.env
 
 ---
 
-## 8. Database Security & Firewall Hardening (CRITICAL)
+## 9. Database Security & Firewall Hardening (CRITICAL)
 
 ### A. Why 0.0.0.0 Port Binding is Dangerous
 - By default, Docker injects `PREROUTING` rules into Linux `iptables` that **bypass standard UFW firewall rules**.
