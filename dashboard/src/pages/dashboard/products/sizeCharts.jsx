@@ -531,7 +531,7 @@ const SizeChartsPage = () => {
       )}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl">
+        <DialogContent className="w-[60vw] max-w-[60vw] sm:max-w-[60vw] max-h-[90vh] overflow-y-auto p-6 rounded-2xl">
           <DialogHeader className="border-b pb-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
