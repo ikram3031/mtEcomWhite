@@ -1,6 +1,6 @@
 {
 	"name": "Backend",
-	"version": "2.3.04",
+	"version": "2.3.05",
 	"private": true,
 	"type": "module",
 	"engines": {
