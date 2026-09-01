@@ -175,19 +175,52 @@ export const listOrders = async (req, res, next) => {
     }
 
     if (req.query.search) {
-      const term = req.query.search.trim();
-      const regex = new RegExp(term, 'i');
-      const searchOr = [
-        { orderNumber: regex },
-        { 'billingInfo.fullName': regex },
-        { 'billingInfo.phone': regex },
-        { 'shippingInfo.phone': regex },
-      ];
-      if (filter.$or) {
-        filter.$and = [...(filter.$and || []), { $or: filter.$or }, { $or: searchOr }];
-        delete filter.$or;
-      } else {
-        filter.$or = searchOr;
+      const term = String(req.query.search).trim();
+      if (term) {
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const textRegex = new RegExp(escaped, 'i');
+        const searchOr = [
+          { orderNumber: textRegex },
+          { did: textRegex },
+          { 'billingInfo.fullName': textRegex },
+          { 'shippingInfo.fullName': textRegex },
+          { 'billingInfo.email': textRegex },
+          { 'shippingInfo.email': textRegex },
+          { 'billingInfo.phone': textRegex },
+          { 'shippingInfo.phone': textRegex },
+        ];
+
+        const digitsOnly = term.replace(/\D/g, '');
+        if (digitsOnly.length >= 3) {
+          const rawDigitsRegex = new RegExp(digitsOnly, 'i');
+          searchOr.push({ 'billingInfo.phone': rawDigitsRegex });
+          searchOr.push({ 'shippingInfo.phone': rawDigitsRegex });
+
+          const coreDigits = digitsOnly.startsWith('880')
+            ? digitsOnly.slice(3)
+            : digitsOnly.startsWith('0')
+            ? digitsOnly.slice(1)
+            : digitsOnly;
+
+          if (coreDigits.length >= 3 && coreDigits !== digitsOnly) {
+            const coreRegex = new RegExp(coreDigits, 'i');
+            searchOr.push({ 'billingInfo.phone': coreRegex });
+            searchOr.push({ 'shippingInfo.phone': coreRegex });
+          }
+        }
+
+        if (Types.ObjectId.isValid(term)) {
+          searchOr.push({ _id: new Types.ObjectId(term) });
+        }
+
+        if (filter.$or) {
+          filter.$and = [...(filter.$and || []), { $or: filter.$or }, { $or: searchOr }];
+          delete filter.$or;
+        } else if (filter.$and) {
+          filter.$and.push({ $or: searchOr });
+        } else {
+          filter.$or = searchOr;
+        }
       }
     }
 
