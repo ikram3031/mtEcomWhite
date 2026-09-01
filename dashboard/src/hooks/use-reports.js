@@ -31,15 +31,17 @@ const fetchInventoryReport = async (params) => {
   return data?.data || {};
 };
 
-// Hook for fetching all report data with given filters
-export const useReports = (filters) => {
+// Hook for fetching all report datasets with filtering and refetch helper
+export const useReports = (filters = {}) => {
   const queryParams = {};
-  if (filters.range !== 'custom') {
+
+  if (filters.range && filters.range !== 'custom') {
     queryParams.range = filters.range;
-  } else {
+  } else if (filters.range === 'custom') {
     if (filters.startDate) queryParams.startDate = filters.startDate;
     if (filters.endDate) queryParams.endDate = filters.endDate;
   }
+
   if (filters.channel && filters.channel !== 'all') {
     queryParams.channel = filters.channel;
   }
@@ -47,32 +49,48 @@ export const useReports = (filters) => {
   const summary = useQuery({
     queryKey: ['reports', 'summary', queryParams],
     queryFn: () => fetchSummaryReport(queryParams),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60000,
   });
 
   const timeline = useQuery({
     queryKey: ['reports', 'timeline', queryParams],
     queryFn: () => fetchSalesTimeline(queryParams),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60000,
   });
 
   const products = useQuery({
     queryKey: ['reports', 'products', queryParams],
     queryFn: () => fetchTopProducts(queryParams),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60000,
   });
 
   const payments = useQuery({
     queryKey: ['reports', 'payments', queryParams],
     queryFn: () => fetchPaymentReport(queryParams),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60000,
   });
 
   const inventory = useQuery({
     queryKey: ['reports', 'inventory', queryParams],
     queryFn: () => fetchInventoryReport(queryParams),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60000,
   });
+
+  const isLoading = summary.isLoading || timeline.isLoading || products.isLoading || payments.isLoading || inventory.isLoading;
+  const isRefetching = summary.isRefetching || timeline.isRefetching || products.isRefetching || payments.isRefetching || inventory.isRefetching;
+  const isError = summary.isError || timeline.isError || products.isError || payments.isError || inventory.isError;
+  const error = summary.error || timeline.error || products.error || payments.error || inventory.error || null;
+
+  // Refetches all report datasets concurrently
+  const refetchAll = () => {
+    return Promise.all([
+      summary.refetch(),
+      timeline.refetch(),
+      products.refetch(),
+      payments.refetch(),
+      inventory.refetch(),
+    ]);
+  };
 
   return {
     summary,
@@ -80,14 +98,10 @@ export const useReports = (filters) => {
     products,
     payments,
     inventory,
-    isLoading: summary.isLoading || timeline.isLoading || products.isLoading || payments.isLoading || inventory.isLoading,
-    isRefetching: summary.isRefetching || timeline.isRefetching || products.isRefetching || payments.isRefetching || inventory.isRefetching,
-    refetchAll: () => {
-      summary.refetch();
-      timeline.refetch();
-      products.refetch();
-      payments.refetch();
-      inventory.refetch();
-    }
+    isLoading,
+    isRefetching,
+    isError,
+    error,
+    refetchAll,
   };
 };

@@ -174,8 +174,21 @@ export const listOrders = async (req, res, next) => {
       }
     }
 
-    if (req.query.email) {
-      filter['billingInfo.email'] = req.query.email.toLowerCase().trim();
+    if (req.query.search) {
+      const term = req.query.search.trim();
+      const regex = new RegExp(term, 'i');
+      const searchOr = [
+        { orderNumber: regex },
+        { 'billingInfo.fullName': regex },
+        { 'billingInfo.phone': regex },
+        { 'shippingInfo.phone': regex },
+      ];
+      if (filter.$or) {
+        filter.$and = [...(filter.$and || []), { $or: filter.$or }, { $or: searchOr }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchOr;
+      }
     }
 
     const total = await OrderModel.countDocuments(filter);

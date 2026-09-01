@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LifeBuoy,
   Plus,
@@ -83,6 +83,7 @@ export const SupportDesk = () => {
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Loads tickets and hosting alert telemetry from central hub
   const loadData = async (isManual = false) => {
     if (isManual) setRefreshing(true);
     try {
@@ -108,12 +109,19 @@ export const SupportDesk = () => {
     return () => clearInterval(timer);
   }, [clientKey]);
 
+  // Submits support ticket with automatic title fallback and sanitized inputs
   const handleSubmitTicket = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) {
-      toast.error("Please fill in both title and description");
+    const cleanTitle = title.trim();
+    const cleanDesc = description.trim();
+
+    if (!cleanTitle && !cleanDesc) {
+      toast.error("Please provide a description of the issue");
       return;
     }
+
+    const finalTitle = cleanTitle || (cleanDesc.length > 60 ? `${cleanDesc.slice(0, 57)}...` : cleanDesc);
+    const finalDesc = cleanDesc || cleanTitle;
 
     setSubmitting(true);
     try {
@@ -121,8 +129,8 @@ export const SupportDesk = () => {
         clientKey,
         category,
         priority,
-        title: title.trim(),
-        description: description.trim(),
+        title: finalTitle,
+        description: finalDesc,
         pageUrl: window.location.href,
         browserInfo: `${navigator.userAgent} (${window.screen.width}x${window.screen.height})`,
         errorLogs: [`Submitted from ${brandName} eCommerce Admin Dashboard`],
@@ -153,7 +161,6 @@ export const SupportDesk = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-2 sm:p-4 animate-in fade-in duration-300">
-      {/* Top Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card border border-border p-6 rounded-2xl shadow-sm">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner">
@@ -192,7 +199,6 @@ export const SupportDesk = () => {
         </div>
       </div>
 
-      {/* Hosting Renewal Alert Banner */}
       {billingInfo?.showWarningBanner && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
           <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -208,7 +214,6 @@ export const SupportDesk = () => {
         </div>
       )}
 
-      {/* KPI Overview Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
@@ -250,7 +255,6 @@ export const SupportDesk = () => {
         </div>
       </div>
 
-      {/* Support Tickets Section */}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div>
@@ -368,7 +372,6 @@ export const SupportDesk = () => {
         )}
       </div>
 
-      {/* New Issue Reporting Dialog */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -414,24 +417,29 @@ export const SupportDesk = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1">Issue Summary</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                Issue Summary <span className="text-[11px] font-normal text-muted-foreground/60">(Optional)</span>
+              </label>
               <Input
                 type="text"
-                placeholder="e.g. Checkout button unresponsive on mobile Safari"
+                placeholder="Brief one-line summary..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-xs h-9"
+                className="text-xs h-9 placeholder:text-muted-foreground/40 placeholder:italic"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1">Detailed Description</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Detailed Description <span className="text-destructive">*</span>
+              </label>
               <textarea
                 rows={4}
-                placeholder="Explain what happened, steps to reproduce, or error messages seen..."
+                placeholder="Explain what happened or what needs to be fixed..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-background border border-input rounded-md p-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-background border border-input rounded-md p-2.5 text-xs text-foreground placeholder:text-muted-foreground/40 placeholder:italic focus:outline-none focus:ring-1 focus:ring-primary"
+                required
               />
             </div>
 

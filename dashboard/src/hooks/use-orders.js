@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
+// Fetches a paginated and filtered list of orders from the backend API
 const fetchOrders = async (params) => {
   const limit = params?.limit ?? 15;
   const page = params?.page ?? 1;
@@ -12,7 +13,7 @@ const fetchOrders = async (params) => {
     };
     if (params?.status) queryParams.status = params.status.toLowerCase();
     if (params?.paymentStatus) queryParams.paymentStatus = params.paymentStatus.toLowerCase();
-    if (params?.search) queryParams.email = params.search;
+    if (params?.search) queryParams.search = params.search;
 
     const response = await apiClient.get('/api/v1/orders', { params: queryParams });
     const responseData = response.data;
@@ -54,11 +55,13 @@ const fetchOrders = async (params) => {
       const id = o._id || o.id || `UNKNOWN-${Math.random().toString(36).slice(2, 10)}`;
 
       return {
+        ...o,
         id,
         orderNumber: o.orderNumber || `ORD-${o._id?.slice(-8) || id}`,
         customerName: o.billingInfo?.fullName || o.shippingInfo?.fullName || o.customer?.fullName || 'Guest Customer',
+        customer: o.customer || o.billingInfo || o.shippingInfo || {},
         date: o.createdAt || new Date().toISOString(),
-        totalAmount: o.totals?.total || 0,
+        totalAmount: o.totals?.total ?? o.totalAmount ?? 0,
         paymentStatus,
         orderStatus: fulfillment,
       };
@@ -83,13 +86,15 @@ const fetchOrders = async (params) => {
   };
 };
 
-export function useOrders(params) {
+// React Query hook to fetch paginated and filtered orders
+export const useOrders = (params) => {
   return useQuery({
     queryKey: ['orders', params],
     queryFn: () => fetchOrders(params),
   });
-}
+};
 
+// Fetches detailed information for a single order by ID
 const fetchOrderById = async (id) => {
   const response = await apiClient.get(`/api/v1/orders/${id}`);
   if (!response.data?.data) {
@@ -98,10 +103,11 @@ const fetchOrderById = async (id) => {
   return response.data.data;
 };
 
-export function useOrder(id) {
+// React Query hook to fetch a single order by ID
+export const useOrder = (id) => {
   return useQuery({
     queryKey: ['order', id],
     queryFn: () => fetchOrderById(id),
     enabled: !!id,
   });
-}
+};

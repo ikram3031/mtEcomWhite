@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -19,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, AlertCircle, Tag } from 'lucide-react';
+import { MoreHorizontal, AlertCircle, Tag, ChevronDown, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -41,8 +42,10 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { getApiErrorMessage } from '@/lib/error-handler';
+import { OrderAccordionDetail } from '@/components/dashboard/order-accordion-detail';
 
-export function OrdersTable({
+// Renders the orders table with expandable accordion rows, filtering, batch selection, and inline actions
+export const OrdersTable = ({
   searchQuery,
   statusFilter,
   paymentFilter,
@@ -50,7 +53,7 @@ export function OrdersTable({
   onTotalPagesChange,
   selectedIds,
   onSelectedIdsChange,
-}) {
+}) => {
   const queryClient = useQueryClient();
 
   const { data: responseData, isLoading, isError, error } = useOrders({
@@ -63,6 +66,8 @@ export function OrdersTable({
 
   const orders = responseData?.data ?? [];
   const totalPages = responseData?.meta?.totalPages ?? 1;
+
+  const [expandedOrderIds, setExpandedOrderIds] = useState([]);
 
   useEffect(() => {
     if (onTotalPagesChange && responseData?.meta) {
@@ -78,12 +83,21 @@ export function OrdersTable({
   const [targetPaymentStatus, setTargetPaymentStatus] = useState('Not Found');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
+  // Toggles row expansion for displaying detailed order accordion
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrderIds((prev) =>
+      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  // Opens the quick status update dialog for a selected order
   const handleOpenStatusModal = (order) => {
     setStatusTarget(order);
     setTargetOrderStatus(order.orderStatus || 'Not found');
     setTargetPaymentStatus(order.paymentStatus || 'Not found');
   };
 
+  // Submits the quick status changes from the modal
   const handleUpdateStatus = async () => {
     if (!statusTarget) return;
     setIsUpdatingStatus(true);
@@ -94,6 +108,7 @@ export function OrdersTable({
       });
       toast.success(`Status for order #${statusTarget.orderNumber} updated successfully.`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order', statusTarget.id] });
       setStatusTarget(null);
     } catch (err) {
       console.error(err);
@@ -103,6 +118,7 @@ export function OrdersTable({
     }
   };
 
+  // Permanently deletes an individual order
   const handleDeleteOrder = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -119,14 +135,17 @@ export function OrdersTable({
     }
   };
 
+  // Navigates directly to the edit mode for the order
   const handleEditOrderClick = (order) => {
     window.location.href = `/dashboard/orders/${order.id}?edit=true`;
   };
 
+  // Navigates to the full standalone order details page
   const handleViewDetails = (order) => {
     window.location.href = `/dashboard/orders/${order.id}`;
   };
 
+  // Resolves the visual badge representation for payment status
   const getPaymentBadge = (status) => {
     switch (String(status).toLowerCase()) {
       case 'paid':
@@ -140,6 +159,7 @@ export function OrdersTable({
     }
   };
 
+  // Resolves the visual badge representation for fulfillment status
   const getFulfillmentBadge = (status) => {
     switch (String(status).toLowerCase()) {
       case 'delivered':
@@ -178,7 +198,8 @@ export function OrdersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px] px-4">
+            <TableHead className="w-[36px] pl-3 pr-0"></TableHead>
+            <TableHead className="w-[44px] px-2">
               <input
                 type="checkbox"
                 className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
@@ -208,7 +229,10 @@ export function OrdersTable({
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell className="w-[50px] px-4">
+                <TableCell className="w-[36px] pl-3 pr-0">
+                  <Skeleton className="h-4 w-4 rounded" />
+                </TableCell>
+                <TableCell className="w-[44px] px-2">
                   <Skeleton className="h-4 w-4 rounded" />
                 </TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -221,76 +245,128 @@ export function OrdersTable({
               </TableRow>
             ))
           ) : orders && orders.length > 0 ? (
-            orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="w-[50px] px-4">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
-                    checked={selectedIds.includes(order.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        onSelectedIdsChange([...selectedIds, order.id]);
-                      } else {
-                        onSelectedIdsChange(selectedIds.filter(id => id !== order.id));
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="max-w-[150px]">
-                  <span className="font-semibold truncate block" title={order.orderNumber}>{order.orderNumber}</span>
-                </TableCell>
-                <TableCell className="max-w-[180px]">
-                  <span className="truncate block" title={order.customerName}>{order.customerName}</span>
-                </TableCell>
-                <TableCell className="w-[110px] text-muted-foreground whitespace-nowrap">
-                  {new Date(order.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="w-[120px] font-medium whitespace-nowrap">
-                  <span>৳{order.totalAmount.toFixed(2)}</span>
-                  {order.couponCode && (
-                    <span className="flex items-center gap-0.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
-                      <Tag className="h-2.5 w-2.5" />
-                      {order.couponCode}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="w-[100px]">{getPaymentBadge(order.paymentStatus)}</TableCell>
-                <TableCell className="w-[120px]">{getFulfillmentBadge(order.orderStatus)}</TableCell>
-                <TableCell className="text-right w-[60px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    } />
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleViewDetails(order)}>
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditOrderClick(order)}>
-                        Edit Order
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleOpenStatusModal(order)}>
-                        Change Status
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive cursor-pointer"
-                        onClick={() => setDeleteTarget({ id: order.id, orderNumber: order.orderNumber })}
+            orders.map((order) => {
+              const isExpanded = expandedOrderIds.includes(order.id);
+              return (
+                <div key={order.id} className="contents">
+                  <TableRow
+                    className={`cursor-pointer transition-colors ${
+                      isExpanded
+                        ? 'bg-muted/40 font-medium border-l-4 border-l-primary'
+                        : 'hover:bg-muted/20'
+                    }`}
+                    onClick={() => toggleOrderExpansion(order.id)}
+                  >
+                    <TableCell className="w-[36px] pl-3 pr-0 text-muted-foreground">
+                      <button
+                        type="button"
+                        className="p-1 rounded hover:bg-muted/50 transition-transform"
+                        aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOrderExpansion(order.id);
+                        }}
                       >
-                        Delete Order
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-primary" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </TableCell>
+                    <TableCell
+                      className="w-[44px] px-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                        checked={selectedIds.includes(order.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            onSelectedIdsChange([...selectedIds, order.id]);
+                          } else {
+                            onSelectedIdsChange(selectedIds.filter(id => id !== order.id));
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell
+                      className="max-w-[150px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link
+                        to={`/dashboard/orders/${order.id}`}
+                        className="font-semibold truncate block text-primary hover:underline hover:text-primary/80 transition-colors"
+                        title={order.orderNumber}
+                      >
+                        {order.orderNumber}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="max-w-[180px]">
+                      <span className="truncate block" title={order.customerName}>{order.customerName}</span>
+                    </TableCell>
+                    <TableCell className="w-[110px] text-muted-foreground whitespace-nowrap">
+                      {new Date(order.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="w-[120px] font-medium whitespace-nowrap">
+                      <span>৳{order.totalAmount.toFixed(2)}</span>
+                      {order.couponCode && (
+                        <span className="flex items-center gap-0.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                          <Tag className="h-2.5 w-2.5" />
+                          {order.couponCode}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="w-[100px]">{getPaymentBadge(order.paymentStatus)}</TableCell>
+                    <TableCell className="w-[120px]">{getFulfillmentBadge(order.orderStatus)}</TableCell>
+                    <TableCell
+                      className="text-right w-[60px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={
+                          <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        } />
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewDetails(order)}>
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditOrderClick(order)}>
+                            Edit Order
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenStatusModal(order)}>
+                            Change Status
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive cursor-pointer"
+                            onClick={() => setDeleteTarget({ id: order.id, orderNumber: order.orderNumber })}
+                          >
+                            Delete Order
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+
+                  {isExpanded && (
+                    <TableRow className="hover:bg-transparent border-b bg-muted/10">
+                      <TableCell colSpan={9} className="p-0">
+                        <OrderAccordionDetail order={order} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </div>
+              );
+            })
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center">
+              <TableCell colSpan={9} className="h-24 text-center">
                 No orders found.
               </TableCell>
             </TableRow>
@@ -364,4 +440,4 @@ export function OrdersTable({
       />
     </div>
   );
-}
+};

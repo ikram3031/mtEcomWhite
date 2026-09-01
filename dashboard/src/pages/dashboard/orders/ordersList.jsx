@@ -146,7 +146,7 @@ const OrdersPage = () => {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by order ID or customer..."
+            placeholder="Search by name, phone or order ID..."
             className="pl-8 h-9"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}

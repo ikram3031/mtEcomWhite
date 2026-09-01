@@ -10,7 +10,6 @@ import {
 
 const reportsRouter = Router();
 
-// Protect all report endpoints
 reportsRouter.use(authenticateToken);
 reportsRouter.use(authorizeRoles("admin", "manager"));
 

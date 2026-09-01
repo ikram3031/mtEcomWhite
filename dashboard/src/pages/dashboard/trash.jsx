@@ -42,7 +42,7 @@ import {
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { useCategories, useBrands, getCategoryName, getBrandName } from '@/lib/category-cache';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const TrashPage = () => {
   const navigate = useNavigate();
@@ -659,7 +659,12 @@ const TrashPage = () => {
                         />
                       </TableCell>
                       <TableCell className="font-mono text-xs font-bold text-foreground">
-                        #{order.orderNumber || id.slice(-6)}
+                        <Link
+                          to={`/dashboard/orders/${id}`}
+                          className="text-primary hover:underline"
+                        >
+                          #{order.orderNumber || id.slice(-6)}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-0.5">

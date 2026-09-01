@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -45,14 +46,15 @@ import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { getApiErrorMessage } from '@/lib/error-handler';
 
-export function MembersTable({
+// Renders the members and customer management table with batch actions and profile modal
+export const MembersTable = ({
   searchQuery,
   segmentFilter,
   page = 1,
   onTotalPagesChange,
   selectedIds,
   onSelectedIdsChange,
-}) {
+}) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -547,9 +549,12 @@ export function MembersTable({
                       >
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4 text-primary" />
-                          <span className="font-mono font-semibold text-foreground">
+                          <Link
+                            to={`/dashboard/orders/${ord._id || ord.id || ord.orderNumber}`}
+                            className="font-mono font-semibold text-primary hover:underline"
+                          >
                             #{ord.orderNumber}
-                          </span>
+                          </Link>
                           <span className="text-muted-foreground">
                             ({new Date(ord.createdAt).toLocaleDateString()})
                           </span>

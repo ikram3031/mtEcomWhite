@@ -46,4 +46,5 @@ backups/
 # Frontend split repository folder
 frontend/
 
-.agents
+.agents
+*.bundle
