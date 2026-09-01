@@ -4,7 +4,7 @@ import { useOrder } from "@/hooks/use-orders";
 import { useAuth } from "@/lib/auth-context";
 import { useProducts } from "@/hooks/use-products";
 import { useCategories, useBrands } from "@/lib/category-cache";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, baseURL } from "@/lib/api-client";
 import { logActivity } from "@/lib/activity-logger";
 import { toast } from "sonner";
 import { clientConfig } from "@/clientConfig";
@@ -49,6 +49,7 @@ import {
   Search,
   X,
   Tag,
+  FileText,
 } from "lucide-react";
 
 import { effectivePrice, formatBDT } from "@/utils/orderHelper";
@@ -394,6 +395,14 @@ const OrderDetailsPage = () => {
     [isInStoreOrder],
   );
 
+  // Opens the printable invoice endpoint in a new browser tab
+  const handleOpenInvoice = () => {
+    const apiBase = (baseURL || import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com').replace(/\/$/, '');
+    const orderIdentifier = order?._id || order?.id || order?.did || order?.orderNumber || id;
+    window.open(`${apiBase}/api/v1/orders/${orderIdentifier}/invoice`, '_blank', 'noopener,noreferrer');
+  };
+
+  // Saves edits made to the current order
   const handleSave = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty. Add at least one product.");
@@ -535,9 +544,14 @@ const OrderDetailsPage = () => {
               </Button>
             </>
           ) : (
-            <Button className="gap-1.5 shadow-sm" onClick={() => setIsEditMode(true)}>
-              <Edit className="h-4 w-4" /> Edit Order
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" className="gap-1.5 shadow-sm bg-background cursor-pointer" onClick={handleOpenInvoice}>
+                <FileText className="h-4 w-4 text-muted-foreground" /> Print Invoice
+              </Button>
+              <Button className="gap-1.5 shadow-sm cursor-pointer" onClick={() => setIsEditMode(true)}>
+                <Edit className="h-4 w-4" /> Edit Order
+              </Button>
+            </div>
           )}
         </div>
       </div>

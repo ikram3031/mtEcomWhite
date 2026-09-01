@@ -425,12 +425,11 @@ export const buildDecantreOrderInvoiceHtml = ({
     </div>
   </div>
 
-  ${!isPrintView ? `
   <div class="actions-bar">
     <button onclick="window.print()" class="btn-action btn-print">
       🖨️ Print / Save as PDF
     </button>
-  </div>` : ""}
+  </div>
 </body>
 </html>
 `;
