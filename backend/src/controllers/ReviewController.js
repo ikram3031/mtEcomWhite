@@ -4,10 +4,7 @@ import { MemberModel } from "../models/member.model.js";
 import { logger } from "../config/logger.js";
 import { USER_ROLES } from "../models/user.model.js";
 
-/**
- * POST /api/reviews
- * Create a new review (Authenticated Member only)
- */
+// Creates a new customer review for a product with duplicate prevention
 export const createReview = async (req, res) => {
   try {
     const { productDid, rating, description } = req.body;
@@ -21,32 +18,40 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ status: "error", message: "Rating must be between 1 and 5" });
     }
 
-    // Check if product exists
-    const product = await ProductModel.findOne({ did: productDid });
+    const product = await ProductModel.findOne({
+      $or: [
+        { did: productDid },
+        { slug: productDid },
+        { _id: productDid.match(/^[0-9a-fA-F]{24}$/) ? productDid : null },
+      ],
+    });
     if (!product) {
       return res.status(404).json({ status: "error", message: "Product not found" });
     }
 
-    // Check duplicate review policy
-    const existingReview = await ReviewModel.findOne({ productDid, memberDid });
+    const canonicalDid = product.did || productDid;
+    const existingReview = await ReviewModel.findOne({
+      productDid: canonicalDid,
+      memberDid,
+      active: true,
+    });
     if (existingReview) {
       return res.status(409).json({ status: "error", message: "You have already reviewed this product" });
     }
 
-    // Ensure member exists
     const member = await MemberModel.findOne({ did: memberDid });
     if (!member) {
       return res.status(404).json({ status: "error", message: "Member not found" });
     }
 
     const review = new ReviewModel({
-      productDid,
+      productDid: canonicalDid,
       productId: product._id,
       memberDid,
       memberId: member._id,
       description,
       rating,
-      isApproved: false, // Default is pending approval
+      isApproved: false,
       createdBy: member._id,
       createdByType: "Member",
     });
@@ -59,29 +64,37 @@ export const createReview = async (req, res) => {
   }
 };
 
-/**
- * GET /api/reviews/product/:productDid
- * Public API to fetch approved reviews and statistics for a specific product
- */
+// Fetches approved reviews and rating breakdown statistics for a product
 export const getProductReviews = async (req, res) => {
   try {
     const { productDid } = req.params;
     const skip = parseInt(req.query.skip, 10) || 0;
     const limit = parseInt(req.query.limit, 10) || 10;
 
-    // Fetch approved reviews
-    const reviews = await ReviewModel.find({ productDid, isApproved: true, active: true })
+    let targetDid = productDid;
+    const product = await ProductModel.findOne({
+      $or: [
+        { did: productDid },
+        { slug: productDid },
+        { _id: productDid.match(/^[0-9a-fA-F]{24}$/) ? productDid : null },
+      ],
+    }).select("did");
+
+    if (product?.did) {
+      targetDid = product.did;
+    }
+
+    const reviews = await ReviewModel.find({ productDid: targetDid, isApproved: true, active: true })
       .populate("memberId", "name did email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    const total = await ReviewModel.countDocuments({ productDid, isApproved: true, active: true });
+    const total = await ReviewModel.countDocuments({ productDid: targetDid, isApproved: true, active: true });
 
-    // Aggregate statistics
     const statsResult = await ReviewModel.aggregate([
-      { $match: { productDid, isApproved: true, active: true } },
+      { $match: { productDid: targetDid, isApproved: true, active: true } },
       {
         $group: {
           _id: null,
@@ -91,14 +104,14 @@ export const getProductReviews = async (req, res) => {
           count3: { $sum: { $cond: [{ $eq: ["$rating", 3] }, 1, 0] } },
           count2: { $sum: { $cond: [{ $eq: ["$rating", 2] }, 1, 0] } },
           count1: { $sum: { $cond: [{ $eq: ["$rating", 1] }, 1, 0] } },
-        }
-      }
+        },
+      },
     ]);
 
     let stats = {
       totalReviews: total,
       averageRating: 0,
-      ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+      ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
     };
 
     if (statsResult.length > 0) {
@@ -109,7 +122,7 @@ export const getProductReviews = async (req, res) => {
         4: data.count4,
         3: data.count3,
         2: data.count2,
-        1: data.count1
+        1: data.count1,
       };
     }
 
@@ -118,8 +131,8 @@ export const getProductReviews = async (req, res) => {
       data: {
         stats,
         reviews,
-        pagination: { skip, limit, total }
-      }
+        pagination: { skip, limit, total },
+      },
     });
   } catch (err) {
     logger.error({ err }, "Failed to fetch product reviews");
@@ -127,10 +140,7 @@ export const getProductReviews = async (req, res) => {
   }
 };
 
-/**
- * GET /api/reviews
- * Admin API to list all reviews with filtering
- */
+// Lists all reviews with optional pagination and filtering
 export const listReviews = async (req, res) => {
   try {
     const skip = parseInt(req.query.skip, 10) || 0;
@@ -159,10 +169,7 @@ export const listReviews = async (req, res) => {
   }
 };
 
-/**
- * GET /api/reviews/:id
- * Get single review by id or did
- */
+// Fetches a single review by id or did
 export const getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -180,10 +187,7 @@ export const getReviewById = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/reviews/:id
- * Update review (Member can update own review if not approved; Admin can update any review)
- */
+// Updates review rating or content with member ownership or admin override
 export const updateReview = async (req, res) => {
   try {
     const { id } = req.params;
@@ -195,12 +199,10 @@ export const updateReview = async (req, res) => {
     const userRole = typeof req.user.role === "string" ? req.user.role.toLowerCase() : "";
     const isAdmin = ["owner", "admin", "manager", "super admin"].includes(userRole);
     
-    // Member authorization check
     if (!isAdmin) {
       if (req.user.did !== review.memberDid) {
         return res.status(403).json({ status: "error", message: "Forbidden: You can only edit your own reviews" });
       }
-      // If member edits, reset approval status to false for safety
       if (review.isApproved) {
         review.isApproved = false;
       }
@@ -212,7 +214,6 @@ export const updateReview = async (req, res) => {
     }
     if (description !== undefined) review.description = description;
     
-    // Admin can update approval status through this route as well
     if (isAdmin && isApproved !== undefined) {
       review.isApproved = isApproved;
     }
@@ -228,10 +229,7 @@ export const updateReview = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/reviews/:id/status
- * Admin toggle approval
- */
+// Toggles approval status for a single review by administrative roles
 export const updateReviewStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -246,7 +244,7 @@ export const updateReviewStatus = async (req, res) => {
 
     review.isApproved = Boolean(isApproved);
     review.updatedBy = req.user._id || req.user.id;
-    review.updatedByType = "User"; // Only admins use this route
+    review.updatedByType = "User";
 
     await review.save();
     return res.json({ status: "success", data: review, message: "Review status updated successfully" });
@@ -256,10 +254,7 @@ export const updateReviewStatus = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/reviews/:id
- * Delete review (Member can delete own, Admin can delete any)
- */
+// Soft-deletes a review by member owner or administrative user
 export const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
@@ -270,7 +265,6 @@ export const deleteReview = async (req, res) => {
     const userRole = typeof req.user.role === "string" ? req.user.role.toLowerCase() : "";
     const isAdmin = ["owner", "admin", "manager", "super admin"].includes(userRole);
     
-    // Member authorization check
     if (!isAdmin && req.user.did !== review.memberDid) {
       return res.status(403).json({ status: "error", message: "Forbidden: You can only delete your own reviews" });
     }
@@ -287,10 +281,7 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-/**
- * POST /api/reviews/bulk-update
- * Bulk update reviews (e.g. approval status)
- */
+// Performs bulk update of review approval statuses
 export const bulkUpdateReviews = async (req, res) => {
   try {
     const { ids, isApproved } = req.body;
@@ -316,10 +307,7 @@ export const bulkUpdateReviews = async (req, res) => {
   }
 };
 
-/**
- * POST /api/reviews/bulk-delete
- * Bulk soft delete reviews
- */
+// Performs bulk soft deletion of reviews
 export const bulkDeleteReviews = async (req, res) => {
   try {
     const { ids } = req.body;
