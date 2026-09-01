@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -54,6 +54,7 @@ export const OrdersTable = ({
   selectedIds,
   onSelectedIdsChange,
 }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: responseData, isLoading, isError, error } = useOrders({
@@ -137,12 +138,12 @@ export const OrdersTable = ({
 
   // Navigates directly to the edit mode for the order
   const handleEditOrderClick = (order) => {
-    window.location.href = `/dashboard/orders/${order.id}?edit=true`;
+    navigate(`/dashboard/orders/${order.id}?edit=true`);
   };
 
   // Navigates to the full standalone order details page
   const handleViewDetails = (order) => {
-    window.location.href = `/dashboard/orders/${order.id}`;
+    navigate(`/dashboard/orders/${order.id}`);
   };
 
   // Resolves the visual badge representation for payment status

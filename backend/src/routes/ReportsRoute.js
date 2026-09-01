@@ -11,7 +11,7 @@ import {
 const reportsRouter = Router();
 
 reportsRouter.use(authenticateToken);
-reportsRouter.use(authorizeRoles("admin", "manager"));
+reportsRouter.use(authorizeRoles("Owner", "Admin", "Manager", "Super Admin"));
 
 reportsRouter.get("/summary", getSummaryReport);
 reportsRouter.get("/sales-timeline", getSalesTimeline);

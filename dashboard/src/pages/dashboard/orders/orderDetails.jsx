@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useOrder } from "@/hooks/use-orders";
 import { useAuth } from "@/lib/auth-context";
 import { useProducts } from "@/hooks/use-products";
@@ -257,8 +257,9 @@ const ProductAddDialog = ({ product, onClose, onAddToCart }) => {
 
 const OrderDetailsPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const searchParams = new URLSearchParams(window.location.search);
+  const [searchParams] = useSearchParams();
   const startInEditMode = searchParams.get("edit") === "true";
 
   const { user } = useAuth();
@@ -468,7 +469,7 @@ const OrderDetailsPage = () => {
       <div className="flex-1 p-8 text-center space-y-4">
         <h2 className="text-2xl font-bold text-destructive">Order Not Found</h2>
         <p className="text-muted-foreground">The order you are looking for does not exist or failed to load.</p>
-        <Button onClick={() => { window.location.href = "/dashboard/orders"; }}>
+        <Button onClick={() => navigate("/dashboard/orders")}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders
         </Button>
       </div>
@@ -486,7 +487,7 @@ const OrderDetailsPage = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => { window.location.href = "/dashboard/orders"; }}
+            onClick={() => navigate("/dashboard/orders")}
             className="h-9 w-9 border-border/80"
           >
             <ArrowLeft className="h-4 w-4" />

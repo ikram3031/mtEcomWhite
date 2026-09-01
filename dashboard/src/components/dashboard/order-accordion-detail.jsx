@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -37,6 +37,7 @@ import { formatBDT } from '@/utils/orderHelper';
 
 // Renders an expanded accordion panel containing full order details and inline status management
 export const OrderAccordionDetail = ({ order }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -113,12 +114,12 @@ export const OrderAccordionDetail = ({ order }) => {
 
   // Navigates to the full standalone order details page
   const handleViewFullPage = () => {
-    window.location.href = `/dashboard/orders/${order.id}`;
+    navigate(`/dashboard/orders/${order.id}`);
   };
 
   // Navigates to the order edit mode
   const handleEditOrder = () => {
-    window.location.href = `/dashboard/orders/${order.id}?edit=true`;
+    navigate(`/dashboard/orders/${order.id}?edit=true`);
   };
 
   return (

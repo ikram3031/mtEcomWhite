@@ -133,7 +133,7 @@ export const getSummaryReport = async (req, res, next) => {
                 {
                   $and: [
                     { $eq: ['$status', 'completed'] },
-                    { $not: [{ $regexMatch: { input: '$orderNumber', regex: /^IS/ } }] }
+                    { $not: [{ $regexMatch: { input: { $ifNull: ['$orderNumber', ''] }, regex: '^IS' } }] }
                   ]
                 },
                 { $ifNull: ['$totals.subtotal', 0] },
@@ -147,7 +147,7 @@ export const getSummaryReport = async (req, res, next) => {
                 {
                   $and: [
                     { $eq: ['$status', 'completed'] },
-                    { $regexMatch: { input: '$orderNumber', regex: /^IS/ } }
+                    { $regexMatch: { input: { $ifNull: ['$orderNumber', ''] }, regex: '^IS' } }
                   ]
                 },
                 { $ifNull: ['$totals.subtotal', 0] },
@@ -219,7 +219,7 @@ export const getTopProductsReport = async (req, res, next) => {
             sku: { $ifNull: ['$items.sku', '$items.productDid'] }
           },
           unitsSold: { $sum: '$items.quantity' },
-          revenue: { $sum: { $multiply: ['$items.quantity', '$items.unitPrice'] } }
+          revenue: { $sum: { $multiply: [{ $ifNull: ['$items.quantity', 0] }, { $ifNull: ['$items.unitPrice', 0] }] } }
         }
       },
       {
