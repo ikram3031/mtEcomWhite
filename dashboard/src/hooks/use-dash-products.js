@@ -27,10 +27,11 @@ const normalizeDashProduct = (p) => {
     '';
 
   const image = resolveImageUrl(rawImg);
+  const rawStatus = String(p.stockStatus || '').toLowerCase().trim();
   const isOutOfStock =
-    p.stockStatus === 'outofstock' ||
-    p.stockStatus === 'out_of_stock' ||
-    (typeof p.stockAmount === 'number' && p.stockAmount <= 0);
+    rawStatus === 'outofstock' ||
+    rawStatus === 'out_of_stock' ||
+    rawStatus === 'out of stock';
 
   const stockStatus = isOutOfStock ? 'Out of Stock' : 'In Stock';
 

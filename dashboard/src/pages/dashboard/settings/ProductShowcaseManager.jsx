@@ -17,9 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, resolveImageUrl } from '@/lib/api-client';
 import { toast } from 'sonner';
 
-/**
- * Normalizes product properties across different API response formats.
- */
+// Normalizes product properties across different API response formats
 const normalizeProduct = (p) => {
   if (!p || typeof p !== 'object') return null;
   const id = p._id ? String(p._id) : (p.id ? String(p.id) : (p.did || ''));
@@ -45,10 +43,11 @@ const normalizeProduct = (p) => {
     '';
 
   const image = resolveImageUrl(rawImg);
+  const rawStatus = String(p.stockStatus || '').toLowerCase().trim();
   const isOutOfStock =
-    p.stockStatus === 'outofstock' ||
-    p.stockStatus === 'out_of_stock' ||
-    (typeof p.stockAmount === 'number' && p.stockAmount <= 0);
+    rawStatus === 'outofstock' ||
+    rawStatus === 'out_of_stock' ||
+    rawStatus === 'out of stock';
 
   const stockStatus = isOutOfStock ? 'Out of Stock' : 'In Stock';
 
@@ -66,11 +65,8 @@ const normalizeProduct = (p) => {
   };
 };
 
-/**
- * Product Showcase Manager Component
- * Handles featured and best-seller product curation with live search, normalization, and persistence.
- */
-export function ProductShowcaseManager({ showcaseKey, title, icon: TagIcon, iconColor }) {
+// Manages showcase product curation with live search, normalization, and persistence
+export const ProductShowcaseManager = ({ showcaseKey, title, icon: TagIcon, iconColor }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');

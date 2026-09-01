@@ -26,7 +26,8 @@ import {
   Edit3,
   Layers,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, baseURL } from '@/lib/api-client';
+import clientConfig from '@/clientConfig';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/activity-logger';
@@ -105,8 +106,9 @@ export const OrderAccordionDetail = ({ order }) => {
 
   // Opens the printable invoice endpoint in a new browser tab
   const handleOpenInvoice = () => {
-    const backendUrl = import.meta.env.VITE_API_URL || '';
-    window.open(`${backendUrl}/api/v1/orders/${order.id}/invoice`, '_blank', 'noopener,noreferrer');
+    const apiBase = (baseURL || import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com').replace(/\/$/, '');
+    const orderIdentifier = order._id || order.id || order.did || order.orderNumber;
+    window.open(`${apiBase}/api/v1/orders/${orderIdentifier}/invoice`, '_blank', 'noopener,noreferrer');
   };
 
   // Navigates to the full standalone order details page
