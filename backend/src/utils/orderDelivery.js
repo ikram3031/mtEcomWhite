@@ -4,33 +4,36 @@ import { getClientInvoiceHtml } from "../templates/invoices/index.js";
 import { buildAdminOrderEmailHtml } from "../templates/adminOrderEmailTemplate.js";
 import { env } from "../config/env.js";
 
-// Cached SMTP transport connection instance
 let defaultTransport;
 
-// Dynamically retrieve/initialize SMTP transport
-function getTransport() {
+// Dynamically retrieve or initialize SMTP transport
+const getTransport = () => {
   if (!defaultTransport) {
+    const isSecure =
+      Number(env.SMTP_PORT) === 465 ||
+      String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
     defaultTransport = nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      port: Number(env.SMTP_PORT),
+      secure: isSecure,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return defaultTransport;
-}
+};
 
-/**
- * Safely send order notification emails asynchronously without blocking the response.
- * Sends Customer Order Confirmation to Customer & Admin Notification to Admin emails.
- * 
- * @param {Object} order - The created order document/payload
- */
-export function sendOrderEmailsAsynchronously(order) {
-  // Execute in setImmediate to ensure completely non-blocking execution flow
+// Safely send customer and admin order notification emails asynchronously
+export const sendOrderEmailsAsynchronously = (order) => {
   setImmediate(async () => {
     try {
       if (!env.SMTP_USER || !env.SMTP_PASSWORD) {

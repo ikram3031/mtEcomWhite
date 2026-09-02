@@ -13,14 +13,24 @@ let defaultTransport = null;
 // Returns configured nodemailer transport for sending outbound webmail
 const getSmtpTransport = () => {
   if (!defaultTransport) {
+    const isSecure =
+      Number(env.SMTP_PORT) === 465 ||
+      String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
     defaultTransport = nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      port: Number(env.SMTP_PORT),
+      secure: isSecure,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return defaultTransport;

@@ -5,22 +5,33 @@ import { env } from "../config/env.js";
 
 const emailRouter = Router();
 
-// Lazy-initialized transport logic to match dynamic env configurations
 let transporter;
-function getTransporter() {
+
+// Dynamically retrieve or initialize SMTP transporter
+const getTransporter = () => {
   if (!transporter) {
+    const isSecure =
+      Number(env.SMTP_PORT) === 465 ||
+      String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
     transporter = nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      port: Number(env.SMTP_PORT),
+      secure: isSecure,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return transporter;
-}
+};
 
 const sendEmail = async ({ toEmail, subject, text, html }) => {
   const activeTransporter = getTransporter();

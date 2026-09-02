@@ -11,20 +11,32 @@ import {
 } from "../helper/userControllerHelper.js";
 
 let defaultTransport;
-function getTransport() {
+
+// Dynamically retrieve or initialize SMTP transport
+const getTransport = () => {
   if (!defaultTransport) {
+    const isSecure =
+      Number(env.SMTP_PORT) === 465 ||
+      String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
     defaultTransport = nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl",
+      port: Number(env.SMTP_PORT),
+      secure: isSecure,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return defaultTransport;
-}
+};
 
 // List all users in the system.
 export const listUsers = async (req, res, next) => {

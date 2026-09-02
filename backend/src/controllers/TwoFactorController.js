@@ -8,20 +8,29 @@ import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { buildTwoFactorQrEmailHtml } from "../templates/twoFactorEmailTemplate.js";
 
-// Cached SMTP transport connection instance
 let defaultTransport;
 
-// Helper to initialize/retrieve SMTP transport
+// Helper to initialize or retrieve SMTP transport
 const getTransport = () => {
   if (!defaultTransport) {
+    const isSecure =
+      Number(env.SMTP_PORT) === 465 ||
+      String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
     defaultTransport = nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: String(env.SMTP_ENCRYPTION).toUpperCase() === "SSL",
+      port: Number(env.SMTP_PORT),
+      secure: isSecure,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return defaultTransport;

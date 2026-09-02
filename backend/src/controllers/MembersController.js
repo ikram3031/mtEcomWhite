@@ -385,7 +385,6 @@ export const registerMember = async (req, res, next) => {
       errors.push("email is required");
     }
     if (trimmedPhone && !/^\+8801[3-9]\d{8}$/.test(trimmedPhone)) {
-      // Enforce Bangladeshi number format as a backend gatekeep if provided
       errors.push("phone must be a valid Bangladeshi number in format +8801[3-9]XXXXXXXXX");
     }
     if (!trimmedPassword || trimmedPassword.length < 6) {
@@ -410,7 +409,6 @@ export const registerMember = async (req, res, next) => {
       });
     }
 
-    // Only check phone uniqueness if a phone was provided
     if (trimmedPhone) {
       const existingPhoneMember = await MemberModel.findOne({ phone: trimmedPhone }).lean();
       if (existingPhoneMember) {
@@ -437,7 +435,21 @@ export const registerMember = async (req, res, next) => {
         billingAddress: sanitizeInfo(req.body?.billingAddress ?? req.body?.billingInfo),
         shippingAddress: sanitizeInfo(req.body?.shippingAddress ?? req.body?.shippingInfo),
       });
+    } catch (createError) {
+      logger.error({ error: createError, email: trimmedEmail }, "Failed to create member record");
+      if (createError.code === 11000) {
+        return res.status(409).json({
+          status: "error",
+          message: "A member with this email or phone number already exists",
+        });
+      }
+      return res.status(500).json({
+        status: "error",
+        message: createError.message || "Failed to create member account",
+      });
+    }
 
+    try {
       const emailResult = await sendOtpEmail({
         toEmail: member.email,
         otp,
@@ -455,7 +467,7 @@ export const registerMember = async (req, res, next) => {
         );
         return res.status(500).json({
           status: "error",
-          message: emailResult.reason || "Failed to send OTP email",
+          message: emailResult.reason || "Failed to send OTP verification email. Please check your email address or try again later.",
         });
       }
     } catch (emailError) {
@@ -468,7 +480,7 @@ export const registerMember = async (req, res, next) => {
       );
       return res
         .status(500)
-        .json({ status: "error", message: "Failed to send OTP email" });
+        .json({ status: "error", message: "Failed to send OTP verification email" });
     }
 
     console.log(`Generated registration OTP for ${trimmedEmail}: ${otp}`);
