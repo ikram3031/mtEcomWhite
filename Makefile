@@ -16,10 +16,10 @@ CLIENT ?= $(shell if [ -f .client ]; then cat .client | tr -d ' \r\n'; \
 	else node scripts/sync-config.js --detect-only 2>/dev/null || echo decantre; fi)
 
 # Resolve the config env file path
-ENV_FILE ?= $(shell if [ -f /opt/$(CLIENT)/configs/backend.env ]; then echo /opt/$(CLIENT)/configs/backend.env; \
+ENV_FILE ?= $(shell if [ -f .env ]; then echo .env; \
+	elif [ -f /opt/$(CLIENT)/configs/backend.env ]; then echo /opt/$(CLIENT)/configs/backend.env; \
 	elif [ -f /opt/$(CLIENT)/configs/.env ]; then echo /opt/$(CLIENT)/configs/.env; \
-	elif [ -f .env ]; then echo .env; \
-	else echo /opt/$(CLIENT)/configs/backend.env; fi)
+	else echo .env; fi)
 
 COMPOSE = CLIENT_NAME=$(CLIENT) CLIENT_CONFIG_PATH=/opt/$(CLIENT)/configs docker compose --env-file $(ENV_FILE) -f docker-compose.prod.yml
 
