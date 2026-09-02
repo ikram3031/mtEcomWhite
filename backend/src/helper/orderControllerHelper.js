@@ -96,6 +96,7 @@ export const buildOrderDocument = async (payload) => {
     shippingTotalAmount: Number(payload.shippingTotalAmount || 0),
     discountTotalAmount: Number(payload.discountTotalAmount || 0),
     couponCode: payload.couponCode ? String(payload.couponCode).trim().toUpperCase() : null,
+    orderType: isInstore ? 'instore' : 'online',
     items: normalizeOrderItems(payload.items),
     totals: {
       subtotal: Number(payload.subtotal || payload.subTotal || 0),

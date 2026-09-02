@@ -3,6 +3,7 @@ import { OrdersTable } from '@/components/dashboard/orders-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Download, PlusCircle, Trash2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import {
   Select,
@@ -36,7 +37,8 @@ import { toast } from 'sonner';
 import { logActivity } from '@/lib/activity-logger';
 import { useAuth } from '@/lib/auth-context';
 
-const OrdersPage = () => {
+// Renders the dedicated management page for in-store walk-in counter orders
+const InStoreOrdersPage = () => {
   const { user } = useAuth();
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -80,15 +82,15 @@ const OrdersPage = () => {
       await apiClient.post('/api/v1/orders/bulk-delete', { ids: selectedIds });
       logActivity({
         type: 'deleted',
-        description: `${selectedIds.length} order(s) deleted by "${user?.name || 'Admin'}"`,
+        description: `${selectedIds.length} in-store order(s) deleted by "${user?.name || 'Admin'}"`,
       });
-      toast.success('Selected orders deleted successfully.');
+      toast.success('Selected in-store orders deleted successfully.');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
       setBulkDeleteOpen(false);
     } catch {
-      toast.error('Failed to delete some orders.');
+      toast.error('Failed to delete some in-store orders.');
     } finally {
       setIsBulkDeleting(false);
     }
@@ -100,14 +102,14 @@ const OrdersPage = () => {
       await apiClient.post('/api/v1/orders/bulk-update', { ids: selectedIds, status });
       logActivity({
         type: 'updated',
-        description: `${selectedIds.length} order(s) status updated to "${status}" by "${user?.name || 'Admin'}"`,
+        description: `${selectedIds.length} in-store order(s) status updated to "${status}" by "${user?.name || 'Admin'}"`,
       });
-      toast.success(`Selected orders updated to status "${status}".`);
+      toast.success(`Selected in-store orders updated to status "${status}".`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
     } catch {
-      toast.error('Failed to update orders.');
+      toast.error('Failed to update in-store orders.');
     }
   };
 
@@ -117,23 +119,28 @@ const OrdersPage = () => {
       await apiClient.post('/api/v1/orders/bulk-update', { ids: selectedIds, paymentStatus });
       logActivity({
         type: 'updated',
-        description: `${selectedIds.length} order(s) payment status updated to "${paymentStatus}" by "${user?.name || 'Admin'}"`,
+        description: `${selectedIds.length} in-store order(s) payment status updated to "${paymentStatus}" by "${user?.name || 'Admin'}"`,
       });
-      toast.success(`Selected orders updated to payment status "${paymentStatus}".`);
+      toast.success(`Selected in-store orders updated to payment status "${paymentStatus}".`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       setSelectedIds([]);
     } catch {
-      toast.error('Failed to update orders.');
+      toast.error('Failed to update in-store orders.');
     }
   };
- 
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Orders Management</h2>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">In-Store Orders</h2>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Manage POS walk-in counter sales and in-store pickup orders
+          </p>
+        </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" nativeButton={false} render={<a href="/dashboard/orders/new" />}>
+          <Button variant="outline" nativeButton={false} render={<Link to="/dashboard/orders/new" />}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New In-Store Order
           </Button>
@@ -143,7 +150,7 @@ const OrdersPage = () => {
           </Button>
         </div>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
         <div className="relative flex-1 w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -235,7 +242,7 @@ const OrdersPage = () => {
           )}
         </div>
       </div>
-      
+
       <div className="bg-card text-card-foreground shadow-sm border rounded-lg">
         <div className="p-6">
           <OrdersTable
@@ -246,7 +253,7 @@ const OrdersPage = () => {
             onTotalPagesChange={setTotalPages}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
-            orderType="online"
+            orderType="instore"
           />
 
           <div className="border-t mt-4 pt-3">
@@ -320,7 +327,7 @@ const OrdersPage = () => {
           <DialogHeader>
             <DialogTitle>Confirm Order Status Change</DialogTitle>
             <DialogDescription>
-              Are you sure you want to update the Order Status of <span className="font-semibold text-foreground">{selectedIds.length}</span> selected orders to <span className="font-semibold text-foreground">"{bulkStatusTarget}"</span>?
+              Are you sure you want to update the Order Status of <span className="font-semibold text-foreground">{selectedIds.length}</span> selected in-store orders to <span className="font-semibold text-foreground">"{bulkStatusTarget}"</span>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -350,7 +357,7 @@ const OrdersPage = () => {
           <DialogHeader>
             <DialogTitle>Confirm Payment Status Change</DialogTitle>
             <DialogDescription>
-              Are you sure you want to update the Payment Status of <span className="font-semibold text-foreground">{selectedIds.length}</span> selected orders to <span className="font-semibold text-foreground">"{bulkPaymentTarget}"</span>?
+              Are you sure you want to update the Payment Status of <span className="font-semibold text-foreground">{selectedIds.length}</span> selected in-store orders to <span className="font-semibold text-foreground">"{bulkPaymentTarget}"</span>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -380,11 +387,11 @@ const OrdersPage = () => {
         onOpenChange={setBulkDeleteOpen}
         onConfirm={handleBulkDelete}
         isDeleting={isBulkDeleting}
-        title="Delete Selected Orders"
-        description={`Are you sure you want to permanently delete the ${selectedIds.length} selected orders? This action cannot be undone.`}
+        title="Delete Selected In-Store Orders"
+        description={`Are you sure you want to permanently delete the ${selectedIds.length} selected in-store orders? This action cannot be undone.`}
       />
     </div>
   );
-}
+};
 
-export default OrdersPage;
+export default InStoreOrdersPage;

@@ -14,6 +14,7 @@ const fetchOrders = async (params) => {
     if (params?.status) queryParams.status = params.status.toLowerCase();
     if (params?.paymentStatus) queryParams.paymentStatus = params.paymentStatus.toLowerCase();
     if (params?.search) queryParams.search = params.search;
+    if (params?.orderType) queryParams.orderType = params.orderType;
 
     const response = await apiClient.get('/api/v1/orders', { params: queryParams });
     const responseData = response.data;

@@ -34,6 +34,7 @@ import {
   LineChart,
   LifeBuoy,
   Ruler,
+  Store,
 } from "lucide-react"
 
 import {
@@ -193,6 +194,17 @@ export function AppSidebar({ ...props }) {
                       >
                         <ListOrdered className="h-3.5 w-3.5" />
                         <span>Orders List</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("orders.instore") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/orders/in-store" || pathname === "/dashboard/orders/instore"}
+                        render={<Link to="/dashboard/orders/in-store" />}
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                        <span>In-Store Orders</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

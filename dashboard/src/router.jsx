@@ -35,6 +35,7 @@ import EditAttribute from './pages/dashboard/products/editAttribute';
 import OrdersList from './pages/dashboard/orders/ordersList';
 import OrderDetails from './pages/dashboard/orders/orderDetails';
 import NewOrder from './pages/dashboard/orders/newOrder';
+import InStoreOrders from './pages/dashboard/orders/inStoreOrders';
 
 // Billing
 import BillingOverview from './pages/dashboard/billing/billingOverview';
@@ -328,6 +329,22 @@ export const router = createBrowserRouter([
             element: (
               <RoleGuard menuKey="orders.list">
                 <OrdersList />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'in-store',
+            element: (
+              <RoleGuard menuKey="orders.instore">
+                <InStoreOrders />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'instore',
+            element: (
+              <RoleGuard menuKey="orders.instore">
+                <InStoreOrders />
               </RoleGuard>
             ),
           },

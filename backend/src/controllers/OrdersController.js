@@ -144,33 +144,54 @@ export const listOrders = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const filter = {};
+    const andConditions = [];
+
     if (req.query.active !== undefined) {
-      filter.active = req.query.active === 'false' || req.query.active === false ? false : true;
+      andConditions.push({ active: req.query.active === 'false' || req.query.active === false ? false : true });
     } else {
-      filter.active = true;
+      andConditions.push({ active: true });
     }
 
     if (req.query.status) {
-      filter.status = req.query.status;
+      andConditions.push({ status: req.query.status.toLowerCase() });
+    }
+
+    if (req.query.orderType === 'instore') {
+      andConditions.push({
+        $or: [
+          { orderType: 'instore' },
+          { orderNumber: { $regex: '^IS', $options: 'i' } }
+        ]
+      });
+    } else if (req.query.orderType === 'online') {
+      andConditions.push({
+        $and: [
+          { orderType: { $ne: 'instore' } },
+          { orderNumber: { $not: { $regex: '^IS', $options: 'i' } } }
+        ]
+      });
     }
 
     if (req.query.paymentStatus) {
       const pStatus = req.query.paymentStatus.toLowerCase();
       const matchingPayments = await PaymentModel.find({ status: pStatus }).distinct('orderId');
       if (pStatus === 'paid') {
-        filter.$or = [
-          { _id: { $in: matchingPayments } },
-          { status: { $in: ['completed', 'shipped'] } }
-        ];
+        andConditions.push({
+          $or: [
+            { _id: { $in: matchingPayments } },
+            { status: { $in: ['completed', 'shipped'] } }
+          ]
+        });
       } else if (pStatus === 'pending') {
         const paidPayments = await PaymentModel.find({ status: 'paid' }).distinct('orderId');
-        filter.$and = [
-          { _id: { $nin: paidPayments } },
-          { status: { $nin: ['completed', 'shipped'] } }
-        ];
+        andConditions.push({
+          $and: [
+            { _id: { $nin: paidPayments } },
+            { status: { $nin: ['completed', 'shipped'] } }
+          ]
+        });
       } else {
-        filter._id = { $in: matchingPayments };
+        andConditions.push({ _id: { $in: matchingPayments } });
       }
     }
 
@@ -213,16 +234,11 @@ export const listOrders = async (req, res, next) => {
           searchOr.push({ _id: new Types.ObjectId(term) });
         }
 
-        if (filter.$or) {
-          filter.$and = [...(filter.$and || []), { $or: filter.$or }, { $or: searchOr }];
-          delete filter.$or;
-        } else if (filter.$and) {
-          filter.$and.push({ $or: searchOr });
-        } else {
-          filter.$or = searchOr;
-        }
+        andConditions.push({ $or: searchOr });
       }
     }
+
+    const filter = andConditions.length > 0 ? { $and: andConditions } : {};
 
     const total = await OrderModel.countDocuments(filter);
     const orders = await OrderModel.find(filter)

@@ -53,6 +53,7 @@ export const OrdersTable = ({
   onTotalPagesChange,
   selectedIds,
   onSelectedIdsChange,
+  orderType = 'online',
 }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -63,6 +64,7 @@ export const OrdersTable = ({
     paymentStatus: paymentFilter !== 'All' ? paymentFilter : undefined,
     page,
     limit: 15,
+    orderType,
   });
 
   const orders = responseData?.data ?? [];
