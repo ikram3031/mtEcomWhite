@@ -362,7 +362,7 @@ export const buildDecantreOrderInvoiceHtml = ({
         <p><strong>Order Date:</strong> ${createdAt}</p>
         <p><strong>Payment Method:</strong> ${paymentMethod}</p>
         <p><strong>Payment Status:</strong> <span style="color: #15803D; font-weight: 700;">Paid / Confirmed</span></p>
-        <p style="margin-top: 6px; font-size: 12.5px;"><strong>Store Helpline:</strong><br />+880 1712-345678 (WhatsApp Available)</p>
+        <p style="margin-top: 6px; font-size: 12.5px;"><strong>Store Helpline:</strong><br />01869151550 (WhatsApp Available)</p>
       </div>
     </div>
 
@@ -420,7 +420,7 @@ export const buildDecantreOrderInvoiceHtml = ({
       <div class="authenticity-seal">✦ 100% Authentic Flacon Decant Guarantee ✦</div>
       <p>Thank you for choosing <strong>Decantre</strong> — Your Premier Destination for Luxury Perfumes.</p>
       <p style="margin-top: 4px; font-size: 11px; color: #64748B;">
-        For questions or returns, reach out via WhatsApp at <strong>+880 1712-345678</strong> or email <a href="mailto:support@decantrebd.com">support@decantrebd.com</a>.
+        For questions or returns, reach out via WhatsApp at <strong>01869151550</strong> or email <a href="mailto:support@decantrebd.com">support@decantrebd.com</a>.
       </p>
     </div>
   </div>

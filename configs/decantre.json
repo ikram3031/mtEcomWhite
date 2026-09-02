@@ -4,6 +4,8 @@
   "brandName": "Decantre",
   "domain": "decantrebd.com",
   "supportEmail": "support@decantrebd.com",
+  "supportPhone": "01869151550",
+  "whatsappNumber": "01869151550",
   "apiBaseUrl": "https://server.decantrebd.com",
   "dashboardUrl": "https://admin.decantrebd.com",
   "storefrontUrl": "https://decantrebd.com",

@@ -2,6 +2,8 @@
   "clientId": "01",
   "clientKey": "decantre",
   "brandName": "Decantre",
+  "supportPhone": "01869151550",
+  "whatsappNumber": "01869151550",
   "apiBaseUrl": "https://server.decantrebd.com",
   "features": {
     "season": true,
