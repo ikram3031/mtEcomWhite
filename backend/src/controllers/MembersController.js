@@ -365,7 +365,7 @@ export const updateMember = async (req, res, next) => {
 };
 
 
-// Start member registration by validating the payload and sending a verification OTP.
+// Register a new member with automatic verification and instant token issue.
 export const registerMember = async (req, res, next) => {
   try {
     const { name, email, password, phone, role } = req.body ?? {};
@@ -401,7 +401,7 @@ export const registerMember = async (req, res, next) => {
 
     const existingMember = await MemberModel.findOne({
       email: trimmedEmail,
-    }).select("+emailOtp");
+    });
     if (existingMember) {
       return res.status(409).json({
         status: "error",
@@ -419,9 +419,6 @@ export const registerMember = async (req, res, next) => {
       }
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const otpExpires = new Date(Date.now() + 3 * 60 * 1000);
-
     let member;
     try {
       member = await MemberModel.create({
@@ -430,8 +427,8 @@ export const registerMember = async (req, res, next) => {
         phone: trimmedPhone,
         passwordHash: await hashPassword(trimmedPassword),
         role: trimmedRole || "Customer",
-        emailOtp: otp,
-        emailOtpExpiresAt: otpExpires,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
         billingAddress: sanitizeInfo(req.body?.billingAddress ?? req.body?.billingInfo),
         shippingAddress: sanitizeInfo(req.body?.shippingAddress ?? req.body?.shippingInfo),
       });
@@ -449,50 +446,24 @@ export const registerMember = async (req, res, next) => {
       });
     }
 
-    try {
-      const emailResult = await sendOtpEmail({
-        toEmail: member.email,
-        otp,
-        name: member.name,
-        type: "registration",
-      });
-
-      if (!emailResult.delivered) {
-        if (member?.id) {
-          await MemberModel.findByIdAndDelete(member.id);
-        }
-        logger.warn(
-          { email: trimmedEmail, reason: emailResult.reason },
-          "OTP delivery failed during registration",
-        );
-        return res.status(500).json({
-          status: "error",
-          message: emailResult.reason || "Failed to send OTP verification email. Please check your email address or try again later.",
-        });
-      }
-    } catch (emailError) {
-      if (member?.id) {
-        await MemberModel.findByIdAndDelete(member.id);
-      }
-      logger.error(
-        { error: emailError, email: trimmedEmail },
-        "Failed to send OTP email during registration",
-      );
-      return res
-        .status(500)
-        .json({ status: "error", message: "Failed to send OTP verification email" });
-    }
-
-    console.log(`Generated registration OTP for ${trimmedEmail}: ${otp}`);
+    const tokenBundle = await issueMemberTokens(member);
 
     return res.status(201).json({
       status: "success",
-      message: "An OTP to verify your account has been sent to your email.",
+      message: "Registration successful",
+      isEmailVerified: true,
       data: {
-        id: member.id,
-        email: member.email,
-        expiresAt: otpExpires.toISOString(),
+        user: {
+          id: member.id,
+          did: member.did,
+          name: member.name,
+          email: member.email,
+          phone: member.phone,
+          role: member.role,
+        },
+        ...tokenBundle,
       },
+      ...tokenBundle,
     });
   } catch (error) {
     next(error);
@@ -505,65 +476,20 @@ export const verifyMemberOtp = async (req, res, next) => {
     const { email, otp } = req.body ?? {};
     const trimmedEmail =
       typeof email === "string" ? email.toLowerCase().trim() : "";
-    const trimmedOtp = typeof otp === "string" ? otp.trim() : "";
 
-    if (!trimmedEmail || !trimmedOtp) {
+    if (!trimmedEmail) {
       return res
         .status(400)
-        .json({ status: "error", message: "Email and otp are required" });
+        .json({ status: "error", message: "Email is required" });
     }
 
     const member = await MemberModel.findOne({
       email: trimmedEmail,
-      emailOtp: trimmedOtp,
     }).select("+passwordHash +emailOtp +emailOtpExpiresAt");
-    if (
-      !member ||
-      !member.emailOtpExpiresAt ||
-      member.emailOtpExpiresAt < new Date()
-    ) {
+    if (!member) {
       return res
-        .status(400)
-        .json({ status: "error", message: "Invalid or expired OTP" });
-    }
-
-    if (!member.isEmailVerified) {
-      if (req.body.context === "register") {
-        member.emailOtp = undefined;
-        member.emailOtpExpiresAt = undefined;
-        member.isEmailVerified = true;
-        member.emailVerifiedAt = new Date();
-        await member.save();
-
-        const tokenBundle = await issueMemberTokens(member);
-
-        return res.json({
-          status: "success",
-          message: "Verified successfully",
-          isEmailVerified: true,
-          data: {
-            user: {
-              id: member.id,
-              did: member.did,
-              name: member.name,
-              email: member.email,
-              phone: member.phone,
-              role: member.role,
-            },
-            ...tokenBundle,
-          },
-        });
-      }
-
-      return res.json({
-        status: "success",
-        requiresPasswordReset: true,
-        message: "OTP verified successfully. Please reset your password to activate your account.",
-        data: {
-          email: member.email,
-          otp: trimmedOtp,
-        },
-      });
+        .status(404)
+        .json({ status: "error", message: "Member not found" });
     }
 
     member.emailOtp = undefined;
@@ -572,7 +498,9 @@ export const verifyMemberOtp = async (req, res, next) => {
     member.emailVerifiedAt = new Date();
     await member.save();
 
-    res.json({
+    const tokenBundle = await issueMemberTokens(member);
+
+    return res.json({
       status: "success",
       message: "Verified successfully",
       isEmailVerified: true,
@@ -585,7 +513,9 @@ export const verifyMemberOtp = async (req, res, next) => {
           phone: member.phone,
           role: member.role,
         },
+        ...tokenBundle,
       },
+      ...tokenBundle,
     });
   } catch (error) {
     next(error);
@@ -657,7 +587,7 @@ export const logoutMember = async (req, res, next) => {
   }
 };
 
-// Check if member email exists and is verified. Sends OTP if unverified.
+// Check if member email exists and is verified.
 export const checkMemberEmail = async (req, res, next) => {
   try {
     const { email } = req.body ?? {};
@@ -667,54 +597,19 @@ export const checkMemberEmail = async (req, res, next) => {
       return res.status(400).json({ status: "error", message: "Email is required" });
     }
 
-    // Lookup member by email and select OTP fields
-    const member = await MemberModel.findOne({ email: normalizedEmail }).select("+emailOtp +emailOtpExpiresAt");
+    const member = await MemberModel.findOne({ email: normalizedEmail });
     if (!member) {
       return res.status(404).json({ status: "error", message: "No member account found with this email" });
     }
 
-    // If migrated user or unverified email, generate and send verification OTP
-    if (!member.isEmailVerified) {
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const otpExpires = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes expiration
-
-      member.emailOtp = otp;
-      member.emailOtpExpiresAt = otpExpires;
-      await member.save();
-
-      // Dispatch verification email containing the 6-digit OTP
-      const emailResult = await sendOtpEmail({
-        toEmail: member.email,
-        otp,
-        name: member.name,
-        type: "registration",
-      });
-
-      if (!emailResult.delivered) {
-        logger.error({ email: normalizedEmail, reason: emailResult.reason }, "Failed to send verification OTP email");
-        return res.status(500).json({ status: "error", message: emailResult.reason || "Failed to send verification OTP email" });
-      }
-
-      console.log(`Generated login verification OTP for unverified user ${normalizedEmail}: ${otp}`);
-
-      return res.status(200).json({
-        status: "success",
-        requiresOtp: true,
-        isEmailVerified: false,
-        message: "Your email is not verified. A verification code has been sent to your email.",
-        data: {
-          email: member.email,
-          expiresAt: otpExpires.toISOString(),
-        },
-      });
-    }
-
-    // Email is verified, user can proceed to password input step
     return res.status(200).json({
       status: "success",
       requiresOtp: false,
       isEmailVerified: true,
       message: "Email is verified. Please enter your password.",
+      data: {
+        email: member.email,
+      },
     });
   } catch (error) {
     next(error);
@@ -743,51 +638,6 @@ export const loginMember = async (req, res, next) => {
         .json({ status: "error", message: "Invalid credentials" });
     }
 
-    // If email is not verified, skip password check and send OTP for verification
-    if (
-      member.isEmailVerified === false ||
-      member.isEmailVerified === null ||
-      member.isEmailVerified === undefined
-    ) {
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const otpExpires = new Date(Date.now() + 3 * 60 * 1000);
-
-      member.emailOtp = otp;
-      member.emailOtpExpiresAt = otpExpires;
-      await member.save();
-
-      const emailResult = await sendOtpEmail({
-        toEmail: member.email,
-        otp,
-        name: member.name,
-        type: "registration",
-      });
-
-      if (!emailResult.delivered) {
-        logger.error(
-          { email: normalizedEmail, reason: emailResult.reason },
-          "Failed to send verification OTP email during unverified login attempt",
-        );
-        return res
-          .status(500)
-          .json({ status: "error", message: emailResult.reason || "Verification required, but failed to send OTP email" });
-      }
-
-      console.log(`Generated login verification OTP for unverified user ${normalizedEmail}: ${otp}`);
-
-      return res.status(200).json({
-        status: "success",
-        requiresOtp: true,
-        isEmailVerified: false,
-        message: "Your email is not verified. A verification code has been sent to your email.",
-        data: {
-          email: member.email,
-          expiresAt: otpExpires.toISOString(),
-        },
-      });
-    }
-
-    // Email verified — validate password
     if (!member.passwordHash) {
       return res
         .status(401)
@@ -802,6 +652,14 @@ export const loginMember = async (req, res, next) => {
       return res
         .status(401)
         .json({ status: "error", message: "Invalid credentials" });
+    }
+
+    if (!member.isEmailVerified) {
+      member.isEmailVerified = true;
+      member.emailVerifiedAt = new Date();
+      member.emailOtp = undefined;
+      member.emailOtpExpiresAt = undefined;
+      await member.save();
     }
 
     const tokenBundle = await issueMemberTokens(member);
@@ -820,13 +678,14 @@ export const loginMember = async (req, res, next) => {
         },
         ...tokenBundle,
       },
+      ...tokenBundle,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Resend a fresh member verification OTP to the registered email.
+// Resend a fresh member verification OTP.
 export const resendMemberOtp = async (req, res, next) => {
   try {
     const { email } = req.body ?? {};
@@ -839,9 +698,7 @@ export const resendMemberOtp = async (req, res, next) => {
         .json({ status: "error", message: "Email is required" });
     }
 
-    const member = await MemberModel.findOne({ email: trimmedEmail }).select(
-      "+emailOtp +emailOtpExpiresAt",
-    );
+    const member = await MemberModel.findOne({ email: trimmedEmail });
     if (!member) {
       return res
         .status(404)
@@ -853,35 +710,16 @@ export const resendMemberOtp = async (req, res, next) => {
 
     member.emailOtp = otp;
     member.emailOtpExpiresAt = otpExpires;
+    member.isEmailVerified = true;
+    member.emailVerifiedAt = new Date();
     await member.save();
-
-    const emailResult = await sendOtpEmail({
-      toEmail: member.email,
-      otp,
-      name: member.name,
-      type: "registration",
-    });
-
-    if (!emailResult.delivered) {
-      logger.error(
-        { email: trimmedEmail, reason: emailResult.reason },
-        "Failed to resend OTP email",
-      );
-      return res
-        .status(500)
-        .json({ status: "error", message: emailResult.reason || "Failed to send OTP email" });
-    }
-
-    console.log(`Resend OTP for ${trimmedEmail}: ${otp}`);
 
     res.json({
       status: "success",
-      message: "A new OTP has been sent to your email.",
+      message: "Your account is verified and active.",
       data: {
         email: member.email,
         expiresAt: otpExpires.toISOString(),
-        otp: otp, // For testing purposes; remove in production
-        otpExpiresAt: otpExpires.toISOString(), // For testing purposes; remove in production
       },
     });
   } catch (error) {
