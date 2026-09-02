@@ -8,6 +8,9 @@ import {
 
 const router = Router();
 
+router.route("/attributes")
+  .get(getAttributes);
+
 router.route("/dashboard/attributes")
   .get(getAttributes)
   .post(createAttribute);
