@@ -38,6 +38,7 @@ import {
   Table as TableIcon,
   X,
   Sparkles,
+  Check,
 } from 'lucide-react';
 
 const COMMON_COLUMN_SUGGESTIONS = [
@@ -66,6 +67,7 @@ const SizeChartsPage = () => {
   const [isEditingExisting, setIsEditingExisting] = useState(false);
 
   const [selectedAttributeId, setSelectedAttributeId] = useState('');
+  const [selectedSizes, setSelectedSizes] = useState([]);
   const [columns, setColumns] = useState([]);
   const [newColumnName, setNewColumnName] = useState('');
   const [matrixRows, setMatrixRows] = useState([]);
@@ -138,7 +140,7 @@ const SizeChartsPage = () => {
 
     if (existingChart) {
       setIsEditingExisting(true);
-      setCurrentStep(3);
+      setCurrentStep(1);
       setSelectedAttributeId(
         existingChart.attributeId?._id ||
           existingChart.attributeId ||
@@ -155,6 +157,7 @@ const SizeChartsPage = () => {
           }))
         : [];
       setMatrixRows(existingRows);
+      setSelectedSizes(existingRows.map((r) => r.size));
     } else {
       setIsEditingExisting(false);
       setCurrentStep(1);
@@ -168,10 +171,53 @@ const SizeChartsPage = () => {
       setColumns(['Chest', 'Length', 'Sleeve']);
       setMeasurementUnit('inches');
       setMatrixRows([]);
+      setSelectedSizes([]);
     }
 
     setNewColumnName('');
     setModalOpen(true);
+  };
+
+  // Handles selecting or deselecting a size option
+  const handleToggleSize = (sizeLabel) => {
+    setSelectedSizes((prev) =>
+      prev.includes(sizeLabel)
+        ? prev.filter((s) => s !== sizeLabel)
+        : [...prev, sizeLabel]
+    );
+  };
+
+  // Selects all available attribute size options
+  const handleSelectAllSizes = (allSizes) => {
+    setSelectedSizes(allSizes);
+  };
+
+  // Clears all selected size options
+  const handleClearAllSizes = () => {
+    setSelectedSizes([]);
+  };
+
+  // Handles changing the active attribute group
+  const handleAttributeChange = (newAttrId) => {
+    setSelectedAttributeId(newAttrId);
+    const newAttr = attributes.find((a) => a._id === newAttrId || a.id === newAttrId);
+    const newValues = (newAttr?.values || []).map((v) =>
+      typeof v === 'string' ? v : v.name || v.size || v.slug
+    );
+    setSelectedSizes((prev) => prev.filter((s) => newValues.includes(s)));
+  };
+
+  // Validates size selection and transitions to column definition step
+  const handleProceedToColumns = () => {
+    if (!selectedAttributeId) {
+      toast.error('Please select an attribute group');
+      return;
+    }
+    if (selectedSizes.length === 0) {
+      toast.error('Please select at least one size for this category');
+      return;
+    }
+    setCurrentStep(2);
   };
 
   // Handles adding a new measurement column
@@ -200,20 +246,18 @@ const SizeChartsPage = () => {
 
   // Generates or syncs matrix rows when proceeding to step 3
   const handleProceedToMatrix = () => {
+    if (selectedSizes.length === 0) {
+      toast.error('Please select at least one size variation for this category');
+      return;
+    }
     if (columns.length === 0) {
       toast.error('Please add at least one measurement column (e.g. Chest, Length)');
       return;
     }
 
-    const attrValues = activeAttribute?.values || [];
-    const sizeLabels =
-      attrValues.length > 0
-        ? attrValues.map((v) => (typeof v === 'string' ? v : v.name || v.size || v.slug))
-        : ['S', 'M', 'L', 'XL', 'XXL'];
-
     setMatrixRows((prevRows) => {
       const existingMap = new Map(prevRows.map((r) => [r.size, r.values]));
-      return sizeLabels.map((size) => ({
+      return selectedSizes.map((size) => ({
         size,
         values: existingMap.get(size) || {},
       }));
@@ -241,6 +285,10 @@ const SizeChartsPage = () => {
   // Submits and saves size chart to backend API
   const handleSaveSizeChart = async () => {
     if (!activeCategory) return;
+    if (selectedSizes.length === 0) {
+      toast.error('Please select at least one size variation');
+      return;
+    }
     if (columns.length === 0) {
       toast.error('At least one measurement column is required');
       return;
@@ -561,10 +609,10 @@ const SizeChartsPage = () => {
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    1. Attribute
+                    1. Attribute & Sizes
                   </span>
                   <span
-                    onClick={() => setCurrentStep(2)}
+                    onClick={handleProceedToColumns}
                     className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
                       currentStep === 2
                         ? 'bg-primary text-primary-foreground shadow-xs'
@@ -604,10 +652,10 @@ const SizeChartsPage = () => {
               <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
                 <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Sliders className="h-4 w-4 text-primary" />
-                  Step 1: Select Source Attribute for Rows
+                  Step 1: Select Source Attribute & Category Sizes
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  Select which attribute group defines the size variations (e.g. Size, Volume, Dimension).
+                  Select which attribute defines the sizes and choose the specific size options for &ldquo;{activeCategory?.name}&rdquo;.
                 </p>
               </div>
 
@@ -618,7 +666,7 @@ const SizeChartsPage = () => {
                   </label>
                   <Select
                     value={selectedAttributeId}
-                    onValueChange={(val) => setSelectedAttributeId(val)}
+                    onValueChange={(val) => handleAttributeChange(val)}
                   >
                     <SelectTrigger className="w-full h-11 bg-card">
                       <SelectValue placeholder="Select an attribute (e.g. Size)">
@@ -641,26 +689,85 @@ const SizeChartsPage = () => {
                 </div>
 
                 {activeAttribute && (
-                  <div className="p-4 rounded-xl border bg-muted/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">
-                        Configured Values in &ldquo;{activeAttribute.name}&rdquo;:
-                      </span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {activeAttribute.values?.length || 0} variations
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {activeAttribute.values?.map((val, idx) => (
-                        <Badge
-                          key={idx}
+                  <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-foreground block">
+                          Available Sizes in &ldquo;{activeAttribute.name}&rdquo;:
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          Click to select or unselect sizes for this category
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-background border text-[11px]">
+                          <span className="font-bold text-primary">{selectedSizes.length}</span> / {activeAttribute.values?.length || 0} selected
+                        </span>
+                        <Button
+                          type="button"
                           variant="outline"
-                          className="font-mono text-xs px-3 py-1 bg-background text-foreground border-border/80 shadow-2xs font-semibold"
+                          size="sm"
+                          onClick={() =>
+                            handleSelectAllSizes(
+                              (activeAttribute.values || []).map((v) =>
+                                typeof v === 'string' ? v : v.name || v.slug
+                              )
+                            )
+                          }
+                          className="h-7 text-xs px-2.5 font-semibold cursor-pointer"
                         >
-                          {typeof val === 'string' ? val : val.name || val.slug}
-                        </Badge>
-                      ))}
+                          Select All
+                        </Button>
+                        {selectedSizes.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearAllSizes}
+                            className="h-7 text-xs px-2 text-muted-foreground hover:text-destructive cursor-pointer"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
                     </div>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {activeAttribute.values?.map((val, idx) => {
+                        const sizeLabel = typeof val === 'string' ? val : val.name || val.slug;
+                        const isSelected = selectedSizes.includes(sizeLabel);
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleToggleSize(sizeLabel)}
+                            className={`group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border select-none ${
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary shadow-xs font-bold'
+                                : 'bg-card text-muted-foreground hover:text-foreground border-border/80 hover:border-primary/40 hover:bg-muted/40 shadow-2xs'
+                            }`}
+                          >
+                            <div
+                              className={`h-4 w-4 rounded flex items-center justify-center border transition-all ${
+                                isSelected
+                                  ? 'bg-primary-foreground text-primary border-primary-foreground'
+                                  : 'border-muted-foreground/40 group-hover:border-primary/60 bg-muted/20'
+                              }`}
+                            >
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                            <span className="font-mono">{sizeLabel}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedSizes.length === 0 && (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span>Please select at least one size variation above for this category.</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -676,8 +783,8 @@ const SizeChartsPage = () => {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => setCurrentStep(2)}
-                  disabled={!selectedAttributeId}
+                  onClick={handleProceedToColumns}
+                  disabled={!selectedAttributeId || selectedSizes.length === 0}
                   className="cursor-pointer text-xs font-semibold gap-2 shadow-xs"
                 >
                   Next: Define Columns <ArrowRight className="h-4 w-4" />
@@ -851,6 +958,15 @@ const SizeChartsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentStep(1)}
+                    className="text-xs h-8.5 px-3 font-semibold gap-1.5 rounded-lg cursor-pointer border-border"
+                  >
+                    <Sliders className="h-3.5 w-3.5 text-primary" /> Edit Sizes ({selectedSizes.length})
+                  </Button>
                   <Button
                     type="button"
                     size="sm"
