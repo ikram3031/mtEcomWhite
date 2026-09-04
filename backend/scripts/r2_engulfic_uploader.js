@@ -1,22 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * ☁️ Engulfic Cloudflare R2 Backup & Upload Engine
+ * ☁️ Engulfic Cloudflare R2 Backup & Upload Engine (ESM)
  * 
  * Uploads full database dumps, product catalogs, categories, seeder scripts,
  * and media assets into the 'client-hub' bucket under the 'engulfic/' prefix.
- * 
- * Usage:
- *   node backend/scripts/r2_engulfic_uploader.js \
- *     --account-id <CLOUDFLARE_ACCOUNT_ID> \
- *     --access-key-id <R2_ACCESS_KEY_ID> \
- *     --secret-access-key <R2_SECRET_ACCESS_KEY> \
- *     --bucket client-hub
  */
 
-const fs = require('fs');
-const path = require('path');
-const { S3Client, PutObjectCommand, HeadBucketCommand, CreateBucketCommand } = require('@aws-sdk/client-s3');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { S3Client, PutObjectCommand, HeadBucketCommand, CreateBucketCommand } from '@aws-sdk/client-s3';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -85,12 +82,6 @@ const run = async () => {
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
     console.error('\n⚠️ Missing Cloudflare R2 Credentials!');
-    console.log('Please provide credentials via flags or environment variables:');
-    console.log('  node backend/scripts/r2_engulfic_uploader.js \\');
-    console.log('    --account-id <YOUR_ACCOUNT_ID> \\');
-    console.log('    --access-key-id <YOUR_ACCESS_KEY_ID> \\');
-    console.log('    --secret-access-key <YOUR_SECRET_ACCESS_KEY> \\');
-    console.log('    --bucket client-hub\n');
     process.exit(1);
   }
 
@@ -118,7 +109,7 @@ const run = async () => {
     }
   }
 
-  const backupDir = path.resolve('f:/AFull/backups/engulfic');
+  const backupDir = path.resolve(__dirname, '../../backups/engulfic');
   const filesToUpload = getFilesRecursive(backupDir, backupDir);
   console.log(`\nFound ${filesToUpload.length} files to upload from local backup bundle.\n`);
 

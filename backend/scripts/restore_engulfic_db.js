@@ -1,11 +1,27 @@
-// Automated database restoration and seed script for Engulfic
-const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
-const bcrypt = require('bcryptjs');
+// Automated database restoration and seed script for Engulfic (ESM)
+import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { hashPassword } from '../src/utils/password.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const parseObjectId = (val) => {
+  if (!val) return null;
+  if (val instanceof mongoose.Types.ObjectId) return val;
+  if (typeof val === 'string' && mongoose.Types.ObjectId.isValid(val)) {
+    return new mongoose.Types.ObjectId(val);
+  }
+  if (typeof val === 'object' && val._id) {
+    return parseObjectId(val._id);
+  }
+  return null;
+};
 
 const restoreEngulfic = async () => {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://admin:11223345@127.0.0.1:27017/engulfic-db?authSource=admin';
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://admin:engulfic_pass_2026@engulfic-mongodb-live:27017/engulfic-db?authSource=admin';
   console.log('Connecting to MongoDB...');
   
   try {
@@ -23,15 +39,22 @@ const restoreEngulfic = async () => {
         console.log(`Seeding ${catList.length} categories...`);
         const catCol = db.collection('categories');
         await catCol.deleteMany({});
-        const docs = catList.map(c => ({
-          ...c,
-          _id: new mongoose.Types.ObjectId(c._id),
-          parent: c.parent ? new mongoose.Types.ObjectId(c.parent) : null,
-          createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
-          updatedAt: c.updatedAt ? new Date(c.updatedAt) : new Date()
-        }));
+        const docs = catList.map(c => {
+          const doc = { ...c };
+          if (doc._id) doc._id = parseObjectId(doc._id) || new mongoose.Types.ObjectId();
+          if (doc.parent) {
+            doc.parent = parseObjectId(doc.parent);
+          } else {
+            doc.parent = null;
+          }
+          if (doc.createdBy) doc.createdBy = parseObjectId(doc.createdBy);
+          if (doc.updatedBy) doc.updatedBy = parseObjectId(doc.updatedBy);
+          doc.createdAt = doc.createdAt ? new Date(doc.createdAt) : new Date();
+          doc.updatedAt = doc.updatedAt ? new Date(doc.updatedAt) : new Date();
+          return doc;
+        });
         await catCol.insertMany(docs);
-        console.log('Categories restored successfully.');
+        console.log('✅ Categories restored successfully.');
       }
     }
 
@@ -44,29 +67,53 @@ const restoreEngulfic = async () => {
         console.log(`Seeding ${prodList.length} products...`);
         const prodCol = db.collection('products');
         await prodCol.deleteMany({});
-        const docs = prodList.map(p => ({
-          ...p,
-          _id: new mongoose.Types.ObjectId(p._id || p.id),
-          categories: Array.isArray(p.categories) ? p.categories.map(cat => ({
-            ...cat,
-            _id: new mongoose.Types.ObjectId(cat._id),
-            parent: cat.parent ? new mongoose.Types.ObjectId(cat.parent) : null
-          })) : [],
-          createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-          updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date()
-        }));
+        const docs = prodList.map(p => {
+          const doc = { ...p };
+          if (doc._id || doc.id) {
+            doc._id = parseObjectId(doc._id || doc.id) || new mongoose.Types.ObjectId();
+          }
+          if (Array.isArray(doc.categories)) {
+            doc.categories = doc.categories.map(cat => {
+              const cDoc = { ...cat };
+              if (cDoc._id) cDoc._id = parseObjectId(cDoc._id) || new mongoose.Types.ObjectId();
+              if (cDoc.parent) cDoc.parent = parseObjectId(cDoc.parent);
+              return cDoc;
+            });
+          }
+          if (doc.createdBy) doc.createdBy = parseObjectId(doc.createdBy);
+          if (doc.updatedBy) doc.updatedBy = parseObjectId(doc.updatedBy);
+          doc.createdAt = doc.createdAt ? new Date(doc.createdAt) : new Date();
+          doc.updatedAt = doc.updatedAt ? new Date(doc.updatedAt) : new Date();
+          return doc;
+        });
         await prodCol.insertMany(docs);
-        console.log('Products restored successfully.');
+        console.log('✅ Products restored successfully.');
       }
     }
 
-    // 3. Ensure Default Admin User
+    // 3. Restore Store Utils
+    const storeUtilsFile = path.join(__dirname, '../data/engulfic_store_utils.json');
+    if (fs.existsSync(storeUtilsFile)) {
+      const raw = JSON.parse(fs.readFileSync(storeUtilsFile, 'utf8'));
+      const data = raw.data || raw;
+      if (data) {
+        const utilsCol = db.collection('storeutils');
+        await utilsCol.deleteMany({});
+        await utilsCol.insertOne({
+          featured: Array.isArray(data.featured) ? data.featured.map(id => parseObjectId(id)).filter(Boolean) : [],
+          bestSeller: Array.isArray(data.bestSeller) ? data.bestSeller.map(id => parseObjectId(id)).filter(Boolean) : [],
+          updatedAt: new Date()
+        });
+        console.log('✅ Store Utils restored successfully.');
+      }
+    }
+
+    // 4. Ensure Default Admin User
     const usersCol = db.collection('users');
     const existingAdmin = await usersCol.findOne({ role: 'Owner' });
     if (!existingAdmin) {
       console.log('Creating initial Owner/Admin user...');
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash('11223345', salt);
+      const passwordHash = await hashPassword('11223345');
       await usersCol.insertOne({
         name: 'Engulfic Admin',
         email: 'info@engulfic.com',
@@ -76,11 +123,11 @@ const restoreEngulfic = async () => {
         createdAt: new Date(),
         updatedAt: new Date()
       });
-      console.log('Initial Owner user created: info@engulfic.com / 11223345');
+      console.log('✅ Initial Owner user created: info@engulfic.com / 11223345');
     }
 
     console.log('=============================================');
-    console.log('Engulfic Database Restore Completed 100%!');
+    console.log('🎉 Engulfic Database Restore Completed 100%!');
     console.log('=============================================');
   } catch (error) {
     console.error('Migration error:', error);
