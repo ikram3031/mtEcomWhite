@@ -1,6 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
 import { generateDid } from "../utils/generateDid.js";
-import { randomBytes } from "crypto";
 
 
 const categorySchema = new Schema(

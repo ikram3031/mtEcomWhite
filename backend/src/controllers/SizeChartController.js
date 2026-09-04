@@ -23,23 +23,34 @@ export const getAllSizeCharts = async (req, res) => {
   }
 };
 
-// Fetches and returns a specific size chart by parent category identifier
+// Fetches and returns a specific size chart by parent category DID, ID, or slug
 export const getSizeChartByCategory = async (req, res) => {
   const { categoryId } = req.params;
   try {
-    const category = await CategoryModel.findOne({
-      $or: [
-        { _id: categoryId.match(/^[0-9a-fA-F]{24}$/) ? categoryId : null },
-        { slug: categoryId },
-        { did: categoryId },
-      ],
-    }).lean();
+    const isObjectId = typeof categoryId === "string" && /^[0-9a-fA-F]{24}$/.test(categoryId);
+    const categoryQuery = isObjectId
+      ? { $or: [{ _id: categoryId }, { slug: categoryId }, { did: categoryId }] }
+      : { $or: [{ slug: categoryId }, { did: categoryId }] };
 
-    if (!category) {
-      return res.status(404).json({ status: "error", message: "Category not found" });
-    }
+    const category = await CategoryModel.findOne(categoryQuery).lean();
 
-    const sizeChart = await SizeChartModel.findOne({ category: category._id })
+    const chartFilter = category
+      ? {
+          $or: [
+            { category: category._id },
+            ...(category.did ? [{ categoryDid: category.did }] : []),
+            ...(category.slug ? [{ categorySlug: category.slug }] : []),
+          ],
+        }
+      : {
+          $or: [
+            ...(isObjectId ? [{ category: categoryId }] : []),
+            { categoryDid: categoryId },
+            { categorySlug: categoryId },
+          ],
+        };
+
+    const sizeChart = await SizeChartModel.findOne(chartFilter)
       .populate({
         path: "category",
         select: "name slug did imageUrl parent",
@@ -61,7 +72,7 @@ export const getSizeChartByCategory = async (req, res) => {
   }
 };
 
-// Creates or updates a parent category size chart specification
+// Creates or updates a parent category size chart specification by category DID, ID, or slug
 export const upsertSizeChart = async (req, res) => {
   try {
     const {
@@ -74,18 +85,22 @@ export const upsertSizeChart = async (req, res) => {
       unit = "inches",
     } = req.body;
 
-    const targetCatIdentifier = categoryId || rawCategory;
-    if (!targetCatIdentifier) {
+    const rawTarget = categoryId || rawCategory;
+    const targetCatIdentifier =
+      typeof rawTarget === "object" && rawTarget !== null
+        ? rawTarget.did || rawTarget._id || rawTarget.id || rawTarget.slug
+        : rawTarget;
+
+    if (!targetCatIdentifier || typeof targetCatIdentifier !== "string") {
       return res.status(400).json({ status: "error", message: "Category identifier is required" });
     }
 
-    const category = await CategoryModel.findOne({
-      $or: [
-        { _id: targetCatIdentifier.match(/^[0-9a-fA-F]{24}$/) ? targetCatIdentifier : null },
-        { slug: targetCatIdentifier },
-        { did: targetCatIdentifier },
-      ],
-    });
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(targetCatIdentifier);
+    const categoryQuery = isObjectId
+      ? { $or: [{ _id: targetCatIdentifier }, { slug: targetCatIdentifier }, { did: targetCatIdentifier }] }
+      : { $or: [{ slug: targetCatIdentifier }, { did: targetCatIdentifier }] };
+
+    const category = await CategoryModel.findOne(categoryQuery);
 
     if (!category) {
       return res.status(404).json({ status: "error", message: "Target category not found" });
@@ -105,11 +120,18 @@ export const upsertSizeChart = async (req, res) => {
     const userId = req.user?._id || req.user?.id || null;
 
     const updatedChart = await SizeChartModel.findOneAndUpdate(
-      { category: category._id },
+      {
+        $or: [
+          { category: category._id },
+          ...(category.did ? [{ categoryDid: category.did }] : []),
+          ...(category.slug ? [{ categorySlug: category.slug }] : []),
+        ],
+      },
       {
         $set: {
           category: category._id,
           categorySlug: category.slug,
+          categoryDid: category.did || null,
           attributeId: attributeId || null,
           attributeName: attributeName || "Size",
           columns: cleanedColumns,
@@ -139,17 +161,26 @@ export const upsertSizeChart = async (req, res) => {
   }
 };
 
-// Deletes a category size chart by its record ID or category ID
+// Deletes a category size chart by its record ID, category DID, or slug
 export const deleteSizeChart = async (req, res) => {
   const { id } = req.params;
   try {
-    const deleted = await SizeChartModel.findOneAndDelete({
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const categoryQuery = isObjectId
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
+    const category = await CategoryModel.findOne(categoryQuery).lean();
+
+    const deleteFilter = {
       $or: [
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-        { category: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+        ...(isObjectId ? [{ _id: id }, { category: id }] : []),
+        ...(category ? [{ category: category._id }, { categoryDid: category.did }, { categorySlug: category.slug }] : []),
         { categorySlug: id },
+        { categoryDid: id },
       ],
-    });
+    };
+
+    const deleted = await SizeChartModel.findOneAndDelete(deleteFilter);
 
     if (!deleted) {
       return res.status(404).json({ status: "error", message: "Size chart not found" });

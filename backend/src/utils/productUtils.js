@@ -13,11 +13,7 @@ const SORT_FIELD_MAP = {
 
 export const PLACEHOLDER_IMAGE_URL = "/uploads/product_placeholder.webp";
 
-/**
- * Normalizes input value by trimming if it is a string.
- * @param {*} value - The value to normalize.
- * @returns {*} Normalized value.
- */
+// Normalizes input value by trimming if it is a string
 export const normalizeValue = (value) => {
   if (typeof value === "string") {
     return value.trim();
@@ -26,41 +22,46 @@ export const normalizeValue = (value) => {
   return value;
 };
 
-/**
- * Checks if the image URL matches the placeholder image.
- * @param {string} value - The image URL to check.
- * @returns {boolean} True if the image is a placeholder.
- */
+// Checks if the image URL matches the placeholder image
 export const isPlaceholderImageUrl = (value) => typeof value === "string" && value.trim() === PLACEHOLDER_IMAGE_URL;
 
-/**
- * Serializes a Mongoose product document into a clean API response format.
- * @param {Object} product - The product document.
- * @returns {Object} Serialized product object.
- */
+// Serializes a Mongoose product document into a clean API response format with category did support
 export const serializeProduct = (product) => {
   const source = product?.toObject ? product.toObject() : product;
   const { _id, __v, ...rest } = source || {};
   const id = source?._id?.toString?.() ?? source?.id ?? null;
 
+  const rawCategories = Array.isArray(source?.categories) ? source.categories : [];
+  const populatedCategories = rawCategories
+    .filter((c) => c && typeof c === "object" && (c.name || c.slug || c.did || c._id))
+    .map((c) => ({
+      id: c._id?.toString?.() ?? c.id ?? null,
+      _id: c._id?.toString?.() ?? c.id ?? null,
+      did: c.did ?? null,
+      name: c.name ?? "",
+      slug: c.slug ?? "",
+      imageUrl: c.imageUrl ?? "",
+      parent: c.parent ?? null,
+    }));
+
+  const primaryCategory = populatedCategories.length > 0 ? populatedCategories[0] : null;
+
   return {
-		...rest,
-		id,
-		stockStatus: source?.stockStatus ?? "instock",
-		stockAmount: typeof source?.stockAmount === "number" ? source.stockAmount : Number(source?.stockAmount || 0),
-		created_at: source?.createdAt ?? null,
-		updated_at: source?.updatedAt ?? null,
-		image_url: source?.imageUrl ?? null,
-		thumbnail_url: source?.thumbnailUrl ?? null,
-	};
+    ...rest,
+    id,
+    category: primaryCategory,
+    categories: populatedCategories.length > 0 ? populatedCategories : rawCategories,
+    _populatedCategories: populatedCategories,
+    stockStatus: source?.stockStatus ?? "instock",
+    stockAmount: typeof source?.stockAmount === "number" ? source.stockAmount : Number(source?.stockAmount || 0),
+    created_at: source?.createdAt ?? null,
+    updated_at: source?.updatedAt ?? null,
+    image_url: source?.imageUrl ?? null,
+    thumbnail_url: source?.thumbnailUrl ?? null,
+  };
 };
 
-/**
- * Builds a Mongoose filter query object based on the provided request parameters.
- * Supports keyword search, stock status, category filter, brand filter, type, slug, and did.
- * @param {Object} input - The input parameters.
- * @returns {Promise<Object>} The filter object.
- */
+// Builds a Mongoose filter query object based on the provided request parameters
 export const buildProductFilter = async (input = {}) => {
   const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
   const explicitFilter = source.filter && typeof source.filter === "object" && !Array.isArray(source.filter)
@@ -158,10 +159,12 @@ export const buildProductFilter = async (input = {}) => {
       const normalizedCategory = normalizeValue(categoryValue);
       if (!normalizedCategory) continue;
 
-      const categoryQuery = /^[0-9a-fA-F]{16}$/.test(normalizedCategory)
-        ? { did: normalizedCategory }
+      const isDidFormat = /^[0-9a-fA-F]{16}$/.test(normalizedCategory);
+      const categoryQuery = isDidFormat
+        ? { $or: [{ did: normalizedCategory }, { slug: normalizedCategory }] }
         : {
             $or: [
+              { did: normalizedCategory },
               { slug: normalizedCategory },
               { slug: { $regex: `^${normalizedCategory}$`, $options: "i" } },
               { name: normalizedCategory },
@@ -194,7 +197,6 @@ export const buildProductFilter = async (input = {}) => {
     if (resolved.length > 0) {
       filter.categories = { $in: resolved };
     } else {
-      // If categories were requested but none resolved, force an empty match
       filter.categories = { $in: [] };
     }
   }
@@ -267,7 +269,6 @@ export const buildProductFilter = async (input = {}) => {
     filter.did = did;
   }
 
-  // Price range filters
   const minPrice = Number(source.minPrice ?? source.min_price);
   const maxPrice = Number(source.maxPrice ?? source.max_price);
 
@@ -277,7 +278,6 @@ export const buildProductFilter = async (input = {}) => {
 
     const priceConditions = [];
 
-    // Simple products price filter
     const simpleOfferPriceCond = { $gt: 0, $ne: null, $gte: minVal };
     const simplePriceCond = { $gte: minVal };
     if (maxVal !== Infinity) {
@@ -294,7 +294,6 @@ export const buildProductFilter = async (input = {}) => {
     };
     priceConditions.push(simpleCond);
 
-    // Variant products price filter
     const variantOfferPriceCond = { $gt: 0, $ne: null, $gte: minVal };
     const variantPriceCond = { $gte: minVal };
     if (maxVal !== Infinity) {
@@ -329,30 +328,14 @@ export const buildProductFilter = async (input = {}) => {
   return filter;
 };
 
-/**
- * Builds a Mongoose sort options object for product listings.
- * 
- * Architectural Handling:
- * - Polymorphic Input: Safely accepts either individual arguments (sortBy, order)
- *   or a queryOptions object ({ skip, limit, sort, sortBy, order }).
- * - Presets Support: Automatically maps frontend sort keywords (e.g. 'newest', 'price-asc')
- *   to direct Mongo sort keys.
- * - Prevents TypeErrors: Guards against raw object-to-primitive conversions when
- *   parsing Express req.query parameters.
- * 
- * @param {string|Object} [sortByOrInput="createdAt"] - Field name to sort by or query object.
- * @param {string} [order="desc"] - Sort direction ('asc' or 'desc').
- * @returns {Object} Mongoose sort specification (e.g., { createdAt: -1 } or { price: 1 }).
- */
+// Builds a Mongoose sort options object for product listings
 export const buildProductSort = (sortByOrInput = "createdAt", order = "desc") => {
   let sortBy = "createdAt";
   let sortOrder = "desc";
 
-  // Case 1: When an object is passed (e.g. req.query / queryOptions)
   if (typeof sortByOrInput === "object" && sortByOrInput !== null) {
     const input = sortByOrInput;
 
-    // Handle high-level preset string aliases from storefront / client requests
     if (typeof input.sort === "string") {
       const s = input.sort.toLowerCase().trim();
       if (s === "newest") {
@@ -370,16 +353,13 @@ export const buildProductSort = (sortByOrInput = "createdAt", order = "desc") =>
       }
     }
 
-    // Extract explicit sortBy and order keys if present
     sortBy = input.sortBy || input.sort_by || "createdAt";
     sortOrder = input.order || input.sortOrder || input.sort_order || "desc";
   } else if (typeof sortByOrInput === "string") {
-    // Case 2: Direct string arguments passed
     sortBy = sortByOrInput;
     sortOrder = order || "desc";
   }
 
-  // Ensure field exists in SORT_FIELD_MAP and fallback safely to createdAt
   const cleanSortBy = typeof sortBy === "string" ? sortBy.trim() : "createdAt";
   const field = SORT_FIELD_MAP[cleanSortBy] || "createdAt";
   const direction = String(sortOrder).toLowerCase().trim() === "asc" ? 1 : -1;
@@ -387,11 +367,7 @@ export const buildProductSort = (sortByOrInput = "createdAt", order = "desc") =>
   return { [field]: direction };
 };
 
-/**
- * Parses and validates offset (skip) and limit pagination parameters.
- * @param {Object} input - Pagination input parameters.
- * @returns {Object} An object containing parsed skip and limit.
- */
+// Parses and validates offset (skip) and limit pagination parameters
 export const parsePagination = (input = {}) => {
   const skip = Math.max(0, parseInt(normalizeValue(input.skip ?? input.offset ?? 0), 10) || 0);
   const limit = Math.min(100, Math.max(1, parseInt(normalizeValue(input.limit ?? DEFAULT_LIMIT), 10) || DEFAULT_LIMIT));

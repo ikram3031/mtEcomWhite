@@ -11,20 +11,11 @@ import {
   parsePagination,
 } from "../utils/productUtils.js";
 
-// ==========================================
-// CRUD ENDPOINTS
-// ==========================================
-
-/**
- * CREATE: Creates a new product.
- * Expects product information in req.body. Resolves categories, brand, user IDs, and structure.
- * Path: POST /api/products
- */
+// Creates a new product and returns the populated product document
 export const createProduct = async (req, res, next) => {
   try {
     const body = req.body || {};
 
-    // Resolve createdBy user
     let userId = req.body.createdBy || req.user?.userId || req.user?.id;
     if (!userId) {
       const fallbackUser = await UserModel.findOne({
@@ -39,53 +30,54 @@ export const createProduct = async (req, res, next) => {
     }
 
     if (!userId) {
-      res
-        .status(400)
-        .json({
-          status: "error",
-          message: "User is required to create a product",
-        });
+      res.status(400).json({
+        status: "error",
+        message: "User is required to create a product",
+      });
       return;
     }
 
-    // Resolve Categories: convert array of IDs, DIDs, or slugs to ObjectIds
     let categoryIds = [];
     if (body.categories || body.category) {
       const catInput = body.categories || body.category;
       const catArray = Array.isArray(catInput) ? catInput : [catInput];
       for (const cat of catArray) {
         if (!cat) continue;
-        if (Types.ObjectId.isValid(cat)) {
-          categoryIds.push(cat);
+        const catVal = typeof cat === "object" && cat !== null ? (cat._id || cat.id || cat.did || cat.slug) : cat;
+        if (!catVal || typeof catVal !== "string") continue;
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(catVal);
+        if (isObjectId) {
+          categoryIds.push(catVal);
         } else {
           const found = await CategoryModel.findOne({
-            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+            $or: [{ slug: catVal }, { did: catVal }],
           }).lean();
           if (found) categoryIds.push(found._id);
         }
       }
     }
 
-    // Resolve Brand: convert array of slugs, ObjectIds, or DIDs to brand DIDs
     let brandDids = [];
     if (body.brand || body.brands) {
       const brandInput = body.brand || body.brands;
       const brandArray = Array.isArray(brandInput) ? brandInput : [brandInput];
       for (const br of brandArray) {
         if (!br) continue;
-        if (/^[0-9a-fA-F]{16}$/.test(br)) {
-          brandDids.push(br);
+        const brVal = typeof br === "object" && br !== null ? (br.did || br.slug || br._id || br.id) : br;
+        if (!brVal || typeof brVal !== "string") continue;
+        if (/^[0-9a-fA-F]{16}$/.test(brVal)) {
+          brandDids.push(brVal);
         } else {
-          const query = Types.ObjectId.isValid(br)
-            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
-            : { $or: [{ slug: br }, { did: br }] };
+          const isBrandObjectId = /^[0-9a-fA-F]{24}$/.test(brVal);
+          const query = isBrandObjectId
+            ? { $or: [{ slug: brVal }, { did: brVal }, { _id: brVal }] }
+            : { $or: [{ slug: brVal }, { did: brVal }] };
           const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
       }
     }
 
-    // Validate image URL — must be a non-empty string
     const rawImageUrl = body.imageUrl || body.image_url;
     if (!rawImageUrl || !rawImageUrl.trim()) {
       return res.status(400).json({
@@ -112,7 +104,7 @@ export const createProduct = async (req, res, next) => {
     const productData = {
       name: body.name,
       slug: body.slug,
-      description: body.description || body.name, // default description to name
+      description: body.description || body.name,
       longDescription: body.longDescription || "",
       chargeTax: Boolean(body.chargeTax),
       taxRate: body.taxRate !== undefined && body.taxRate !== null && body.taxRate !== "" ? Number(body.taxRate) : null,
@@ -147,20 +139,19 @@ export const createProduct = async (req, res, next) => {
       createdBy: userId,
     };
 
-    // Parse product configurations based on simple vs variant types
     if (body.type === "variant") {
       productData.variants = Array.isArray(body.variants)
         ? body.variants.map((v, i) => ({
-          size: v.size,
-          price: Number(v.price),
-          offerPrice:
-            v.offerPrice !== undefined && v.offerPrice !== null
-              ? Number(v.offerPrice)
-              : null,
-          sku: v.sku || "",
-          sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
-          imageUrl: v.imageUrl || null,
-        }))
+            size: v.size,
+            price: Number(v.price),
+            offerPrice:
+              v.offerPrice !== undefined && v.offerPrice !== null
+                ? Number(v.offerPrice)
+                : null,
+            sku: v.sku || "",
+            sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
+            imageUrl: v.imageUrl || null,
+          }))
         : [];
     } else {
       productData.price = Number(body.price || 0);
@@ -183,18 +174,19 @@ export const createProduct = async (req, res, next) => {
     }
 
     const newProduct = await ProductModel.create(productData);
+    const populatedProduct = await ProductModel.findById(newProduct._id)
+      .populate("categories")
+      .lean();
+
     res
       .status(201)
-      .json({ status: "success", data: serializeProduct(newProduct) });
+      .json({ status: "success", data: serializeProduct(populatedProduct || newProduct) });
   } catch (err) {
     next(err);
   }
 };
 
-/**
- * READ (LIST): Lists products with filtering, search, sorting, and pagination.
- * Path: GET /api/products or POST /api/products/search (or query POST)
- */
+// Lists products matching filter, pagination, and sorting criteria
 export const listProducts = async (req, res, next) => {
   try {
     const method = (req.method || "GET").toUpperCase();
@@ -216,9 +208,6 @@ export const listProducts = async (req, res, next) => {
     res.json({
       status: "success",
       data: products.map(serializeProduct),
-      // CRITICAL: NEVER CHANGE ANY FIELD NAME in this pagination object.
-      // Frontends and Dashboard strictly rely on `pagination.total`, `pagination.limit`, and `pagination.skip`.
-      // You may add new fields if needed, but existing field names must NEVER be modified or renamed.
       pagination: {
         total: count,
         limit,
@@ -230,18 +219,18 @@ export const listProducts = async (req, res, next) => {
   }
 };
 
-/**
- * READ (SINGLE): Retrieves a single product details by MongoDB ID or slug.
- * Path: GET /api/products/:identifier
- */
+// Retrieves a single product details by MongoDB ObjectId, DID, or slug
 export const getSingleProduct = async (req, res, next) => {
   try {
     const identifier = req.params.identifier;
-    const filter = Types.ObjectId.isValid(identifier)
+    const isObjectId = typeof identifier === "string" && /^[0-9a-fA-F]{24}$/.test(identifier);
+    const filter = isObjectId
       ? { $or: [{ _id: identifier }, { slug: identifier }, { did: identifier }] }
       : { $or: [{ slug: identifier }, { did: identifier }] };
 
-    const product = await ProductModel.findOne(filter).lean();
+    const product = await ProductModel.findOne(filter)
+      .populate("categories")
+      .lean();
 
     if (!product) {
       res.status(404).json({ status: "error", message: "Product not found" });
@@ -254,16 +243,14 @@ export const getSingleProduct = async (req, res, next) => {
   }
 };
 
-/**
- * UPDATE: Updates an existing product details by ID or slug.
- * Path: PUT /api/products/:id
- */
+// Updates an existing product details by ID, DID, or slug
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body || {};
 
-    const filter = Types.ObjectId.isValid(id)
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const filter = isObjectId
       ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
       : { $or: [{ slug: id }, { did: id }] };
     const product = await ProductModel.findOne(filter);
@@ -272,7 +259,6 @@ export const updateProduct = async (req, res, next) => {
       return;
     }
 
-    // Resolve updatedBy user
     let userId = req.body.updatedBy || req.body.createdBy || req.user?.userId || req.user?.id;
     if (!userId) {
       const fallbackUser = await UserModel.findOne({
@@ -281,7 +267,6 @@ export const updateProduct = async (req, res, next) => {
       if (fallbackUser) userId = fallbackUser._id;
     }
 
-    // Validate image URL on update — must be a non-empty string if provided
     const incomingImageUrl = body.imageUrl || body.image_url;
     if (incomingImageUrl !== undefined && incomingImageUrl !== null && !incomingImageUrl.trim()) {
       return res.status(400).json({
@@ -290,7 +275,6 @@ export const updateProduct = async (req, res, next) => {
       });
     }
 
-    // Update primitive properties
     if (body.name !== undefined) product.name = body.name;
     if (body.slug !== undefined) product.slug = body.slug;
     if (body.description !== undefined) product.description = body.description;
@@ -338,7 +322,6 @@ export const updateProduct = async (req, res, next) => {
           : 0;
     }
 
-    // Update gallery images
     const rawGallery =
       body.images !== undefined
         ? body.images
@@ -365,7 +348,6 @@ export const updateProduct = async (req, res, next) => {
       product.updatedBy = userId;
     }
 
-    // Update categories references
     if (body.categories !== undefined || body.category !== undefined) {
       const catInput =
         body.categories !== undefined ? body.categories : body.category;
@@ -373,11 +355,14 @@ export const updateProduct = async (req, res, next) => {
       let categoryIds = [];
       for (const cat of catArray) {
         if (!cat) continue;
-        if (Types.ObjectId.isValid(cat)) {
-          categoryIds.push(cat);
+        const catVal = typeof cat === "object" && cat !== null ? (cat._id || cat.id || cat.did || cat.slug) : cat;
+        if (!catVal || typeof catVal !== "string") continue;
+        const isCatObjectId = /^[0-9a-fA-F]{24}$/.test(catVal);
+        if (isCatObjectId) {
+          categoryIds.push(catVal);
         } else {
           const found = await CategoryModel.findOne({
-            $or: [{ slug: cat }, { did: cat }, { _id: Types.ObjectId.isValid(cat) ? cat : undefined }].filter(Boolean),
+            $or: [{ slug: catVal }, { did: catVal }],
           }).lean();
           if (found) categoryIds.push(found._id);
         }
@@ -385,19 +370,21 @@ export const updateProduct = async (req, res, next) => {
       product.categories = categoryIds;
     }
 
-    // Update brand references
     if (body.brand !== undefined || body.brands !== undefined) {
       const brandInput = body.brand !== undefined ? body.brand : body.brands;
       const brandArray = Array.isArray(brandInput) ? brandInput : [brandInput];
       let brandDids = [];
       for (const br of brandArray) {
         if (!br) continue;
-        if (/^[0-9a-fA-F]{16}$/.test(br)) {
-          brandDids.push(br);
+        const brVal = typeof br === "object" && br !== null ? (br.did || br.slug || br._id || br.id) : br;
+        if (!brVal || typeof brVal !== "string") continue;
+        if (/^[0-9a-fA-F]{16}$/.test(brVal)) {
+          brandDids.push(brVal);
         } else {
-          const query = Types.ObjectId.isValid(br)
-            ? { $or: [{ slug: br }, { did: br }, { _id: br }] }
-            : { $or: [{ slug: br }, { did: br }] };
+          const isBrandObjectId = /^[0-9a-fA-F]{24}$/.test(brVal);
+          const query = isBrandObjectId
+            ? { $or: [{ slug: brVal }, { did: brVal }, { _id: brVal }] }
+            : { $or: [{ slug: brVal }, { did: brVal }] };
           const found = await BrandModel.findOne(query).lean();
           if (found) brandDids.push(found.did);
         }
@@ -405,21 +392,20 @@ export const updateProduct = async (req, res, next) => {
       product.brand = brandDids;
     }
 
-    // Adjust sub-structures (variant schema fields vs simple product fields)
     if (product.type === "variant") {
       if (body.variants !== undefined) {
         product.variants = Array.isArray(body.variants)
           ? body.variants.map((v, i) => ({
-            size: v.size,
-            price: Number(v.price),
-            offerPrice:
-              v.offerPrice !== undefined && v.offerPrice !== null
-                ? Number(v.offerPrice)
-                : null,
-            sku: v.sku || "",
-            sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
-            imageUrl: v.imageUrl || null,
-          }))
+              size: v.size,
+              price: Number(v.price),
+              offerPrice:
+                v.offerPrice !== undefined && v.offerPrice !== null
+                  ? Number(v.offerPrice)
+                  : null,
+              sku: v.sku || "",
+              sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
+              imageUrl: v.imageUrl || null,
+            }))
           : [];
       }
       product.price = undefined;
@@ -446,20 +432,24 @@ export const updateProduct = async (req, res, next) => {
     }
 
     await product.save();
-    res.json({ status: "success", data: serializeProduct(product) });
+    const populatedProduct = await ProductModel.findById(product._id)
+      .populate("categories")
+      .lean();
+
+    res.json({ status: "success", data: serializeProduct(populatedProduct || product) });
   } catch (err) {
     next(err);
   }
 };
 
-/**
- * DELETE: Deletes a product by ID or slug.
- * Path: DELETE /api/products/:id
- */
+// Deletes a product by ID, DID, or slug
 export const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const filter = Types.ObjectId.isValid(id) ? { _id: id } : { slug: id };
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const filter = isObjectId
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
     const result = await ProductModel.deleteOne(filter);
     if (result.deletedCount === 0) {
       res.status(404).json({ status: "error", message: "Product not found" });

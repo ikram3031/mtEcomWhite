@@ -3,10 +3,7 @@ import { ProductModel } from "../models/product.model.js";
 import { logger } from "../config/logger.js";
 import { PLACEHOLDER_IMAGE_URL } from "../utils/productUtils.js";
 
-/**
- * GET /api/v1/categories
- * Returns an array of all categories with live product counts.
- */
+// Fetches and returns an array of all categories with live product counts
 export const getAllCategories = async (req, res) => {
   try {
     const [categories, counts] = await Promise.all([
@@ -16,8 +13,8 @@ export const getAllCategories = async (req, res) => {
       ProductModel.aggregate([
         { $match: { imageUrl: { $ne: PLACEHOLDER_IMAGE_URL } } },
         { $unwind: "$categories" },
-        { $group: { _id: "$categories", count: { $sum: 1 } } }
-      ])
+        { $group: { _id: "$categories", count: { $sum: 1 } } },
+      ]),
     ]);
 
     const countMap = {};
@@ -25,9 +22,9 @@ export const getAllCategories = async (req, res) => {
       countMap[c._id.toString()] = c.count;
     }
 
-    const data = categories.map(cat => ({
+    const data = categories.map((cat) => ({
       ...cat,
-      product_count: countMap[cat._id?.toString()] || 0
+      product_count: countMap[cat._id?.toString()] || 0,
     }));
 
     res.json({ status: "success", data });
@@ -35,34 +32,33 @@ export const getAllCategories = async (req, res) => {
     logger.error({ err }, "Failed to fetch categories");
     res.status(500).json({ status: "error", message: "Unable to fetch categories" });
   }
-}
+};
 
-/**
- * GET /api/v1/categories/:id
- * Returns a single category by its MongoDB ObjectId.
- */
-// GET /categories/:id - একটি ক্যাটাগরির তথ্য দেখায়
+// Fetches and returns a single category by its MongoDB ObjectId, DID, or slug
 export const getCategoryById = async (req, res) => {
   const { id } = req.params;
   try {
-    const category = await CategoryModel.findById(id)
-      .populate({ path: "parent", select: "name slug" })
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
+
+    const category = await CategoryModel.findOne(query)
+      .populate({ path: "parent", select: "name slug did imageUrl" })
       .lean();
+
     if (!category) {
       return res.status(404).json({ status: "error", message: "Category not found" });
     }
+
     res.json({ status: "success", data: category });
   } catch (err) {
     logger.error({ err }, "Failed to fetch category by id");
     res.status(500).json({ status: "error", message: "Unable to fetch category" });
   }
-}
+};
 
-/**
- * POST /api/v1/categories
- * Create a new category.
- */
-// POST /categories - নতুন ক্যাটাগরি তৈরি করে
+// Creates a new product category
 export const createCategory = async (req, res) => {
   try {
     const { name, slug, description, parent } = req.body;
@@ -77,7 +73,11 @@ export const createCategory = async (req, res) => {
 
     let parentId = null;
     if (parent) {
-      const parentCat = await CategoryModel.findOne({ $or: [{ _id: parent.match(/^[0-9a-fA-F]{24}$/) ? parent : null }, { slug: parent }, { did: parent }] });
+      const isParentObjectId = typeof parent === "string" && /^[0-9a-fA-F]{24}$/.test(parent);
+      const parentQuery = isParentObjectId
+        ? { $or: [{ _id: parent }, { slug: parent }, { did: parent }] }
+        : { $or: [{ slug: parent }, { did: parent }] };
+      const parentCat = await CategoryModel.findOne(parentQuery);
       if (parentCat) parentId = parentCat._id;
     }
 
@@ -95,19 +95,19 @@ export const createCategory = async (req, res) => {
     logger.error({ err }, "Failed to create category");
     res.status(500).json({ status: "error", message: "Unable to create category" });
   }
-}
+};
 
-/**
- * PUT /api/v1/categories/:id
- * Update an existing category by ID or slug/did.
- */
-// PUT /categories/:id - ক্যাটাগরি আপডেট করে
+// Updates an existing category by ID, DID, or slug
 export const updateCategory = async (req, res) => {
   const { id } = req.params;
   try {
     const { name, slug, description, parent } = req.body;
-    
-    const category = await CategoryModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { slug: id }, { did: id }] });
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
+
+    const category = await CategoryModel.findOne(query);
     if (!category) {
       return res.status(404).json({ status: "error", message: "Category not found" });
     }
@@ -119,7 +119,11 @@ export const updateCategory = async (req, res) => {
     if (parent !== undefined) {
       let parentId = null;
       if (parent) {
-        const parentCat = await CategoryModel.findOne({ $or: [{ _id: parent.match(/^[0-9a-fA-F]{24}$/) ? parent : null }, { slug: parent }, { did: parent }] });
+        const isParentObjectId = typeof parent === "string" && /^[0-9a-fA-F]{24}$/.test(parent);
+        const parentQuery = isParentObjectId
+          ? { $or: [{ _id: parent }, { slug: parent }, { did: parent }] }
+          : { $or: [{ slug: parent }, { did: parent }] };
+        const parentCat = await CategoryModel.findOne(parentQuery);
         if (parentCat) parentId = parentCat._id;
       }
       category.parent = parentId;
@@ -133,17 +137,18 @@ export const updateCategory = async (req, res) => {
     logger.error({ err }, "Failed to update category");
     res.status(500).json({ status: "error", message: "Unable to update category" });
   }
-}
+};
 
-/**
- * DELETE /api/v1/categories/:id
- * Delete a category by ID or slug/did.
- */
-// DELETE /categories/:id - ক্যাটাগরি ডিলিট করে
+// Deletes a category by ID, DID, or slug
 export const deleteCategory = async (req, res) => {
   const { id } = req.params;
   try {
-    const category = await CategoryModel.findOne({ $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { slug: id }, { did: id }] });
+    const isObjectId = typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId
+      ? { $or: [{ _id: id }, { slug: id }, { did: id }] }
+      : { $or: [{ slug: id }, { did: id }] };
+
+    const category = await CategoryModel.findOne(query);
     if (!category) {
       return res.status(404).json({ status: "error", message: "Category not found" });
     }
@@ -154,4 +159,4 @@ export const deleteCategory = async (req, res) => {
     logger.error({ err }, "Failed to delete category");
     res.status(500).json({ status: "error", message: "Unable to delete category" });
   }
-}
+};

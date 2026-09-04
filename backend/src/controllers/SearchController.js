@@ -3,12 +3,8 @@ import { CategoryModel } from "../models/category.model.js";
 import { BrandModel } from "../models/brand.model.js";
 import { RecentSearchModel } from "../models/recentSearch.model.js";
 import { PopularSearchModel } from "../models/popularSearch.model.js";
-import { buildProductImageUrl } from "../utils/imageUrl.js";
 
-/**
- * GET /api/v1/search?q=term&limit=12
- * Performs product search and asynchronously tracks search analytics
- */
+// Performs product search and asynchronously tracks search analytics
 export const searchProducts = async (req, res, next) => {
   try {
     const q = (req.query.q || "").trim();
@@ -20,10 +16,9 @@ export const searchProducts = async (req, res, next) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || "12", 10)));
     const regex = { $regex: q, $options: "i" };
 
-    // Find any matching brands or categories to support searching by brand/category name
     const [matchingBrands, matchingCategories] = await Promise.all([
       BrandModel.find({ name: regex }).select("did name slug").lean(),
-      CategoryModel.find({ name: regex }).select("_id name slug").lean(),
+      CategoryModel.find({ name: regex }).select("_id did name slug").lean(),
     ]);
 
     const matchingBrandDids = matchingBrands.map((b) => b.did).filter(Boolean);
@@ -44,10 +39,9 @@ export const searchProducts = async (req, res, next) => {
 
     const docs = await ProductModel.find({ $or: searchClauses, isActive: { $ne: false } })
       .limit(limit)
-      .populate("categories", "name slug")
+      .populate("categories", "name slug did imageUrl")
       .lean();
 
-    // Map brand names for quick lookup
     const allBrandDids = [...new Set(docs.flatMap((d) => (Array.isArray(d.brand) ? d.brand : [d.brand]).filter(Boolean)))];
     const brandDocs = allBrandDids.length > 0
       ? await BrandModel.find({ did: { $in: allBrandDids } }).select("did name").lean()
@@ -55,9 +49,9 @@ export const searchProducts = async (req, res, next) => {
     const brandMap = new Map(brandDocs.map((b) => [b.did, b.name]));
 
     const results = docs.map((p) => {
-      const category = Array.isArray(p.categories) && p.categories.length > 0
-        ? (p.categories[0]?.name || p.categories[0]?.slug || null)
-        : null;
+      const firstCat = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories[0] : null;
+      const category = firstCat ? (firstCat.name || firstCat.slug || null) : null;
+      const categoryDid = firstCat?.did || null;
       
       const pBrandDids = Array.isArray(p.brand) ? p.brand : (p.brand ? [p.brand] : []);
       const brand = pBrandDids.map((did) => brandMap.get(did)).filter(Boolean)[0] || null;
@@ -72,6 +66,8 @@ export const searchProducts = async (req, res, next) => {
         name: p.name,
         slug: p.slug,
         category,
+        categoryDid,
+        categories: p.categories || [],
         brand,
         imageUrl: fullUrl,
         thumbnailUrl: fullUrl,
@@ -84,36 +80,29 @@ export const searchProducts = async (req, res, next) => {
 
     res.json({ data: results });
 
-    // Track search asynchronously in background
     trackSearchAsync(req, q);
   } catch (err) {
     next(err);
   }
 };
 
-/**
- * Asynchronously logs search terms for popular rankings and recent user history
- */
-async function trackSearchAsync(req, searchString) {
+// Asynchronously logs search terms for popular rankings and recent user history
+const trackSearchAsync = async (req, searchString) => {
   try {
     const cleanTerm = searchString.trim().toLowerCase();
     if (!cleanTerm || cleanTerm.length < 2) return;
 
-    // 1. Increment popular search count
     await PopularSearchModel.findOneAndUpdate(
       { keyword: cleanTerm },
       { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
       { upsert: true, new: true }
     );
 
-    // 2. Log user recent search if authenticated
     const userId = req.user?.id || req.user?.userId || req.user?._id;
     if (userId) {
-      // Remove any existing duplicate search term for user to push newest to top
       await RecentSearchModel.deleteMany({ userId, query: cleanTerm });
       await RecentSearchModel.create({ userId, query: cleanTerm, searchedAt: new Date() });
 
-      // Cap user history at 10 items
       const userSearches = await RecentSearchModel.find({ userId }).sort({ searchedAt: -1 }).select("_id").lean();
       if (userSearches.length > 10) {
         const idsToRemove = userSearches.slice(10).map((doc) => doc._id);
@@ -121,15 +110,11 @@ async function trackSearchAsync(req, searchString) {
       }
     }
   } catch (err) {
-    // Non-blocking search telemetry failure
     console.error("Search tracking error:", err);
   }
-}
+};
 
-/**
- * GET /api/v1/search/recent
- * Returns the recent searches for authenticated user
- */
+// Fetches recent search history for the authenticated user
 export const getRecentSearches = async (req, res, next) => {
   try {
     const userId = req.user?.id || req.user?.userId || req.user?._id;
@@ -156,10 +141,7 @@ export const getRecentSearches = async (req, res, next) => {
   }
 };
 
-/**
- * DELETE /api/v1/search/recent
- * Clears all or specific recent search item for authenticated user
- */
+// Clears all or specific recent search items for the authenticated user
 export const clearRecentSearches = async (req, res, next) => {
   try {
     const userId = req.user?.id || req.user?.userId || req.user?._id;
@@ -181,10 +163,7 @@ export const clearRecentSearches = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/v1/search/popular
- * Returns top popular search keywords globally
- */
+// Fetches top popular search keywords globally
 export const getPopularSearches = async (req, res, next) => {
   try {
     const limit = Math.min(20, Math.max(1, parseInt(req.query.limit || "8", 10)));

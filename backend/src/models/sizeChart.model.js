@@ -18,6 +18,7 @@ const sizeChartSchema = new Schema(
       index: true,
     },
     categorySlug: { type: String, trim: true, index: true },
+    categoryDid: { type: String, trim: true, index: true },
     attributeId: {
       type: Schema.Types.ObjectId,
       ref: "Attribute",
