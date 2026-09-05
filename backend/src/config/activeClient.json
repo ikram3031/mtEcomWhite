@@ -1,20 +1,20 @@
 {
-  "clientId": "04",
-  "clientKey": "kawaiikutir",
-  "brandName": "Kawaii Kutir",
-  "domain": "kawaiikutir.shop",
-  "supportEmail": "kawaiikutir@gmail.com",
-  "phone": "01600905774",
-  "address": "South Mugda, Dhaka-1214",
-  "apiBaseUrl": "https://server.kawaiikutir.shop",
-  "dashboardUrl": "https://admin.kawaiikutir.shop",
-  "storefrontUrl": "https://kawaiikutir.shop",
+  "clientId": "01",
+  "clientKey": "decantre",
+  "brandName": "Decantre",
+  "domain": "decantrebd.com",
+  "supportEmail": "support@decantrebd.com",
+  "supportPhone": "01869151550",
+  "whatsappNumber": "01869151550",
+  "apiBaseUrl": "https://server.decantrebd.com",
+  "dashboardUrl": "https://admin.decantrebd.com",
+  "storefrontUrl": "https://decantrebd.com",
   "policies": {
     "stock": {
-      "mode": "variant_wise",
+      "mode": "product_wise",
       "trackQuantity": true,
       "lowStockThreshold": 5,
-      "allowPreorder": false
+      "allowPreorder": true
     },
     "pricing": {
       "mode": "variable",
@@ -24,28 +24,28 @@
       "enabled": true,
       "allowVariantImages": true,
       "supportedDimensions": [
-        "size",
-        "color",
-        "style",
-        "design"
+        "size"
       ],
-      "defaultUnit": "piece"
+      "defaultUnit": "ml"
     },
     "specifications": {
-      "material": true,
-      "design": true,
-      "character": true
+      "fragranceNotes": true,
+      "season": true,
+      "brand": true,
+      "gender": true,
+      "concentration": true
     }
   },
   "features": {
-    "season": false,
-    "brand": false,
+    "season": true,
+    "brand": true,
     "variantImage": true,
-    "webmail": true
+    "webmail": true,
+    "sizeChart": false
   },
   "stockManagement": {
     "simpleProduct": true,
-    "variableProduct": true
+    "variableProduct": false
   },
   "reports": {
     "enableInStoreFilter": true,
@@ -57,8 +57,8 @@
       "inventory"
     ]
   },
-  "logoUrl": "/src/uploads/assets/kawaiikutir_logo.png",
-  "siteIconUrl": "/src/uploads/assets/kawaiikutir_logo.png",
+  "logoUrl": "/src/uploads/logo_horizontal.png",
+  "siteIconUrl": "/src/uploads/logo.webp",
   "assetsConfig": {
     "sections": [
       {
@@ -77,6 +77,12 @@
             "label": "Slide 2",
             "filename": "slider-2.webp",
             "recommendedSize": "1920x650"
+          },
+          {
+            "key": "slider-3",
+            "label": "Slide 3",
+            "filename": "slider-3.webp",
+            "recommendedSize": "1920x650"
           }
         ]
       },
@@ -90,6 +96,12 @@
             "label": "Main Promo Banner",
             "filename": "banner-main.webp",
             "recommendedSize": "1200x400"
+          },
+          {
+            "key": "banner-top",
+            "label": "Top Announcement Banner",
+            "filename": "banner-top.webp",
+            "recommendedSize": "1920x100"
           }
         ]
       },
@@ -101,7 +113,7 @@
           {
             "key": "logo",
             "label": "Header Logo",
-            "filename": "kawaiikutir_logo.png",
+            "filename": "logo.webp",
             "recommendedSize": "500x200"
           },
           {
@@ -115,7 +127,6 @@
     ]
   },
   "allowedMenus": [
-    "*",
     "overview",
     "orders",
     "orders.new",
@@ -132,12 +143,8 @@
     "billing",
     "billing.billings",
     "billing.payments",
-    "admin",
     "reports",
     "analytics",
-    "studio",
-    "studio.batch-images",
-    "activity-logs",
     "users",
     "developer",
     "tools",
@@ -145,6 +152,9 @@
     "tools.assets",
     "tools.bulk-image-resize",
     "tools.meta-catalog",
+    "studio",
+    "studio.batch-images",
+    "activity-logs",
     "logs",
     "system-logs",
     "trash",
@@ -152,79 +162,73 @@
   ],
   "theme": {
     "light": {
-      "--background": "oklch(0.99 0.01 350)",
-      "--foreground": "oklch(0.15 0.02 350)",
-      "--card": "oklch(1 0 0)",
-      "--card-foreground": "oklch(0.15 0.02 350)",
-      "--popover": "oklch(1 0 0)",
-      "--popover-foreground": "oklch(0.15 0.02 350)",
-      "--primary": "oklch(0.65 0.22 350)",
+      "--background": "#ffffff",
+      "--foreground": "#111827",
+      "--card": "#ffffff",
+      "--card-foreground": "#111827",
+      "--popover": "#ffffff",
+      "--popover-foreground": "#111827",
+      "--primary": "#C5A059",
       "--primary-foreground": "#ffffff",
-      "--secondary": "oklch(0.92 0.06 350)",
-      "--secondary-foreground": "oklch(0.25 0.08 350)",
-      "--muted": "oklch(0.97 0.01 350)",
-      "--muted-foreground": "oklch(0.55 0.03 350)",
-      "--accent": "oklch(0.93 0.08 340)",
-      "--accent-foreground": "oklch(0.25 0.08 340)",
-      "--destructive": "oklch(0.577 0.245 27.325)",
-      "--destructive-foreground": "#ffffff",
-      "--border": "oklch(0.92 0.02 350)",
-      "--input": "oklch(0.92 0.02 350)",
-      "--ring": "oklch(0.65 0.22 350)",
-      "--chart-1": "oklch(0.65 0.22 350)",
-      "--chart-2": "oklch(0.75 0.18 320)",
-      "--chart-3": "oklch(0.70 0.15 40)",
-      "--chart-4": "oklch(0.80 0.14 80)",
-      "--chart-5": "oklch(0.60 0.20 280)",
-      "--sidebar": "oklch(0.15 0.02 350 / 95%)",
-      "--sidebar-foreground": "oklch(0.95 0.02 350)",
-      "--sidebar-primary": "oklch(0.65 0.22 350)",
+      "--secondary": "#c5a059",
+      "--secondary-foreground": "#ffffff",
+      "--muted": "#f3f4f6",
+      "--muted-foreground": "#6b7280",
+      "--accent": "#eeeeee",
+      "--accent-foreground": "#111827",
+      "--destructive": "#ef4444",
+      "--destructive-foreground": "#fafafa",
+      "--border": "#e5e7eb",
+      "--input": "#e5e7eb",
+      "--ring": "#C5A059",
+      "--chart-1": "#c5a059",
+      "--chart-2": "#C5A059",
+      "--chart-3": "#fbcb97",
+      "--chart-4": "#888888",
+      "--chart-5": "#999999",
+      "--sidebar": "#f3f4f6",
+      "--sidebar-foreground": "#111827",
+      "--sidebar-primary": "#C5A059",
       "--sidebar-primary-foreground": "#ffffff",
-      "--sidebar-accent": "oklch(0.25 0.03 350)",
-      "--sidebar-accent-foreground": "oklch(0.95 0.02 350)",
-      "--sidebar-border": "oklch(1 0 0 / 10%)",
-      "--sidebar-ring": "oklch(0.65 0.22 350)",
-      "--font-sans": "'Poppins', system-ui, -apple-system, sans-serif",
-      "--font-serif": "'Libre Baskerville', Georgia, serif",
-      "--font-mono": "'IBM Plex Mono', ui-monospace, monospace",
+      "--sidebar-accent": "#ffffff",
+      "--sidebar-accent-foreground": "#111827",
+      "--sidebar-border": "#e5e7eb",
+      "--sidebar-ring": "#C5A059",
       "--radius": "0.75rem"
     },
     "dark": {
-      "--background": "oklch(0.14 0.02 350)",
-      "--foreground": "oklch(0.98 0.01 350)",
-      "--card": "oklch(0.18 0.02 350)",
-      "--card-foreground": "oklch(0.98 0.01 350)",
-      "--popover": "oklch(0.20 0.02 350)",
-      "--popover-foreground": "oklch(0.98 0.01 350)",
-      "--primary": "oklch(0.70 0.20 350)",
-      "--primary-foreground": "#ffffff",
-      "--secondary": "oklch(0.28 0.05 350)",
-      "--secondary-foreground": "oklch(0.95 0.02 350)",
-      "--muted": "oklch(0.22 0.02 350)",
-      "--muted-foreground": "oklch(0.70 0.03 350)",
-      "--accent": "oklch(0.28 0.06 340)",
-      "--accent-foreground": "oklch(0.95 0.02 340)",
-      "--destructive": "oklch(0.704 0.191 22.216)",
+      "--background": "#121113",
+      "--foreground": "#c1c1c1",
+      "--card": "#121212",
+      "--card-foreground": "#c1c1c1",
+      "--popover": "#121113",
+      "--popover-foreground": "#c1c1c1",
+      "--primary": "#C5A059",
+      "--primary-foreground": "#121113",
+      "--secondary": "#c5a059",
+      "--secondary-foreground": "#121113",
+      "--muted": "#222222",
+      "--muted-foreground": "#888888",
+      "--accent": "#333333",
+      "--accent-foreground": "#c1c1c1",
+      "--destructive": "#ef4444",
       "--destructive-foreground": "#ffffff",
-      "--border": "oklch(1 0 0 / 12%)",
-      "--input": "oklch(1 0 0 / 15%)",
-      "--ring": "oklch(0.70 0.20 350)",
-      "--chart-1": "oklch(0.70 0.20 350)",
-      "--chart-2": "oklch(0.75 0.18 320)",
-      "--chart-3": "oklch(0.70 0.15 40)",
-      "--chart-4": "oklch(0.80 0.14 80)",
-      "--chart-5": "oklch(0.60 0.20 280)",
-      "--sidebar": "oklch(0.12 0.02 350 / 95%)",
-      "--sidebar-foreground": "oklch(0.95 0.02 350)",
-      "--sidebar-primary": "oklch(0.70 0.20 350)",
-      "--sidebar-primary-foreground": "#ffffff",
-      "--sidebar-accent": "oklch(0.22 0.03 350)",
-      "--sidebar-accent-foreground": "oklch(0.95 0.02 350)",
-      "--sidebar-border": "oklch(1 0 0 / 10%)",
-      "--sidebar-ring": "oklch(0.70 0.20 350)",
-      "--font-sans": "'Poppins', system-ui, -apple-system, sans-serif",
-      "--font-serif": "'Libre Baskerville', Georgia, serif",
-      "--font-mono": "'IBM Plex Mono', ui-monospace, monospace",
+      "--border": "#222222",
+      "--input": "#222222",
+      "--ring": "#C5A059",
+      "--chart-1": "#c5a059",
+      "--chart-2": "#C5A059",
+      "--chart-3": "#fbcb97",
+      "--chart-4": "#888888",
+      "--chart-5": "#999999",
+      "--sidebar": "#121212",
+      "--sidebar-foreground": "#c1c1c1",
+      "--sidebar-primary": "#C5A059",
+      "--sidebar-primary-foreground": "#121113",
+      "--sidebar-accent": "#333333",
+      "--sidebar-accent-foreground": "#c1c1c1",
+      "--sidebar-border": "#222222",
+      "--sidebar-ring": "#C5A059",
       "--radius": "0.75rem"
     }
   }

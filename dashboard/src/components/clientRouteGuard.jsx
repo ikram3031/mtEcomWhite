@@ -2,9 +2,9 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { clientConfig } from '@/clientConfig';
 
-// Map pathnames to required menu permission keys
+// Maps request path to corresponding menu permission key
 const getRequiredPermission = (pathname) => {
-  const cleanPath = pathname.replace(/\/$/, ''); // Strip trailing slash
+  const cleanPath = pathname.replace(/\/$/, '');
 
   if (cleanPath === '/dashboard') return 'overview';
   if (cleanPath === '/dashboard/orders/new') return 'orders.new';
@@ -15,6 +15,7 @@ const getRequiredPermission = (pathname) => {
   if (cleanPath === '/dashboard/products/brands') return 'products.brands';
   if (cleanPath === '/dashboard/products/attributes') return 'products.attributes';
   if (cleanPath === '/dashboard/products/coupons') return 'products.coupons';
+  if (cleanPath === '/dashboard/products/size-charts') return 'products.size-charts';
   if (cleanPath.startsWith('/dashboard/products')) return 'products.list';
 
   if (cleanPath.startsWith('/dashboard/members')) return 'members';
@@ -27,17 +28,21 @@ const getRequiredPermission = (pathname) => {
   if (cleanPath.startsWith('/dashboard/users')) return 'users';
   if (cleanPath.startsWith('/dashboard/developer')) return 'developer';
 
-  return null; // Public or root dashboard path
+  return null;
 };
 
+// Protects dashboard routes matching tenant allowedMenus and capability flags
 export const ClientRouteGuard = ({ children }) => {
   const location = useLocation();
   const requiredPermission = getRequiredPermission(location.pathname);
-  
   const allowedMenus = clientConfig.allowedMenus || [];
-  
+  const features = clientConfig.features || {};
+
+  if (requiredPermission === 'products.size-charts' && !features?.sizeChart) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   if (requiredPermission && !allowedMenus.includes(requiredPermission)) {
-    // Redirect to dashboard root if client lacks permission
     return <Navigate to="/dashboard" replace />;
   }
 

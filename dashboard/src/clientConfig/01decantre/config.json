@@ -9,7 +9,8 @@
     "season": true,
     "brand": true,
     "variantImage": true,
-    "webmail": true
+    "webmail": true,
+    "sizeChart": false
   },
   "stockManagement": {
     "simpleProduct": true,

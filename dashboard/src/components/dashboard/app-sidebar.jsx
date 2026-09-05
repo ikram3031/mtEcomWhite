@@ -96,14 +96,13 @@ export function AppSidebar({ ...props }) {
 
   const userRole = user?.role || "Marketing Expert"
 
+  // Evaluates menu visibility based on tenant feature flags and role access
   const isAllowed = (menuKey) => {
-    // 1. Check feature flags first
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
     if (menuKey === "tools.messages" && features?.webmail === false) return false
-    if (menuKey === "products.size-charts" && features?.sizeChart === false) return false
+    if (menuKey === "products.size-charts" && !features?.sizeChart) return false
 
-    // 2. Check RBAC role permissions
     return hasMenuAccess(userRole, menuKey)
   }
 
