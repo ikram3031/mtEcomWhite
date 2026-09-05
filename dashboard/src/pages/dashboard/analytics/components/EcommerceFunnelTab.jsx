@@ -56,7 +56,7 @@ export const EcommerceFunnelTab = ({ funnelStages = [], conversionRate = '2.76%'
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: stage.conversionFromStart,
-                          backgroundColor: stage.color || '#C5A059',
+                          backgroundColor: stage.color || 'hsl(var(--primary))',
                         }}
                       />
                     </div>

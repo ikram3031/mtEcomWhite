@@ -15,8 +15,10 @@ import { useTheme } from 'next-themes';
 import { getRealtimeMinuteActivity, getLiveEventFeed, getClientIndustryData } from '../analyticsData';
 
 // Tab component visualizing live real-time visitors, minute activity, and real-time events
-export const RealtimeStreamTab = ({ realtimeCount = 34 }) => {
+export const RealtimeStreamTab = ({ realtimeCount = 4 }) => {
   const { theme, systemTheme } = useTheme();
+  const industry = getClientIndustryData();
+  const accentColor = industry.accentColor || 'hsl(var(--primary))';
   const [minuteData, setMinuteData] = useState(() => getRealtimeMinuteActivity());
   const [liveEvents, setLiveEvents] = useState(() => getLiveEventFeed());
   const [activeUsers, setActiveUsers] = useState(realtimeCount);
@@ -25,16 +27,17 @@ export const RealtimeStreamTab = ({ realtimeCount = 34 }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const delta = Math.floor(Math.random() * 5) - 2;
-      setActiveUsers((prev) => Math.max(12, prev + delta));
+      const delta = Math.floor(Math.random() * 3) - 1;
+      setActiveUsers((prev) => Math.max(1, prev + delta));
 
       setMinuteData((prev) => {
         const next = [...prev.slice(1)];
         const now = new Date();
         const label = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const maxVal = Math.max(2, industry.realtimeActive || 4);
         next.push({
           time: label,
-          activeUsers: Math.floor(Math.random() * 14) + 3,
+          activeUsers: Math.floor(Math.random() * maxVal) + 1,
         });
         return next;
       });
@@ -169,7 +172,7 @@ export const RealtimeStreamTab = ({ realtimeCount = 34 }) => {
                   formatter={(val) => [`${val} active users`, 'Live Count']}
                   labelFormatter={(lbl) => `Time: ${lbl}`}
                 />
-                <Bar dataKey="activeUsers" fill="#C5A059" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="activeUsers" fill={accentColor} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

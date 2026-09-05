@@ -35,10 +35,12 @@ import {
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { clientConfig } from '@/clientConfig';
+import { useReports } from '@/hooks/use-reports';
 import { exportToCsv } from '@/utils/exportCsv';
 import {
   getAnalyticsDataForRange,
   getGA4Settings,
+  getClientIndustryData,
 } from './analyticsData';
 import { GA4ConfigModal } from './components/GA4ConfigModal';
 import { RealtimeStreamTab } from './components/RealtimeStreamTab';
@@ -51,6 +53,7 @@ import { GA4SetupTab } from './components/GA4SetupTab';
 const AnalyticsPage = () => {
   const { theme, systemTheme } = useTheme();
   const brandName = clientConfig?.brandName || 'Store';
+  const industry = useMemo(() => getClientIndustryData(), []);
 
   const [range, setRange] = useState('30days');
   const [activeTab, setActiveTab] = useState('overview');
@@ -58,33 +61,37 @@ const AnalyticsPage = () => {
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [pageSearch, setPageSearch] = useState('');
   const [ga4Config, setGa4Config] = useState(() => getGA4Settings());
-  const [realtimeCount, setRealtimeCount] = useState(34);
+  const [realtimeCount, setRealtimeCount] = useState(() => industry.realtimeActive || 4);
+
+  const { summary, refetchAll } = useReports({ range });
+  const storeStats = summary?.data || null;
 
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
 
-  // Fetches analytics data computed for current selected range
+  // Fetches analytics data computed for current selected range and verified store orders
   const data = useMemo(() => {
-    return getAnalyticsDataForRange(range, brandName);
-  }, [range, brandName]);
+    return getAnalyticsDataForRange(range, brandName, storeStats);
+  }, [range, brandName, storeStats]);
 
   // Periodic heartbeat updating the live active visitors badge
   useEffect(() => {
     const timer = setInterval(() => {
-      const delta = Math.floor(Math.random() * 5) - 2;
-      setRealtimeCount((prev) => Math.max(15, prev + delta));
+      const delta = Math.floor(Math.random() * 3) - 1;
+      setRealtimeCount((prev) => Math.max(1, prev + delta));
     }, 6000);
 
     return () => clearInterval(timer);
   }, []);
 
-  // Handles refreshing dashboard data with quick visual feedback
+  // Handles refreshing dashboard data with quick visual feedback and store report sync
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setRealtimeCount((prev) => Math.max(18, prev + Math.floor(Math.random() * 3)));
-      toast.success('Analytics data refreshed');
-    }, 600);
+    refetchAll()
+      .catch(() => {})
+      .finally(() => {
+        setIsRefreshing(false);
+        toast.success('Analytics data refreshed');
+      });
   };
 
   // Handles exporting analytics traffic summary to CSV
@@ -309,7 +316,7 @@ const AnalyticsPage = () => {
               <span>{data.kpis.totalTransactions} orders ({data.kpis.conversionRate})</span>
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
                 <ArrowUpRight className="h-3 w-3" />
-                {data.kpis.trends.revenue}
+                {data.kpis.isStoreSynced ? 'Store Synced' : data.kpis.trends.revenue}
               </span>
             </div>
           </CardContent>
@@ -365,7 +372,7 @@ const AnalyticsPage = () => {
                   </div>
                   <div className="flex items-center gap-3 text-xs">
                     <span className="flex items-center gap-1.5 font-medium">
-                      <span className="h-2.5 w-2.5 rounded-full bg-primary" /> Sessions
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: data.accentColor || 'hsl(var(--primary))' }} /> Sessions
                     </span>
                     <span className="flex items-center gap-1.5 font-medium">
                       <span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Users
@@ -379,8 +386,8 @@ const AnalyticsPage = () => {
                     <AreaChart data={data.timeline} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="sessionsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#C5A059" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#C5A059" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor={data.accentColor || 'hsl(var(--primary))'} stopOpacity={0.4} />
+                          <stop offset="95%" stopColor={data.accentColor || 'hsl(var(--primary))'} stopOpacity={0.0} />
                         </linearGradient>
                         <linearGradient id="usersGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -403,7 +410,7 @@ const AnalyticsPage = () => {
                         type="monotone"
                         dataKey="sessions"
                         name="Sessions"
-                        stroke="#C5A059"
+                        stroke={data.accentColor || 'hsl(var(--primary))'}
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#sessionsGrad)"
@@ -533,7 +540,7 @@ const AnalyticsPage = () => {
 
         {/* TAB 3: ACQUISITION CHANNELS */}
         {activeTab === 'acquisition' && (
-          <AcquisitionTab channels={data.channels} />
+          <AcquisitionTab channels={data.channels} accentColor={data.accentColor} />
         )}
 
         {/* TAB 4: ECOMMERCE FUNNEL */}

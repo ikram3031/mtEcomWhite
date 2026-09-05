@@ -17,7 +17,7 @@ import {
 import { useTheme } from 'next-themes';
 
 // Tab component detailing customer traffic acquisition channels and source performance
-export const AcquisitionTab = ({ channels = [] }) => {
+export const AcquisitionTab = ({ channels = [], accentColor = 'hsl(var(--primary))' }) => {
   const { theme, systemTheme } = useTheme();
   const [search, setSearch] = useState('');
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
@@ -63,7 +63,7 @@ export const AcquisitionTab = ({ channels = [] }) => {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                <Bar dataKey="users" name="Active Users" fill="#C5A059" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="users" name="Active Users" fill={accentColor} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="sessions" name="Sessions" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

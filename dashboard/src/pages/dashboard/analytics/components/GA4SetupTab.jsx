@@ -80,11 +80,11 @@ export const GA4SetupTab = ({ config, brandName = 'Store', onOpenConfigModal }) 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-500/20 text-xs">
             <div>
               <p className="text-[11px] text-muted-foreground">Measurement ID</p>
-              <p className="font-mono font-bold text-foreground">{config.measurementId || 'G-95TCXBZG7W'}</p>
+              <p className="font-mono font-bold text-foreground">{config.measurementId || 'G-XXXXXXXXXX'}</p>
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Google Tag Manager</p>
-              <p className="font-mono font-bold text-foreground">{config.gtmId || 'GTM-DEC883Z'}</p>
+              <p className="font-mono font-bold text-foreground">{config.gtmId || 'Not Configured (Optional)'}</p>
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Enhanced Measurement</p>
