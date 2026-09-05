@@ -48,9 +48,9 @@
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
   "googleAnalytics": {
-    "measurementId": "G-ENGUL72901",
-    "gtmId": "GTM-ENG772X",
-    "propertyId": "419823413",
+    "measurementId": "G-V2H268T9Q5",
+    "gtmId": "",
+    "propertyId": "",
     "streamName": "Engulfic Web Stream",
     "isVerified": true,
     "enhancedMeasurement": true
