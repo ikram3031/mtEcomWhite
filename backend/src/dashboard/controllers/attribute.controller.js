@@ -15,12 +15,6 @@ const DEFAULT_ATTRIBUTES = [
       { name: "XXL", slug: "xxl" },
       { name: "2XL", slug: "2xl" },
       { name: "3XL", slug: "3xl" },
-      { name: "28", slug: "28" },
-      { name: "30", slug: "30" },
-      { name: "32", slug: "32" },
-      { name: "34", slug: "34" },
-      { name: "36", slug: "36" },
-      { name: "38", slug: "38" },
     ],
   },
   {
@@ -39,9 +33,23 @@ const DEFAULT_ATTRIBUTES = [
   },
 ];
 
-// Sorts attribute values alphabetically or numerically
-const sortAttributeValues = (values = []) => {
+const STANDARD_SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "2XL", "3XL", "4XL", "5XL"];
+
+// Sorts attribute values by standard size order for size attribute, or alphabetically
+const sortAttributeValues = (values = [], attrSlug = "") => {
   if (!Array.isArray(values)) return [];
+  if (String(attrSlug).toLowerCase() === "size") {
+    return [...values].sort((a, b) => {
+      const nameA = String(typeof a === "string" ? a : (a?.name || a?.slug || "")).toUpperCase();
+      const nameB = String(typeof b === "string" ? b : (b?.name || b?.slug || "")).toUpperCase();
+      const idxA = STANDARD_SIZE_ORDER.indexOf(nameA);
+      const idxB = STANDARD_SIZE_ORDER.indexOf(nameB);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
+    });
+  }
   return [...values].sort((a, b) => {
     const valA = typeof a === "string" ? a : (a?.name || a?.size || "");
     const valB = typeof b === "string" ? b : (b?.name || b?.size || "");
@@ -65,7 +73,7 @@ export const getAttributes = async (req, res) => {
     }
     const sorted = attributes.map((attr) => ({
       ...attr,
-      values: sortAttributeValues(attr.values || []),
+      values: sortAttributeValues(attr.values || [], attr.slug),
     }));
     res.json({ status: "success", data: sorted });
   } catch (err) {

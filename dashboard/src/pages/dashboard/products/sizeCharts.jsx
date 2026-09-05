@@ -53,6 +53,9 @@ const COMMON_COLUMN_SUGGESTIONS = [
   'Collar',
 ];
 
+const STANDARD_SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', '5XL'];
+
+
 // Main Parent Category-wise Size Chart Management Page Component
 const SizeChartsPage = () => {
   const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
@@ -145,11 +148,26 @@ const SizeChartsPage = () => {
     return map;
   }, [sizeCharts]);
 
-  // Finds currently selected attribute object
+  // Finds currently selected attribute object with standard apparel size sorting
   const activeAttribute = useMemo(() => {
-    return attributes.find(
+    const attr = attributes.find(
       (a) => a._id === selectedAttributeId || a.slug === selectedAttributeId
     );
+    if (!attr) return null;
+    const isSizeAttr = attr.slug?.toLowerCase() === 'size' || attr.name?.toLowerCase().includes('size');
+    const sortedValues = [...(attr.values || [])].sort((a, b) => {
+      const nameA = String(typeof a === 'string' ? a : (a?.name || a?.slug || '')).toUpperCase();
+      const nameB = String(typeof b === 'string' ? b : (b?.name || b?.slug || '')).toUpperCase();
+      if (isSizeAttr) {
+        const idxA = STANDARD_SIZE_ORDER.indexOf(nameA);
+        const idxB = STANDARD_SIZE_ORDER.indexOf(nameB);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+      }
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+    return { ...attr, values: sortedValues };
   }, [attributes, selectedAttributeId]);
 
   // Opens configuration modal for a given parent category
