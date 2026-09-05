@@ -39,7 +39,7 @@ Cloudflare R2 is configured for automated database backup, image asset distribut
 | Parameter | Value |
 | :--- | :--- |
 | **Account ID** | `fa0942a4bd8e442e22f78fdb6a2a605a` |
-| **API Token** | `cfat_6c5pjZtKRqSxdHs...[SECURE_ON_VPS]` |
+| **API Token** | `cfat_kTWWKG...[CONFIGURED_ON_VPS]` |
 | **Access Key ID** | `5f0500c118548702bac32a3d027bc355` |
 | **Secret Access Key** | `78903a1d53535384109a104e7a49e2c85ab6d08936f645124430a41c32b051c7` |
 | **S3 API Endpoint** | `https://fa0942a4bd8e442e22f78fdb6a2a605a.r2.cloudflarestorage.com` |
