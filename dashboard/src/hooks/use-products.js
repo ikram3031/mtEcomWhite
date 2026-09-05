@@ -46,8 +46,11 @@ const fetchProducts = async (params) => {
   }
 
   const mappedProducts = productList.map((p) => {
-    // Resolve category name via localStorage cache (did → name)
+    // Resolves primary category name from populated object, categories array, or cache
     const categoryName = (() => {
+      if (p.category && typeof p.category === 'object' && p.category.name) {
+        return p.category.name;
+      }
       const rawCats = Array.isArray(p.categories) ? p.categories : typeof p.categories === 'string' ? [p.categories] : [];
       if (rawCats.length > 0) {
         const firstCat = rawCats[0];
