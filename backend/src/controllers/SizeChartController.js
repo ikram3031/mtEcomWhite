@@ -50,7 +50,7 @@ export const getSizeChartByCategory = async (req, res) => {
           ],
         };
 
-    const sizeChart = await SizeChartModel.findOne(chartFilter)
+    let sizeChart = await SizeChartModel.findOne(chartFilter)
       .populate({
         path: "category",
         select: "name slug did imageUrl parent",
@@ -60,6 +60,31 @@ export const getSizeChartByCategory = async (req, res) => {
         select: "name slug values",
       })
       .lean();
+
+    if (!sizeChart && category?.parent) {
+      let currentParentId = category.parent;
+      while (currentParentId && !sizeChart) {
+        const parentCat = await CategoryModel.findById(currentParentId).lean();
+        if (!parentCat) break;
+        sizeChart = await SizeChartModel.findOne({
+          $or: [
+            { category: parentCat._id },
+            ...(parentCat.did ? [{ categoryDid: parentCat.did }] : []),
+            ...(parentCat.slug ? [{ categorySlug: parentCat.slug }] : []),
+          ],
+        })
+          .populate({
+            path: "category",
+            select: "name slug did imageUrl parent",
+          })
+          .populate({
+            path: "attributeId",
+            select: "name slug values",
+          })
+          .lean();
+        currentParentId = parentCat.parent;
+      }
+    }
 
     if (!sizeChart) {
       return res.status(404).json({ status: "error", message: "Size chart not configured for this category" });
