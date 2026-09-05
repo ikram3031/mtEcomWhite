@@ -31,6 +31,7 @@ import {
   ChevronRight,
   Mail,
   Image as ImageIcon,
+  Images,
   LineChart,
   LifeBuoy,
   Ruler,
@@ -365,7 +366,7 @@ export function AppSidebar({ ...props }) {
           )}
 
           {/* Admin Menu */}
-          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("analytics") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("reviews") || isAllowed("trash")) && (
+          {(isAllowed("admin") || isAllowed("members") || isAllowed("reports") || isAllowed("analytics") || isAllowed("users") || isAllowed("activity-logs") || isAllowed("reviews") || isAllowed("trash") || isAllowed("settings")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
@@ -375,7 +376,8 @@ export function AppSidebar({ ...props }) {
                   pathname.startsWith("/dashboard/activity-logs") ||
                   pathname.startsWith("/dashboard/users") ||
                   pathname.startsWith("/dashboard/reviews") ||
-                  pathname.startsWith("/dashboard/trash")
+                  pathname.startsWith("/dashboard/trash") ||
+                  pathname.startsWith("/dashboard/settings")
                 }
                 tooltip="Admin"
                 onClick={() => toggleMenu("admin")}
@@ -466,6 +468,17 @@ export function AppSidebar({ ...props }) {
                       <span className="text-destructive font-medium">Trash</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  {isAllowed("settings") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/settings")}
+                        render={<Link to="/dashboard/settings" />}
+                      >
+                        <Settings className="h-3.5 w-3.5" />
+                        <span>Settings</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                 </SidebarMenuSub>
               )}
             </SidebarMenuItem>
@@ -475,7 +488,7 @@ export function AppSidebar({ ...props }) {
           {isAllowed("tools") && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/tools")}
+                isActive={pathname.startsWith("/dashboard/tools") || pathname.startsWith("/dashboard/media")}
                 tooltip="Tools"
                 onClick={() => toggleMenu("tools")}
                 className="cursor-pointer flex items-center justify-between w-full"
@@ -511,6 +524,17 @@ export function AppSidebar({ ...props }) {
                       >
                         <ImageIcon className="h-3.5 w-3.5" />
                         <span>Assets Manager</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {(isAllowed("tools.assets") || isAllowed("tools.media")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/media" || pathname.startsWith("/dashboard/media")}
+                        render={<Link to="/dashboard/media" />}
+                      >
+                        <Images className="h-3.5 w-3.5" />
+                        <span>All Media</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

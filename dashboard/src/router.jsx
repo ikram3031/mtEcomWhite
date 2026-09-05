@@ -183,6 +183,7 @@ export const router = createBrowserRouter([
               </RoleGuard>
             ),
           },
+          { path: 'media', element: <Navigate to="/dashboard/media" replace /> },
           {
             path: 'bulk-image-resize',
             element: (
