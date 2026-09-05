@@ -128,7 +128,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
                 <Input
                   value={config.propertyId || ''}
                   onChange={(e) => setConfig((prev) => ({ ...prev, propertyId: e.target.value.trim() }))}
-                  placeholder="e.g. 419823412"
+                  placeholder="e.g. 4XXXXXXXX"
                   className="font-mono text-xs"
                 />
               </div>
@@ -141,7 +141,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
               <Input
                 value={config.streamName || ''}
                 onChange={(e) => setConfig((prev) => ({ ...prev, streamName: e.target.value }))}
-                placeholder="e.g. Decantre Web Stream"
+                placeholder={`e.g. ${brandName} Web Stream`}
                 className="text-xs"
               />
             </div>

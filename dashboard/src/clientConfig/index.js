@@ -11,18 +11,19 @@ const clientConfigs = {
   kawaiikutir: kawaiikutirConfig,
 };
 
-// Fallback to hostname detection
+// Detects active client key from current window location hostname
 const getClientFromHostname = () => {
-  if (typeof window === 'undefined') return 'decantre';
+  if (typeof window === 'undefined') return null;
   const hostname = window.location.hostname.toLowerCase();
   const matchedKey = Object.keys(clientConfigs).find((key) => hostname.includes(key));
-  return matchedKey || 'decantre';
+  return matchedKey || null;
 };
 
 const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
-const activeKey = envClient || activeSyncedConfig?.clientKey || getClientFromHostname();
+const detectedClient = getClientFromHostname();
+const activeKey = envClient || detectedClient || activeSyncedConfig?.clientKey || 'decantre';
 
-export const clientConfig = activeSyncedConfig?.clientKey === activeKey
+export const clientConfig = activeKey === activeSyncedConfig?.clientKey
   ? activeSyncedConfig
   : (clientConfigs[activeKey] || activeSyncedConfig || decantreConfig);
 

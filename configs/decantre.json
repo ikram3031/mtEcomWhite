@@ -50,6 +50,14 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "googleAnalytics": {
+    "measurementId": "G-95TCXBZG7W",
+    "gtmId": "GTM-DEC883Z",
+    "propertyId": "419823412",
+    "streamName": "Decantre Web Stream",
+    "isVerified": true,
+    "enhancedMeasurement": true
+  },
   "logoUrl": "/src/uploads/logo_horizontal.png",
   "siteIconUrl": "/src/uploads/logo.webp",
   "assetsConfig": {

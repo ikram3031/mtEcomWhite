@@ -48,7 +48,7 @@ export const GA4SetupTab = ({ config, brandName = 'Store', onOpenConfigModal }) 
                   Google Analytics 4 Stream Connected
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Active Property ID: <span className="font-mono font-semibold">{config.propertyId || '419823412'}</span> • Stream: <span className="font-semibold">{config.streamName || `${brandName} Web Stream`}</span>
+                  Active Property ID: <span className="font-mono font-semibold">{config.propertyId || 'Not Configured'}</span> • Stream: <span className="font-semibold">{config.streamName || `${brandName} Web Stream`}</span>
                 </CardDescription>
               </div>
             </div>

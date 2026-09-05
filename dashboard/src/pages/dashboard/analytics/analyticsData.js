@@ -58,8 +58,71 @@ export const generateGtagScript = (measurementId) => {
 </script>`;
 };
 
+// Supplies industry-tailored sample product events and live feed based on client tenant
+export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
+  switch (clientKey) {
+    case 'engulfic':
+      return {
+        sampleProducts: [
+          { path: '/products/signature-oversized-hoodie', title: 'Signature Oversized Hoodie' },
+          { path: '/products/heavyweight-boxy-tee', title: 'Heavyweight Boxy Tee (Black)' },
+          { path: '/products/vintage-cargo-trousers', title: 'Vintage Cargo Trousers' },
+          { path: '/products/drop-shoulder-fleece', title: 'Drop-Shoulder Fleece' },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: 'Viewed Product "Signature Oversized Hoodie"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-blue-500/15 text-blue-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Heavyweight Boxy Tee (L)"', location: 'Chittagong, BD', time: '12s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 3, type: 'page_view', label: 'Browsing "/collections/streetwear"', location: 'Sylhet, BD', time: '28s ago', badge: 'bg-purple-500/15 text-purple-500' },
+          { id: 4, type: 'purchase', label: 'Completed Order (৳2,850 via bKash)', location: 'Dhaka, BD', time: '45s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 5, type: 'begin_checkout', label: 'Started Checkout step', location: 'Rajshahi, BD', time: '1m ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 6, type: 'search', label: 'Searched "oversized hoodie"', location: 'Khulna, BD', time: '2m ago', badge: 'bg-sky-500/15 text-sky-500' },
+        ],
+        accentColor: '#10b981',
+      };
+    case 'toyoland':
+      return {
+        sampleProducts: [
+          { path: '/products/rc-monster-truck', title: 'Remote Control 4WD Monster Truck' },
+          { path: '/products/magnetic-blocks-set', title: 'Magnetic Building Blocks 100pcs' },
+          { path: '/products/deluxe-plush-bear', title: 'Deluxe Plush Bear 40cm' },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: 'Viewed "Remote Control 4WD Monster Truck"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-blue-500/15 text-blue-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Magnetic Building Blocks"', location: 'Chittagong, BD', time: '12s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 3, type: 'page_view', label: 'Browsing "/collections/educational-toys"', location: 'Sylhet, BD', time: '28s ago', badge: 'bg-purple-500/15 text-purple-500' },
+          { id: 4, type: 'purchase', label: 'Completed Order (৳1,890 via Nagad)', location: 'Dhaka, BD', time: '45s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 5, type: 'begin_checkout', label: 'Started Checkout step', location: 'Rajshahi, BD', time: '1m ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 6, type: 'search', label: 'Searched "rc cars for kids"', location: 'Khulna, BD', time: '2m ago', badge: 'bg-sky-500/15 text-sky-500' },
+        ],
+        accentColor: '#3b82f6',
+      };
+    default:
+      return {
+        sampleProducts: [
+          { path: '/products/velvet-noir-perfume', title: 'Velvet Noir Luxury Perfume' },
+          { path: '/products/amber-suede-100ml', title: 'Amber Suede 100ml' },
+          { path: '/products/imperial-oud-edp', title: 'Imperial Oud Eau de Parfum' },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: 'Viewed Product "Velvet Noir Perfume"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-blue-500/15 text-blue-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Amber Suede 100ml"', location: 'Chittagong, BD', time: '12s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 3, type: 'page_view', label: 'Browsing "/collections/all-products"', location: 'Sylhet, BD', time: '28s ago', badge: 'bg-purple-500/15 text-purple-500' },
+          { id: 4, type: 'purchase', label: 'Completed Order (৳3,450 via bKash)', location: 'Dhaka, BD', time: '45s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 5, type: 'begin_checkout', label: 'Started Checkout step', location: 'Rajshahi, BD', time: '1m ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 6, type: 'search', label: 'Searched "oud wood luxury"', location: 'Khulna, BD', time: '2m ago', badge: 'bg-sky-500/15 text-sky-500' },
+        ],
+        accentColor: '#C5A059',
+      };
+  }
+};
+
 // Generates comprehensive Google Analytics dataset based on selected date range
-export const getAnalyticsDataForRange = (range = '30days', _brandName = 'Decantre') => {
+export const getAnalyticsDataForRange = (range = '30days', brandName = null) => {
+  const activeBrand = brandName || clientConfig?.brandName || 'Store';
+  const clientKey = getActiveClientKey();
+  const industry = getClientIndustryData(clientKey);
+  const accentColor = industry.accentColor || '#C5A059';
+
   let daysCount = 30;
   let multiplier = 1.0;
 
@@ -390,15 +453,7 @@ export const getRealtimeMinuteActivity = () => {
   return minutes;
 };
 
-// Generates simulated live real-time visitor event feed
+// Generates simulated live real-time visitor event feed matching active tenant
 export const getLiveEventFeed = () => {
-  const events = [
-    { id: 1, type: 'view_item', label: 'Viewed Product "Velvet Noir Perfume"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-blue-500/15 text-blue-500' },
-    { id: 2, type: 'add_to_cart', label: 'Added to Cart "Amber Suede 100ml"', location: 'Chittagong, BD', time: '12s ago', badge: 'bg-amber-500/15 text-amber-500' },
-    { id: 3, type: 'page_view', label: 'Browsing "/collections/all-products"', location: 'Sylhet, BD', time: '28s ago', badge: 'bg-purple-500/15 text-purple-500' },
-    { id: 4, type: 'purchase', label: 'Completed Order (৳3,450 via bKash)', location: 'Dhaka, BD', time: '45s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
-    { id: 5, type: 'begin_checkout', label: 'Started Checkout step', location: 'Rajshahi, BD', time: '1m ago', badge: 'bg-amber-500/15 text-amber-500' },
-    { id: 6, type: 'search', label: 'Searched "oud wood luxury"', location: 'Khulna, BD', time: '2m ago', badge: 'bg-sky-500/15 text-sky-500' },
-  ];
-  return events;
+  return getClientIndustryData().liveEvents;
 };

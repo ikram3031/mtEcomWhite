@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useTheme } from 'next-themes';
-import { getRealtimeMinuteActivity, getLiveEventFeed } from '../analyticsData';
+import { getRealtimeMinuteActivity, getLiveEventFeed, getClientIndustryData } from '../analyticsData';
 
 // Tab component visualizing live real-time visitors, minute activity, and real-time events
 export const RealtimeStreamTab = ({ realtimeCount = 34 }) => {
@@ -45,10 +45,11 @@ export const RealtimeStreamTab = ({ realtimeCount = 34 }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const sampleProduct = getClientIndustryData().sampleProducts?.[0] || { path: '/products/featured-item', title: 'Featured Item' };
   const activePages = [
     { path: '/collections/all-products', title: 'All Products Catalog', users: Math.round(activeUsers * 0.35) },
     { path: '/', title: 'Storefront Homepage', users: Math.round(activeUsers * 0.28) },
-    { path: '/products/velvet-noir-perfume', title: 'Velvet Noir Luxury Perfume', users: Math.round(activeUsers * 0.15) },
+    { path: sampleProduct.path, title: sampleProduct.title, users: Math.round(activeUsers * 0.15) },
     { path: '/cart', title: 'Shopping Cart', users: Math.round(activeUsers * 0.12) },
     { path: '/checkout', title: 'Checkout Page', users: Math.max(1, Math.round(activeUsers * 0.08)) },
     { path: '/contact', title: 'Contact Us', users: 1 },
