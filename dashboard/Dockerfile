@@ -8,6 +8,9 @@ COPY . .
 ARG VITE_API_BASE_URL=https://server.decantrebd.com
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
+ARG VITE_CLIENT=engulfic
+ENV VITE_CLIENT=$VITE_CLIENT
+
 RUN npm run build
 
 # Production Stage (Nginx)
