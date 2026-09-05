@@ -59,6 +59,7 @@ const SizeChartsPage = () => {
   const [sizeCharts, setSizeCharts] = useState([]);
   const [attributes, setAttributes] = useState([]);
   const [isLoadingCharts, setIsLoadingCharts] = useState(true);
+  const [isSeedingAttr, setIsSeedingAttr] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -94,9 +95,31 @@ const SizeChartsPage = () => {
   const fetchAttributes = async () => {
     try {
       const res = await apiClient.get('/api/v1/dashboard/attributes');
-      setAttributes(res.data?.data || []);
+      const loaded = res.data?.data || [];
+      setAttributes(loaded);
+      return loaded;
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to fetch attributes'));
+      return [];
+    }
+  };
+
+  // Seeds standard Size attribute group if none exist in the store
+  const handleSeedDefaultAttributes = async () => {
+    setIsSeedingAttr(true);
+    try {
+      const loaded = await fetchAttributes();
+      const sizeAttr = loaded.find(
+        (a) => a.slug?.toLowerCase() === 'size' || a.name?.toLowerCase().includes('size')
+      ) || loaded[0];
+      if (sizeAttr) {
+        setSelectedAttributeId(sizeAttr._id || sizeAttr.id || '');
+        toast.success('Standard attribute group loaded');
+      }
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to load attributes'));
+    } finally {
+      setIsSeedingAttr(false);
     }
   };
 
@@ -130,8 +153,13 @@ const SizeChartsPage = () => {
   }, [attributes, selectedAttributeId]);
 
   // Opens configuration modal for a given parent category
-  const handleOpenConfigModal = (category) => {
+  const handleOpenConfigModal = async (category) => {
     setActiveCategory(category);
+    let currentAttrs = attributes;
+    if (currentAttrs.length === 0) {
+      currentAttrs = await fetchAttributes();
+    }
+
     const existingChart =
       sizeChartMap.get(category.id) ||
       sizeChartMap.get(category._id) ||
@@ -144,7 +172,8 @@ const SizeChartsPage = () => {
       setSelectedAttributeId(
         existingChart.attributeId?._id ||
           existingChart.attributeId ||
-          attributes.find((a) => a.slug.toLowerCase().includes('size'))?._id ||
+          currentAttrs.find((a) => a.slug?.toLowerCase().includes('size'))?._id ||
+          currentAttrs[0]?._id ||
           ''
       );
       setColumns(existingChart.columns || []);
@@ -161,13 +190,13 @@ const SizeChartsPage = () => {
     } else {
       setIsEditingExisting(false);
       setCurrentStep(1);
-      const defaultSizeAttr = attributes.find(
+      const defaultSizeAttr = currentAttrs.find(
         (a) =>
-          a.slug.toLowerCase() === 'size' ||
-          a.name.toLowerCase().includes('size')
-      ) || attributes[0];
+          a.slug?.toLowerCase() === 'size' ||
+          a.name?.toLowerCase().includes('size')
+      ) || currentAttrs[0];
 
-      setSelectedAttributeId(defaultSizeAttr?._id || '');
+      setSelectedAttributeId(defaultSizeAttr?._id || defaultSizeAttr?.id || '');
       setColumns(['Chest', 'Length', 'Sleeve']);
       setMeasurementUnit('inches');
       setMatrixRows([]);
@@ -661,31 +690,60 @@ const SizeChartsPage = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-foreground mb-1.5 block">
-                    Choose Attribute Group *
-                  </label>
-                  <Select
-                    value={selectedAttributeId}
-                    onValueChange={(val) => handleAttributeChange(val)}
-                  >
-                    <SelectTrigger className="w-full h-11 bg-card">
-                      <SelectValue placeholder="Select an attribute (e.g. Size)">
-                        {activeAttribute?.name || 'Select an attribute (e.g. Size)'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {attributes.map((attr) => (
-                        <SelectItem key={attr._id || attr.id} value={attr._id || attr.id}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{attr.name}</span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              ({attr.values?.length || 0} values)
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-foreground block">
+                      Choose Attribute Group *
+                    </label>
+                    <span className="text-[11px] text-muted-foreground">
+                      {attributes.length} {attributes.length === 1 ? 'group' : 'groups'} available
+                    </span>
+                  </div>
+                  {attributes.length === 0 ? (
+                    <div className="p-4 rounded-xl border border-dashed border-amber-500/40 bg-amber-500/10 space-y-3">
+                      <div className="flex items-center gap-2 text-amber-500">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span className="text-xs font-bold">No attribute groups found in the store</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Attributes (e.g. Size, Color) are needed to define variations for size charts.
+                      </p>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={isSeedingAttr}
+                          onClick={handleSeedDefaultAttributes}
+                          className="h-8 text-xs font-semibold gap-1.5 cursor-pointer"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>{isSeedingAttr ? 'Loading attributes...' : 'Load Standard "Size" Attribute'}</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Select
+                      value={selectedAttributeId}
+                      onValueChange={(val) => handleAttributeChange(val)}
+                    >
+                      <SelectTrigger className="w-full h-11 bg-card">
+                        <SelectValue placeholder="Select an attribute (e.g. Size)">
+                          {activeAttribute?.name || 'Select an attribute (e.g. Size)'}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {attributes.map((attr) => (
+                          <SelectItem key={attr._id || attr.id} value={attr._id || attr.id}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{attr.name}</span>
+                              <span className="text-xs text-muted-foreground font-mono">
+                                ({attr.values?.length || 0} values)
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 {activeAttribute && (
