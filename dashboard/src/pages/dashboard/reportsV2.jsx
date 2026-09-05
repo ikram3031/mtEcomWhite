@@ -619,7 +619,7 @@ const ReportsV2Page = () => {
             </Card>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col space-y-5">
             <div className="overflow-x-auto pb-1">
               <TabsList className="h-10 p-1 bg-muted/60 border">
                 {reportsConfig.enabledTabs.includes('sales') && (
