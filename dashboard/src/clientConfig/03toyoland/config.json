@@ -26,8 +26,8 @@
     "isVerified": true,
     "enhancedMeasurement": true
   },
-  "logoUrl": "/src/uploads/assets/toyoland_logo.png",
-  "siteIconUrl": "/src/uploads/assets/toyoland_logo.png",
+  "logoUrl": "/src/uploads/assets/logo.webp",
+  "siteIconUrl": "/src/uploads/assets/logo.webp",
   "assetsConfig": {
     "sections": [
       {
@@ -52,7 +52,7 @@
         "title": "Brand & Identity",
         "description": "Brand logo and browser favicon files",
         "slots": [
-          { "key": "logo", "label": "Header Logo", "filename": "toyoland_logo.png", "recommendedSize": "500x200" },
+          { "key": "logo", "label": "Dashboard Logo", "filename": "logo.webp", "recommendedSize": "500x200" },
           { "key": "favicon", "label": "Favicon Icon", "filename": "favicon.ico", "recommendedSize": "64x64" }
         ]
       }

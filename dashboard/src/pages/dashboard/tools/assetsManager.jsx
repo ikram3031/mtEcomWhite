@@ -53,7 +53,7 @@ const DEFAULT_ASSET_SECTIONS = [
     title: 'Brand & Identity',
     description: 'Store logo, dark logo, and browser favicon files',
     slots: [
-      { key: 'logo', label: 'Header Logo', filename: 'logo.webp', recommendedSize: '500x200' },
+      { key: 'logo', label: 'Dashboard Logo', filename: 'logo.webp', recommendedSize: '500x200' },
       { key: 'favicon', label: 'Favicon Icon', filename: 'favicon.ico', recommendedSize: '64x64' },
     ],
   },

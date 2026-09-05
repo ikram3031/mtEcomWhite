@@ -8,14 +8,15 @@
     "brand": false,
     "variantImage": false,
     "webmail": true,
-    "sizeChart": true
+    "sizeChart": true,
+    "inStoreOrder": false
   },
   "stockManagement": {
     "simpleProduct": true,
     "variableProduct": true
   },
   "reports": {
-    "enableInStoreFilter": true,
+    "enableInStoreFilter": false,
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
@@ -27,7 +28,7 @@
     "isVerified": true,
     "enhancedMeasurement": true
   },
-  "logoUrl": "/src/uploads/assets/engulfic_logo.png",
+  "logoUrl": "/src/uploads/assets/logo.webp",
   "assetsConfig": {
     "sections": [
       {
@@ -53,7 +54,7 @@
         "title": "Brand & Identity",
         "description": "Brand logo and browser favicon files",
         "slots": [
-          { "key": "logo", "label": "Header Logo", "filename": "engulfic_logo.png", "recommendedSize": "500x200" },
+          { "key": "logo", "label": "Dashboard Logo", "filename": "logo.webp", "recommendedSize": "500x200" },
           { "key": "favicon", "label": "Favicon Icon", "filename": "favicon.ico", "recommendedSize": "64x64" }
         ]
       }
@@ -62,7 +63,6 @@
   "allowedMenus": [
     "overview",
     "orders",
-    "orders.new",
     "orders.list",
     "products",
     "products.new",

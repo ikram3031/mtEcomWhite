@@ -13,7 +13,7 @@ export const DecantreLogo = ({
   const { clientKey = 'decantre', brandName = 'Decantre', logoUrl } = clientConfig || {};
 
   // Resolve target logo URL (Prop > Client Config > Env Var > Default asset path)
-  const rawUrl = src || logoUrl || import.meta.env?.VITE_LOGO_URL || `/src/uploads/assets/${clientKey === 'decantre' ? 'decantre_logo.png' : `${clientKey}_logo.png`}`;
+  const rawUrl = src || logoUrl || import.meta.env?.VITE_LOGO_URL || `/src/uploads/assets/logo.webp`;
 
   // Helper to resolve full URL
   const resolveLogoUrl = (url) => {
