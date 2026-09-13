@@ -7,32 +7,68 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 
+// Maps raw client identifier or numeric code to registered client key
+const mapClientIdentifier = (input, clientMap, availableClients) => {
+  if (!input) return null;
+  const clean = input.trim().toLowerCase();
+  if (clientMap.has(clean)) {
+    return clientMap.get(clean);
+  }
+  if (availableClients.includes(clean)) {
+    return clean;
+  }
+  return null;
+};
+
 // Resolves target client key from CLI args, env vars, marker file, hostname, or VPS directories
 const resolveClientKey = () => {
+  const configsDir = path.join(rootDir, "configs");
+  const clientMap = new Map();
+  const availableClients = [];
+
+  if (fs.existsSync(configsDir)) {
+    fs.readdirSync(configsDir)
+      .filter((file) => file.endsWith(".json"))
+      .forEach((file) => {
+        const key = path.basename(file, ".json").toLowerCase();
+        availableClients.push(key);
+        try {
+          const content = JSON.parse(fs.readFileSync(path.join(configsDir, file), "utf8"));
+          if (content.clientId) {
+            const rawId = String(content.clientId).trim().toLowerCase();
+            clientMap.set(rawId, key);
+            const num = parseInt(rawId, 10);
+            if (!isNaN(num)) {
+              clientMap.set(String(num), key);
+            }
+          }
+          if (content.clientKey) {
+            clientMap.set(String(content.clientKey).trim().toLowerCase(), key);
+          }
+        } catch {}
+      });
+  }
+
   const argClient = process.argv[2]?.toLowerCase()?.trim();
   if (argClient && argClient !== "--detect-only" && !argClient.startsWith("-")) {
-    return argClient;
+    const mapped = mapClientIdentifier(argClient, clientMap, availableClients);
+    return mapped || argClient;
   }
 
   const envClient = process.env.CLIENT?.toLowerCase()?.trim() || process.env.CLIENT_NAME?.toLowerCase()?.trim();
   if (envClient) {
-    return envClient;
+    const mapped = mapClientIdentifier(envClient, clientMap, availableClients);
+    return mapped || envClient;
   }
 
   const clientMarkerPath = path.join(rootDir, ".client");
   if (fs.existsSync(clientMarkerPath)) {
     const fileContent = fs.readFileSync(clientMarkerPath, "utf8").trim().toLowerCase();
     if (fileContent) {
-      return fileContent;
+      const mapped = mapClientIdentifier(fileContent, clientMap, availableClients);
+      return mapped || fileContent;
     }
   }
-
-  const configsDir = path.join(rootDir, "configs");
-  const availableClients = fs.existsSync(configsDir)
-    ? fs.readdirSync(configsDir)
-        .filter((file) => file.endsWith(".json"))
-        .map((file) => path.basename(file, ".json").toLowerCase())
-    : ["decantre", "engulfic", "toyoland"];
 
   const hostname = os.hostname().toLowerCase();
   const matchedHost = availableClients.find((client) => hostname.includes(client));
