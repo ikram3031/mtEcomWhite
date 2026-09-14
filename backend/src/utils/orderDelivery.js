@@ -32,6 +32,21 @@ const getTransport = () => {
   return defaultTransport;
 };
 
+// Validates whether the given email address is deliverable rather than dummy or system-generated
+const isValidCustomerEmail = (email) => {
+  if (!email || typeof email !== "string") return false;
+  const normalized = email.trim().toLowerCase();
+  if (
+    normalized.includes("instore@") ||
+    normalized.includes("noemail") ||
+    normalized.includes("dummy") ||
+    normalized.endsWith("@store.com")
+  ) {
+    return false;
+  }
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+};
+
 // Safely send customer and admin order notification emails asynchronously
 export const sendOrderEmailsAsynchronously = (order) => {
   setImmediate(async () => {
@@ -137,7 +152,12 @@ export const sendOrderEmailsAsynchronously = (order) => {
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)
-      if (customerEmail) {
+      const isInstoreOrder =
+        order.orderType === "instore" ||
+        String(orderId).startsWith("IS") ||
+        (order.paymentMethod && String(order.paymentMethod).toLowerCase() === "instore");
+
+      if (!isInstoreOrder && isValidCustomerEmail(customerEmail)) {
         try {
           const customerHtml = getClientInvoiceHtml({
             order: formattedOrderData,
