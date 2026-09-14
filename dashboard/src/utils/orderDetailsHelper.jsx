@@ -207,7 +207,7 @@ export const buildUpdatePayload = ({
     customer: {
       fullName: customerName.trim(),
       phone: formattedPhone,
-      email: customerEmail.trim() || (isInStoreOrder ? `instore@${clientConfig?.domain || 'store.com'}` : `customer@${clientConfig?.domain || 'store.com'}`),
+      email: customerEmail.trim() || "",
       address: customerAddress.trim() || (isInStoreOrder ? "In-Store" : "Delivery Address"),
       city: customerCity,
       thana: customerThana,

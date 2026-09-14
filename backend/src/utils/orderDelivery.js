@@ -63,6 +63,17 @@ export const sendOrderEmailsAsynchronously = (order) => {
 
       // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
+      const isInstoreOrder =
+        order.orderType === "instore" ||
+        order.orderType === "in-store" ||
+        String(orderId).startsWith("IS") ||
+        (order.paymentMethod && String(order.paymentMethod).toLowerCase() === "instore") ||
+        (order.billingInfo?.email && order.billingInfo.email.includes("instore@"));
+
+      if (isInstoreOrder) {
+        return;
+      }
+
       const customerEmail = order.billingInfo?.email || "";
       const customerName = order.billingInfo?.fullName || "Customer";
       const customerPhone = order.billingInfo?.phone || "N/A";
@@ -152,12 +163,7 @@ export const sendOrderEmailsAsynchronously = (order) => {
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)
-      const isInstoreOrder =
-        order.orderType === "instore" ||
-        String(orderId).startsWith("IS") ||
-        (order.paymentMethod && String(order.paymentMethod).toLowerCase() === "instore");
-
-      if (!isInstoreOrder && isValidCustomerEmail(customerEmail)) {
+      if (isValidCustomerEmail(customerEmail)) {
         try {
           const customerHtml = getClientInvoiceHtml({
             order: formattedOrderData,
