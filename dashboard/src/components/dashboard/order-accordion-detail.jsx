@@ -34,6 +34,12 @@ import { logActivity } from '@/lib/activity-logger';
 import { useAuth } from '@/lib/auth-context';
 import { getApiErrorMessage } from '@/lib/error-handler';
 import { formatBDT } from '@/utils/orderHelper';
+import {
+  checkIsInStoreOrder,
+  getBillingInfo,
+  getShippingInfo,
+  formatFullAddress,
+} from '@/utils/orderDetailsHelper';
 
 // Renders an expanded accordion panel containing full order details and inline status management
 export const OrderAccordionDetail = ({ order }) => {
@@ -50,8 +56,10 @@ export const OrderAccordionDetail = ({ order }) => {
     setPaymentStatus(order.paymentStatus || 'Pending');
   }, [order.orderStatus, order.paymentStatus]);
 
-  const customer = order.customer || order.billingInfo || order.shippingInfo || {};
-  const shipping = order.shippingInfo || order.billingInfo || customer;
+  const isInStore = checkIsInStoreOrder(order);
+  const billing = getBillingInfo(order);
+  const shipping = getShippingInfo(order);
+
   const items = Array.isArray(order.items) ? order.items : [];
   const totals = order.totals || {};
   const subtotal = totals.subtotal ?? order.subtotal ?? 0;
@@ -65,16 +73,12 @@ export const OrderAccordionDetail = ({ order }) => {
     : (String(order.paymentStatus).toLowerCase() === 'paid' ? grandTotal : 0);
   const pendingAmount = Math.max(0, grandTotal - paidAmount);
 
-  const phoneNum = customer.phone || order.phone || '';
+  const phoneNum = billing.phone || order.phone || '';
   const cleanPhone = phoneNum.replace(/^\+880?/, '');
-  const emailAddr = customer.email || order.email || '';
-  const fullAddress = [
-    shipping.address || customer.address,
-    shipping.thana || customer.thana,
-    shipping.city || customer.city,
-    shipping.district || customer.district,
-    shipping.zip || customer.zip,
-  ].filter(Boolean).join(', ');
+  const emailAddr = billing.email || order.email || '';
+
+  const billingAddressText = formatFullAddress(billing);
+  const shippingAddressText = formatFullAddress(shipping);
 
   const hasStatusChanged =
     orderStatus.toLowerCase() !== (order.orderStatus || 'Processing').toLowerCase() ||
@@ -243,69 +247,110 @@ export const OrderAccordionDetail = ({ order }) => {
             <div className="flex items-center justify-between border-b border-border/50 pb-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <User className="h-4 w-4 text-primary" />
-                Customer & Delivery
+                {isInStore ? 'Customer Info' : 'Billing & Shipping'}
               </h4>
+              {isInStore && (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                  In-Store
+                </Badge>
+              )}
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-start gap-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-muted-foreground block">Customer Name</span>
-                  <span className="font-semibold text-foreground">{customer.fullName || order.customerName || 'N/A'}</span>
-                </div>
-              </div>
-
-              {phoneNum && (
+            {isInStore ? (
+              <div className="space-y-2.5 text-xs">
                 <div className="flex items-start gap-2">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                  <User className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <span className="text-[10px] text-muted-foreground block">Phone</span>
-                    <a
-                      href={`tel:+880${cleanPhone}`}
-                      className="font-semibold text-primary hover:underline"
-                    >
-                      +880{cleanPhone}
-                    </a>
+                    <span className="text-[10px] text-muted-foreground block">Customer Name</span>
+                    <span className="font-semibold text-foreground">{billing.fullName || 'Walk-in Customer'}</span>
                   </div>
                 </div>
-              )}
 
-              {emailAddr && (
+                {phoneNum && (
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block">Phone</span>
+                      <a
+                        href={`tel:+880${cleanPhone}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        +880{cleanPhone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {emailAddr && (
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block">Email</span>
+                      <a
+                        href={`mailto:${emailAddr}`}
+                        className="font-medium text-foreground hover:underline truncate block max-w-[200px]"
+                      >
+                        {emailAddr}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start gap-2">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <span className="text-[10px] text-muted-foreground block">Email</span>
-                    <a
-                      href={`mailto:${emailAddr}`}
-                      className="font-medium text-foreground hover:underline truncate block max-w-[200px]"
-                    >
-                      {emailAddr}
-                    </a>
+                    <span className="text-[10px] text-muted-foreground block">Order Channel</span>
+                    <span className="text-foreground font-medium">In-Store / POS Sale</span>
                   </div>
                 </div>
-              )}
-
-              <div className="flex items-start gap-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-muted-foreground block">Delivery Address</span>
-                  <span className="text-foreground leading-tight font-medium">
-                    {fullAddress || 'N/A'}
+              </div>
+            ) : (
+              <div className="space-y-3 text-xs max-h-[220px] overflow-y-auto pr-1">
+                {/* Billing Details */}
+                <div className="space-y-1.5 border-b border-border/40 pb-2.5">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <FileText className="h-3 w-3 text-primary" /> Billing Address
                   </span>
+                  <div className="pl-4 space-y-1">
+                    <p className="font-semibold text-foreground">{billing.fullName || 'N/A'}</p>
+                    {phoneNum && (
+                      <p className="text-muted-foreground">
+                        Phone: <a href={`tel:+880${cleanPhone}`} className="text-primary hover:underline font-medium">+880{cleanPhone}</a>
+                      </p>
+                    )}
+                    {emailAddr && (
+                      <p className="text-muted-foreground truncate">
+                        Email: <span className="text-foreground">{emailAddr}</span>
+                      </p>
+                    )}
+                    <p className="text-muted-foreground leading-tight">
+                      Address: <span className="text-foreground">{billingAddressText || 'N/A'}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Shipping Details */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <Truck className="h-3 w-3 text-primary" /> Shipping Address
+                  </span>
+                  <div className="pl-4 space-y-1">
+                    <p className="font-semibold text-foreground">{shipping.fullName || billing.fullName || 'N/A'}</p>
+                    {(shipping.phone || phoneNum) && (
+                      <p className="text-muted-foreground">
+                        Phone: <a href={`tel:${shipping.phone || phoneNum}`} className="text-primary hover:underline font-medium">{shipping.phone || phoneNum}</a>
+                      </p>
+                    )}
+                    <p className="text-muted-foreground leading-tight">
+                      Destination: <span className="text-foreground">{shippingAddressText || billingAddressText || 'N/A'}</span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Delivery: <span className="text-foreground">{shippingFee === 0 ? 'Free Delivery' : 'Standard Delivery'}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-start gap-2">
-                <Truck className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-muted-foreground block">Delivery Type</span>
-                  <span className="text-foreground font-medium">
-                    {shippingFee === 0 ? 'Free Delivery / In-Store' : 'Standard Delivery'}
-                  </span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs">

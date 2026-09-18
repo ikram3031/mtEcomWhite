@@ -144,11 +144,16 @@ export const sendOrderEmailsAsynchronously = (order) => {
 
       const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
       const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
-      const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
+      const discountAmount = Number(order.discountTotalAmount || order.totals?.discount || 0);
+      const calculatedTotal = subtotal + shippingFee - discountAmount;
+      const totalAmount = Number(order.totals?.total !== undefined ? order.totals.total : (order.totalAmount !== undefined ? order.totalAmount : calculatedTotal));
+      const couponCode = order.couponCode ? String(order.couponCode).trim().toUpperCase() : null;
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
       const formattedOrderData = {
         orderId,
+        status: order.status || "processing",
+        orderType: order.orderType || "online",
         createdAt,
         customerName,
         customerEmail,
@@ -158,6 +163,8 @@ export const sendOrderEmailsAsynchronously = (order) => {
         items,
         subtotal,
         shippingFee,
+        discountAmount,
+        couponCode,
         totalAmount,
         paymentMethod
       };

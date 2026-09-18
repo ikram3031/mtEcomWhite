@@ -21,6 +21,7 @@ export const buildDashboardInvoiceHtml = ({
     subtotal = 0,
     shippingFee = 0,
     discountAmount = 0,
+    couponCode = null,
     totalAmount = 0,
     paymentMethod = "N/A",
   } = order;
@@ -357,7 +358,7 @@ export const buildDashboardInvoiceHtml = ({
           </tr>
           ${discountAmount > 0 ? `
           <tr>
-            <td class="label">Discount</td>
+            <td class="label">Discount ${couponCode ? `(${couponCode})` : ''}</td>
             <td class="value" style="color: #DC2626;">-৳${discountAmount.toFixed(2)}</td>
           </tr>` : ''}
           <tr class="total-row">

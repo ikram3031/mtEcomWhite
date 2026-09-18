@@ -6,8 +6,49 @@ export const checkIsInStoreOrder = (order) => {
   if (!order) return false;
   const orderNum = String(order.orderNumber || "").toUpperCase();
   const type = String(order.orderType || "").toLowerCase();
-  const email = String(order.customer?.email || "").toLowerCase();
+  const email = String(order.billingInfo?.email || order.customer?.email || "").toLowerCase();
   return orderNum.startsWith("IS") || type === "instore" || email.includes("instore@");
+};
+
+// Safely extract billing info according to schema from order
+export const getBillingInfo = (order) => {
+  if (!order) return { fullName: '', phone: '', email: '', address: '', thana: '', district: 'Dhaka', zip: '' };
+  const raw = order.billingInfo || order.customer || {};
+  return {
+    fullName: raw.fullName || raw.name || order.customerName || '',
+    phone: raw.phone || order.phone || '',
+    email: raw.email || order.email || '',
+    address: raw.address || raw.street || '',
+    thana: raw.thana || '',
+    district: raw.district || raw.city || 'Dhaka',
+    zip: raw.zip || raw.postcode || '',
+  };
+};
+
+// Safely extract shipping info according to schema from order
+export const getShippingInfo = (order) => {
+  if (!order) return { fullName: '', phone: '', address: '', thana: '', district: 'Dhaka', zip: '' };
+  const raw = order.shippingInfo || order.billingInfo || order.customer || {};
+  return {
+    fullName: raw.fullName || raw.name || order.customerName || '',
+    phone: raw.phone || order.phone || '',
+    address: raw.address || raw.street || '',
+    thana: raw.thana || '',
+    district: raw.district || raw.city || 'Dhaka',
+    zip: raw.zip || raw.postcode || '',
+  };
+};
+
+// Format address parts into a clean display string
+export const formatFullAddress = (info) => {
+  if (!info) return '';
+  const parts = [
+    info.address || info.street,
+    info.thana,
+    info.district || info.city,
+    info.zip ? `Zip: ${info.zip}` : '',
+  ].filter(Boolean);
+  return parts.join(', ');
 };
 
 // Format raw payment method value into a clean display label.
@@ -174,6 +215,8 @@ export const buildUpdatePayload = ({
   paidAmount,
   paymentPhone,
   isDigitalPayment,
+  billingInfo,
+  shippingInfo,
   customerName,
   customerPhone,
   customerEmail,
@@ -191,7 +234,27 @@ export const buildUpdatePayload = ({
   total,
   user,
 }) => {
-  const formattedPhone = formatPhoneNumber(customerPhone);
+  const finalBilling = billingInfo || {
+    fullName: customerName?.trim() || (isInStoreOrder ? 'Walk-in Customer' : ''),
+    phone: formatPhoneNumber(customerPhone),
+    email: customerEmail?.trim() || '',
+    address: customerAddress?.trim() || (isInStoreOrder ? 'In-Store' : 'Delivery Address'),
+    thana: customerThana || '',
+    district: customerDistrict || customerCity || 'Dhaka',
+    zip: customerZip || '',
+  };
+
+  const finalShipping = isInStoreOrder
+    ? { ...finalBilling }
+    : (shippingInfo || {
+        fullName: finalBilling.fullName,
+        phone: finalBilling.phone,
+        address: finalBilling.address,
+        thana: finalBilling.thana,
+        district: finalBilling.district,
+        zip: finalBilling.zip,
+      });
+
   const formattedPaymentPhone = !isInStoreOrder && isDigitalPayment && paymentPhone ? formatPhoneNumber(paymentPhone) : "";
 
   let fullPaymentMethod = getPaymentMethodLabel(paymentMethod);
@@ -199,20 +262,34 @@ export const buildUpdatePayload = ({
     fullPaymentMethod = `${fullPaymentMethod} (${formattedPaymentPhone})`;
   }
 
+  const normalizedBilling = {
+    fullName: finalBilling.fullName?.trim() || (isInStoreOrder ? 'Walk-in Customer' : ''),
+    phone: formatPhoneNumber(finalBilling.phone),
+    email: finalBilling.email?.trim() || '',
+    address: finalBilling.address?.trim() || (isInStoreOrder ? 'In-Store' : 'Delivery Address'),
+    thana: finalBilling.thana?.trim() || '',
+    district: finalBilling.district?.trim() || 'Dhaka',
+    zip: finalBilling.zip?.trim() || '',
+  };
+
+  const normalizedShipping = {
+    fullName: finalShipping.fullName?.trim() || normalizedBilling.fullName,
+    phone: formatPhoneNumber(finalShipping.phone || normalizedBilling.phone),
+    address: finalShipping.address?.trim() || normalizedBilling.address,
+    thana: finalShipping.thana?.trim() || normalizedBilling.thana,
+    district: finalShipping.district?.trim() || normalizedBilling.district,
+    zip: finalShipping.zip?.trim() || normalizedBilling.zip,
+  };
+
   return {
     status: getBackendStatus(orderStatus),
     paymentMethod: fullPaymentMethod,
     paidAmount: isInStoreOrder ? Number(total || 0) : Number(paidAmount || 0),
     paymentPhone: formattedPaymentPhone,
+    billingInfo: normalizedBilling,
+    shippingInfo: normalizedShipping,
     customer: {
-      fullName: customerName.trim(),
-      phone: formattedPhone,
-      email: customerEmail.trim() || "",
-      address: customerAddress.trim() || (isInStoreOrder ? "In-Store" : "Delivery Address"),
-      city: customerCity,
-      thana: customerThana,
-      district: customerDistrict,
-      zip: customerZip,
+      ...normalizedBilling,
       giftWrap: false,
     },
     items: cart.map((item) => ({
