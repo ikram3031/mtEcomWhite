@@ -476,11 +476,12 @@ export const verifyMemberOtp = async (req, res, next) => {
     const { email, otp } = req.body ?? {};
     const trimmedEmail =
       typeof email === "string" ? email.toLowerCase().trim() : "";
+    const trimmedOtp = typeof otp === "string" ? otp.trim() : "";
 
-    if (!trimmedEmail) {
+    if (!trimmedEmail || !trimmedOtp) {
       return res
         .status(400)
-        .json({ status: "error", message: "Email is required" });
+        .json({ status: "error", message: "Email and OTP are required" });
     }
 
     const member = await MemberModel.findOne({
@@ -492,8 +493,16 @@ export const verifyMemberOtp = async (req, res, next) => {
         .json({ status: "error", message: "Member not found" });
     }
 
-    member.emailOtp = undefined;
-    member.emailOtpExpiresAt = undefined;
+    if (
+      member.emailOtp !== trimmedOtp ||
+      !member.emailOtpExpiresAt ||
+      member.emailOtpExpiresAt < new Date()
+    ) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Invalid or expired OTP" });
+    }
+
     member.isEmailVerified = true;
     member.emailVerifiedAt = new Date();
     await member.save();

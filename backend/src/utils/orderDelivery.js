@@ -32,6 +32,21 @@ const getTransport = () => {
   return defaultTransport;
 };
 
+// Validates whether the given email address is deliverable rather than dummy or system-generated
+const isValidCustomerEmail = (email) => {
+  if (!email || typeof email !== "string") return false;
+  const normalized = email.trim().toLowerCase();
+  if (
+    normalized.includes("instore@") ||
+    normalized.includes("noemail") ||
+    normalized.includes("dummy") ||
+    normalized.endsWith("@store.com")
+  ) {
+    return false;
+  }
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+};
+
 // Safely send customer and admin order notification emails asynchronously
 export const sendOrderEmailsAsynchronously = (order) => {
   setImmediate(async () => {
@@ -48,6 +63,17 @@ export const sendOrderEmailsAsynchronously = (order) => {
 
       // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
+      const isInstoreOrder =
+        order.orderType === "instore" ||
+        order.orderType === "in-store" ||
+        String(orderId).startsWith("IS") ||
+        (order.paymentMethod && String(order.paymentMethod).toLowerCase() === "instore") ||
+        (order.billingInfo?.email && order.billingInfo.email.includes("instore@"));
+
+      if (isInstoreOrder) {
+        return;
+      }
+
       const customerEmail = order.billingInfo?.email || "";
       const customerName = order.billingInfo?.fullName || "Customer";
       const customerPhone = order.billingInfo?.phone || "N/A";
@@ -118,11 +144,16 @@ export const sendOrderEmailsAsynchronously = (order) => {
 
       const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
       const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.totals?.shippingTotalAmount || 0);
-      const totalAmount = Number(order.totals?.total || order.totalAmount || (subtotal + shippingFee));
+      const discountAmount = Number(order.discountTotalAmount || order.totals?.discount || 0);
+      const calculatedTotal = subtotal + shippingFee - discountAmount;
+      const totalAmount = Number(order.totals?.total !== undefined ? order.totals.total : (order.totalAmount !== undefined ? order.totalAmount : calculatedTotal));
+      const couponCode = order.couponCode ? String(order.couponCode).trim().toUpperCase() : null;
       const paymentMethod = order.paymentMethod || "Cash on Delivery (COD)";
 
       const formattedOrderData = {
         orderId,
+        status: order.status || "processing",
+        orderType: order.orderType || "online",
         createdAt,
         customerName,
         customerEmail,
@@ -132,12 +163,14 @@ export const sendOrderEmailsAsynchronously = (order) => {
         items,
         subtotal,
         shippingFee,
+        discountAmount,
+        couponCode,
         totalAmount,
         paymentMethod
       };
 
       // 1. Send Customer Order Confirmation Email (to customer email)
-      if (customerEmail) {
+      if (isValidCustomerEmail(customerEmail)) {
         try {
           const customerHtml = getClientInvoiceHtml({
             order: formattedOrderData,
@@ -146,7 +179,7 @@ export const sendOrderEmailsAsynchronously = (order) => {
           await activeTransport.sendMail({
             from: fromAddress,
             to: customerEmail,
-            subject: `Decantre BD: Order Confirmation - #${orderId}`,
+            subject: `${env.SMTP_FROM_NAME || "Store"}: Order Confirmation - #${orderId}`,
             html: customerHtml
           });
           console.log(`[Email Notification] Customer confirmation email sent to: ${customerEmail}`);
@@ -155,17 +188,22 @@ export const sendOrderEmailsAsynchronously = (order) => {
         }
       }
 
-      // 2. Resolve Admin Recipients: decantre.store@gmail.com AND database Super Admin / Owner / Admin EXCLUDING ikramul.web@gmail.com
-      const adminRecipientsSet = new Set(["decantre.store@gmail.com"]);
+      // 2. Resolve Admin Recipients
+      const adminRecipientsSet = new Set();
+      const activeClientKey = env.CLIENT_NAME || "demo";
+      if (activeClientKey === "decantre") {
+        adminRecipientsSet.add("decantre.store@gmail.com");
+      }
 
       try {
         const superAdmins = await UserModel.find({
           role: { $in: ["Owner", "Admin", "Super Admin", "Manager"] },
-          $or: [{ isActive: true }, { active: true }, { isActive: { $exists: false } }]
-        }).select("email").lean();
+          $or: [{ isActive: true }, { active: true }, { isActive: { $exists: false } }],
+          receiveEmailNotifications: { $ne: false },
+        }).select("email receiveEmailNotifications").lean();
 
         for (const adminUser of superAdmins) {
-          if (adminUser.email) {
+          if (adminUser.email && adminUser.receiveEmailNotifications !== false) {
             adminRecipientsSet.add(adminUser.email.toLowerCase().trim());
           }
         }
@@ -173,8 +211,14 @@ export const sendOrderEmailsAsynchronously = (order) => {
         console.error("[Email Notification] Database query for super admin emails failed, falling back to default admins:", dbErr.message);
       }
 
-      // Explicitly EXCLUDE ikramul.web@gmail.com as requested
+      // Explicitly EXCLUDE emails that should not receive admin notifications
       adminRecipientsSet.delete("ikramul.web@gmail.com");
+      adminRecipientsSet.delete("md.ikr4m@gmail.com");
+
+      // For demo / plexivia environment, ensure info@plexivia.online receives notifications
+      if (activeClientKey === "demo" || (env.SMTP_USER && env.SMTP_USER.includes("plexivia"))) {
+        adminRecipientsSet.add("info@plexivia.online");
+      }
 
       const adminRecipients = Array.from(adminRecipientsSet);
       console.log(`[Email Notification] Admin notification targets: ${adminRecipients.join(", ")}`);
@@ -186,7 +230,7 @@ export const sendOrderEmailsAsynchronously = (order) => {
           await activeTransport.sendMail({
             from: fromAddress,
             to: adminRecipients,
-            subject: `Decantre BD: You have got a new order - #${orderId}`,
+            subject: `${env.SMTP_FROM_NAME || "Store"}: You have got a new order - #${orderId}`,
             html: adminHtml
           });
           console.log(`[Email Notification] Admin notification email successfully sent to: ${adminRecipients.join(", ")}`);

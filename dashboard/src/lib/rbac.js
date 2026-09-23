@@ -7,8 +7,12 @@ export const hasMenuAccess = (role, menuKey) => {
   const normalizedRole = String(role).trim();
   const lowerRole = normalizedRole.toLowerCase();
 
-  if (menuKey === 'settings' || menuKey.startsWith('settings.') || menuKey.startsWith('settings/')) {
-    return lowerRole === 'owner' || lowerRole === 'admin';
+  if (lowerRole === 'owner' || lowerRole === 'admin') {
+    return true;
+  }
+
+  if (menuKey === 'admin' || menuKey.startsWith('admin.') || menuKey.startsWith('admin/')) {
+    return false;
   }
 
   const roleConfig =

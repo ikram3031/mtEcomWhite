@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ProductsTable } from '@/components/dashboard/products-table';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Trash2, PackageX } from 'lucide-react';
@@ -33,9 +34,10 @@ import { apiClient } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-const ProductsPage = () => {
+// Renders the products management interface with search, filters, pagination, and bulk stock controls
+const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = 'Products & Inventory' }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState(fixedCategory || 'All');
   const [brandFilter, setBrandFilter] = useState('All');
   const [stockStatusFilter, setStockStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +52,21 @@ const ProductsPage = () => {
   const queryClient = useQueryClient();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
+
+  useEffect(() => {
+    if (fixedCategory && categories.length > 0) {
+      const match = categories.find(
+        (c) =>
+          c.name?.toLowerCase() === fixedCategory.toLowerCase() ||
+          c.slug?.toLowerCase() === fixedCategory.toLowerCase() ||
+          c.name?.toLowerCase().includes(fixedCategory.toLowerCase()) ||
+          c.slug?.toLowerCase().includes(fixedCategory.toLowerCase())
+      );
+      if (match?.name) {
+        setCategoryFilter(match.name);
+      }
+    }
+  }, [fixedCategory, categories]);
 
   const handleSearch = (q) => {
     setSearchQuery(q);
@@ -115,17 +132,20 @@ const ProductsPage = () => {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Products & Inventory</h2>
-        <a
-          href="/dashboard/products/new"
+        <h2 className="text-3xl font-bold tracking-tight">{pageTitle}</h2>
+        <Link
+          to={
+            fixedCategory
+              ? `/dashboard/products/new?category=${encodeURIComponent(fixedCategory.toLowerCase())}`
+              : '/dashboard/products/new'
+          }
           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add New Product
-        </a>
+        </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <div className="relative flex-1 w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -168,17 +188,23 @@ const ProductsPage = () => {
                 ))}
               </div>
 
-              <Select value={categoryFilter} onValueChange={handleCategory}>
-                <SelectTrigger className="w-[160px] h-9 cursor-pointer text-xs">
-                  <span>{categoryFilter === 'All' ? 'Category: All' : `Category: ${categoryFilter}`}</span>
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-md" side="bottom">
-                  <SelectItem value="All">Category: All</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.did} value={cat.name}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {fixedCategory ? (
+                <div className="flex items-center h-9 px-3 border rounded-md bg-muted/50 text-xs font-medium text-foreground shrink-0 select-none">
+                  <span>Category: {categoryFilter}</span>
+                </div>
+              ) : (
+                <Select value={categoryFilter} onValueChange={handleCategory}>
+                  <SelectTrigger className="w-[160px] h-9 cursor-pointer text-xs">
+                    <span>{categoryFilter === 'All' ? 'Category: All' : `Category: ${categoryFilter}`}</span>
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-md" side="bottom">
+                    <SelectItem value="All">Category: All</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.did} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
               <Select value={brandFilter} onValueChange={handleBrand}>
                 <SelectTrigger className="w-[160px] h-9 cursor-pointer text-xs">
@@ -247,6 +273,7 @@ const ProductsPage = () => {
             onTotalPagesChange={setTotalPages}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
+            fixedOnSale={fixedOnSale}
           />
 
           {totalPages > 1 && (

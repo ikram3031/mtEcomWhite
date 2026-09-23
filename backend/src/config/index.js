@@ -39,3 +39,5 @@ export const getClientPolicy = (policyPath, defaultValue = null) => {
   }
   return current !== undefined ? current : defaultValue;
 };
+
+export { getDynamicCorsConfig } from "./corsOrigins.js";

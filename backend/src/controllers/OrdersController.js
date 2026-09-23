@@ -15,11 +15,13 @@ import { buildAllowedOrderUpdates,
 import { getClientInvoiceHtml } from '../templates/invoices/index.js';
 import { LogModel } from '../models/log.model.js';
 import { broadcastLiveNotification } from '../websocket.js';
+import { config } from '../config/index.js';
 
 const { Types } = mongoose;
 
 import { sendOrderEmailsAsynchronously } from '../utils/orderDelivery.js';
 import { sendServerPurchaseEvent } from '../services/facebookCapi.service.js';
+import { sendTikTokServerPurchaseEvent } from '../services/tiktokEventsApi.service.js';
 
 // Create a new order from checkout payload and sync related payment/member data.
 export const createOrder = async (req, res, next) => {
@@ -104,6 +106,9 @@ export const createOrder = async (req, res, next) => {
 
     // Safely dispatch server-side Meta Conversions API (CAPI) Purchase event
     sendServerPurchaseEvent(createdOrder, req);
+
+    // Safely dispatch server-side TikTok Events API CompletePayment event
+    sendTikTokServerPurchaseEvent(createdOrder, req);
 
     // Automatically record newOrder activity log
     try {
@@ -602,31 +607,55 @@ export const getOrderInvoiceView = async (req, res, next) => {
       return res.status(404).send("<h1 style='font-family:sans-serif;text-align:center;padding:50px;'>Order Invoice Not Found</h1>");
     }
 
+    const subtotal = Number(order.totals?.subtotal || order.subtotal || 0);
+    const shippingFee = Number(order.totals?.shippingFee || order.shippingFee || order.shippingTotalAmount || 0);
+    const discountAmount = Number(order.discountTotalAmount || order.totals?.discount || 0);
+    const calculatedTotal = subtotal + shippingFee - discountAmount;
+    const totalAmount = Number(order.totals?.total !== undefined ? order.totals.total : (order.totalAmount !== undefined ? order.totalAmount : calculatedTotal));
+    const couponCode = order.couponCode ? String(order.couponCode).trim().toUpperCase() : null;
+
     const formattedOrderData = {
       orderId: order.orderNumber || order.did || order._id?.toString()?.slice(-6),
+      status: order.status || 'processing',
+      orderType: order.orderType || 'online',
       createdAt: order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-      customerName: order.billingInfo?.fullName || "Customer",
+      customerName: order.billingInfo?.fullName || "Valued Customer",
       customerEmail: order.billingInfo?.email || "",
       customerPhone: order.billingInfo?.phone || "",
       billingAddress: order.billingInfo || {},
-      shippingAddress: order.shippingInfo || {},
-      items: Array.isArray(order.items) ? order.items.map(item => ({
-        productName: item.name || "Product",
-        variantName: item.size || item.variant || "",
-        quantity: item.quantity || 1,
-        price: item.unitPrice || item.price || 0,
-        subtotal: (item.unitPrice || item.price || 0) * (item.quantity || 1)
-      })) : [],
-      subtotal: order.totals?.subtotal || order.subtotal || 0,
-      shippingFee: order.totals?.shippingFee || order.shippingFee || 0,
-      totalAmount: order.totals?.total || order.totalAmount || 0,
-      paymentMethod: order.paymentMethod || "Cash on Delivery"
+      shippingAddress: order.shippingInfo || order.billingInfo || {},
+      items: Array.isArray(order.items) ? order.items.map(item => {
+        const qty = Number(item.quantity || 1);
+        const unitPrice = Number(item.unitPrice ?? item.price ?? 0);
+        const itemSubtotal = Number(item.subtotal ?? (unitPrice * qty) ?? 0);
+        const variantParts = [item.size, item.concentration, item.variant, item.variantName].filter(Boolean);
+        const variantName = [...new Set(variantParts)].join(' • ');
+
+        return {
+          productName: item.name || item.productName || "Product",
+          variantName,
+          size: item.size || "",
+          concentration: item.concentration || "",
+          quantity: qty,
+          price: unitPrice,
+          unitPrice,
+          subtotal: itemSubtotal
+        };
+      }) : [],
+      subtotal,
+      shippingFee,
+      discountAmount,
+      couponCode,
+      totalAmount,
+      paymentMethod: order.paymentMethod || "Cash on Delivery",
     };
 
+    const clientKey = order.client || config.clientKey || 'decantre';
     const invoiceHtml = getClientInvoiceHtml({
       order: formattedOrderData,
       isPrintView: true,
-      client: order.client || 'decantre',
+      client: clientKey,
+      logoUrl: config.logoUrl || undefined,
     });
     res.setHeader("Content-Type", "text/html");
     res.setHeader("Content-Disposition", `inline; filename="Invoice-${formattedOrderData.orderId}.pdf"`);

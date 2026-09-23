@@ -4,6 +4,10 @@ import {
   updateMetaPixelSettings,
   testMetaPixelConnection,
   getPublicMetaPixelConfig,
+  getTikTokPixelSettings,
+  updateTikTokPixelSettings,
+  testTikTokPixelConnection,
+  getPublicTikTokPixelConfig,
   getGoogleAnalyticsSettings,
   updateGoogleAnalyticsSettings,
   getSeoSettings,
@@ -18,6 +22,9 @@ const settingsRouter = Router();
 
 // Public sanitized Meta Pixel configuration for customer storefront
 settingsRouter.get("/public/meta-pixel", getPublicMetaPixelConfig);
+
+// Public sanitized TikTok Pixel configuration for customer storefront
+settingsRouter.get("/public/tiktok-pixel", getPublicTikTokPixelConfig);
 
 // Protected Meta Pixel and CAPI administration endpoints
 settingsRouter.get(
@@ -39,6 +46,28 @@ settingsRouter.post(
   authenticateToken,
   authorizeRoles("Owner", "Admin"),
   testMetaPixelConnection
+);
+
+// Protected TikTok Pixel and Events API administration endpoints
+settingsRouter.get(
+  "/tiktok-pixel",
+  authenticateToken,
+  authorizeRoles("Owner", "Admin"),
+  getTikTokPixelSettings
+);
+
+settingsRouter.put(
+  "/tiktok-pixel",
+  authenticateToken,
+  authorizeRoles("Owner", "Admin"),
+  updateTikTokPixelSettings
+);
+
+settingsRouter.post(
+  "/tiktok-pixel/test",
+  authenticateToken,
+  authorizeRoles("Owner", "Admin"),
+  testTikTokPixelConnection
 );
 
 // Protected Google Analytics administration endpoints

@@ -226,7 +226,7 @@ const StockManagementPage = () => {
                               <span
                                 key={v.size}
                                 className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
-                                  v.stockQuantity === 0
+                                  v.stockStatus === 'outofstock' || v.stockQuantity === 0
                                     ? 'border-destructive/30 bg-destructive/5 text-destructive'
                                     : v.stockQuantity < 5
                                     ? 'border-amber-500/30 bg-amber-500/5 text-amber-600'

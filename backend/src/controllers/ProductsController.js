@@ -151,8 +151,13 @@ export const createProduct = async (req, res, next) => {
             sku: v.sku || "",
             sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
             imageUrl: v.imageUrl || null,
+            stockStatus: v.stockStatus || "instock",
           }))
         : [];
+      if (productData.variants.length > 0) {
+        const anyInStock = productData.variants.some((v) => v.stockStatus === "instock");
+        productData.stockStatus = anyInStock ? "instock" : "outofstock";
+      }
     } else {
       productData.price = Number(body.price || 0);
       productData.offerPrice =
@@ -395,18 +400,26 @@ export const updateProduct = async (req, res, next) => {
     if (product.type === "variant") {
       if (body.variants !== undefined) {
         product.variants = Array.isArray(body.variants)
-          ? body.variants.map((v, i) => ({
-              size: v.size,
-              price: Number(v.price),
-              offerPrice:
-                v.offerPrice !== undefined && v.offerPrice !== null
-                  ? Number(v.offerPrice)
-                  : null,
-              sku: v.sku || "",
-              sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : i,
-              imageUrl: v.imageUrl || null,
-            }))
+          ? body.variants.map((v, i) => {
+              const existing = (product.variants || []).find((ev) => ev.size === v.size) || product.variants?.[i] || {};
+              return {
+                size: v.size || existing.size,
+                price: v.price !== undefined ? Number(v.price) : (existing.price ?? 0),
+                offerPrice:
+                  v.offerPrice !== undefined
+                    ? (v.offerPrice !== null ? Number(v.offerPrice) : null)
+                    : (existing.offerPrice ?? null),
+                sku: v.sku !== undefined ? (v.sku || "") : (existing.sku || ""),
+                sortOrder: v.sortOrder !== undefined ? Number(v.sortOrder) : (existing.sortOrder ?? i),
+                imageUrl: v.imageUrl !== undefined ? (v.imageUrl || null) : (existing.imageUrl ?? null),
+                stockStatus: v.stockStatus || existing.stockStatus || "instock",
+              };
+            })
           : [];
+        if (body.stockStatus === undefined && product.variants.length > 0) {
+          const anyInStock = product.variants.some((v) => v.stockStatus === "instock");
+          product.stockStatus = anyInStock ? "instock" : "outofstock";
+        }
       }
       product.price = undefined;
       product.offerPrice = undefined;

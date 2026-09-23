@@ -306,7 +306,6 @@ const NewInStoreOrderPage = () => {
   const [cart, setCart] = useState([]);
   const [dialogProduct, setDialogProduct] = useState(null);
   const [completedOrder, setCompletedOrder] = useState(null);
-  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
 
   const [discount, setDiscount] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -386,7 +385,7 @@ const NewInStoreOrderPage = () => {
       const billingInfo = {
         fullName: customerName.trim() || "Walk-in Customer",
         phone: `+880${customerPhone.trim()}`,
-        email: customerEmail.trim() || `instore@${clientConfig?.domain || 'decantrebd.com'}`,
+        email: customerEmail.trim() || "",
         address: customerAddress.trim() || "In-Store",
         thana: "Dhaka",
         district: "Dhaka",
@@ -450,7 +449,7 @@ const NewInStoreOrderPage = () => {
         orderNumber,
         invoiceUrl,
         customerName: customerName.trim() || "Walk-in Customer",
-        customerEmail: customerEmail.trim() || `instore@${clientConfig?.domain || 'decantrebd.com'}`,
+        customerEmail: customerEmail.trim() || "",
         customerPhone: `+880${customerPhone.trim()}`,
         customerAddress: customerAddress.trim() || "In-Store",
         subtotalAmount: subtotal,
@@ -462,7 +461,7 @@ const NewInStoreOrderPage = () => {
       });
 
       toast.success(
-        "In-store order created successfully. Invoice generation is pending.",
+        "In-store order created successfully.",
       );
     } catch (err) {
       const msg =
@@ -472,44 +471,6 @@ const NewInStoreOrderPage = () => {
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSendInvoice = async () => {
-    if (!completedOrder) return;
-    setIsSendingInvoice(true);
-    try {
-      const createdDate = new Date();
-      const dueDate = new Date(createdDate);
-      dueDate.setDate(createdDate.getDate() + 7);
-
-      await apiClient.post("/api/v1/sendEmail/invoice", {
-        email: completedOrder.customerEmail,
-        invoiceNumber: completedOrder.orderNumber,
-        createdDate: createdDate.toISOString().split("T")[0],
-        dueDate: dueDate.toISOString().split("T")[0],
-        sellerName: "Decantre",
-        sellerAddress: "House 20, Rd 10, Uttara, Dhaka 1230",
-        buyerName: completedOrder.customerName,
-        buyerAddress: completedOrder.customerAddress,
-        buyerEmail: completedOrder.customerEmail,
-        paymentMethod: completedOrder.paymentMethod,
-        paymentReference: completedOrder.orderNumber,
-        items: completedOrder.items,
-        subtotal: formatBDT(completedOrder.subtotalAmount || completedOrder.totalAmount),
-        taxes: "৳0",
-        discount: completedOrder.discountAmount ? formatBDT(completedOrder.discountAmount) : "৳0",
-        total: formatBDT(completedOrder.totalAmount),
-        invoiceUrl: completedOrder.invoiceUrl,
-        notes: "Thank you for shopping with Decantre.",
-      });
-      toast.success("Invoice email sent successfully.");
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to send invoice email.",
-      );
-    } finally {
-      setIsSendingInvoice(false);
     }
   };
 
@@ -757,7 +718,7 @@ const NewInStoreOrderPage = () => {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs text-muted-foreground block">
-                    Email
+                    Email (Optional)
                   </label>
                   {isEmailInvalid && (
                     <span className="text-[11px] text-destructive font-medium">
@@ -767,7 +728,7 @@ const NewInStoreOrderPage = () => {
                 </div>
                 <Input
                   type="email"
-                  placeholder="email@example.com"
+                  placeholder="email@example.com (optional)"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   className={isEmailInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
@@ -1023,12 +984,14 @@ const NewInStoreOrderPage = () => {
                     </p>
                     <p className="font-medium">{getPaymentMethodLabel(completedOrder.paymentMethod)}</p>
                   </div>
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                      Email
-                    </p>
-                    <p>{completedOrder.customerEmail}</p>
-                  </div>
+                  {completedOrder.customerEmail ? (
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Email
+                      </p>
+                      <p>{completedOrder.customerEmail}</p>
+                    </div>
+                  ) : null}
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                       Phone
@@ -1039,27 +1002,19 @@ const NewInStoreOrderPage = () => {
               </div>
 
               <div className="space-y-1 text-sm">
-                <p className="font-medium">Invoice Actions</p>
+                <p className="font-medium">Invoice</p>
                 <p className="text-xs text-muted-foreground">
-                  The invoice is generated and can be downloaded or emailed on
-                  demand.
+                  The invoice is generated and ready to download or print.
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
-                  variant="outline"
+                  variant="default"
                   className="w-full"
                   onClick={handleDownloadInvoice}
                 >
-                  Download Invoice
-                </Button>
-                <Button
-                  className="w-full"
-                  onClick={handleSendInvoice}
-                  disabled={isSendingInvoice}
-                >
-                  {isSendingInvoice ? "Sending..." : "Send Invoice"}
+                  Download / Print Invoice
                 </Button>
               </div>
             </div>

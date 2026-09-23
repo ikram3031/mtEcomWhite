@@ -110,6 +110,14 @@ const CMSContentPage = () => {
         slottedFilenames.add(slot.filename.toLowerCase());
         const withoutExt = slot.filename.replace(/\.[^/.]+$/, '').toLowerCase();
         slottedFilenames.add(withoutExt);
+        if (slot.key === 'logo') {
+          slottedFilenames.add('logo.webp');
+          slottedFilenames.add('logo');
+        }
+        if (slot.key === 'favicon') {
+          slottedFilenames.add('favicon.ico');
+          slottedFilenames.add('favicon');
+        }
       });
     });
 
@@ -121,10 +129,13 @@ const CMSContentPage = () => {
   }, [assets, sections]);
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ file, targetFilename }) => {
+    mutationFn: async ({ file, targetFilename, slotKey }) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('targetFilename', targetFilename);
+      if (slotKey) {
+        formData.append('slotKey', slotKey);
+      }
 
       const res = await apiClient.post('/api/v1/dash/assets/upload-slot', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -134,12 +145,17 @@ const CMSContentPage = () => {
     onSuccess: (res, vars) => {
       toast.success(res.message || `Saved as ${vars.targetFilename}`);
       setActiveUploadingSlot(null);
-      if (vars.targetFilename?.includes('logo') || vars.slotKey === 'logo') {
+      const isBranding =
+        vars.targetFilename?.includes('logo') ||
+        vars.targetFilename?.includes('favicon') ||
+        vars.slotKey === 'logo' ||
+        vars.slotKey === 'favicon';
+      if (isBranding) {
         const newVer = Date.now();
         try {
           localStorage.setItem('brand_logo_version', String(newVer));
         } catch {}
-        window.dispatchEvent(new CustomEvent('brand-logo-updated', { detail: { timestamp: newVer } }));
+        window.dispatchEvent(new CustomEvent('brand-logo-updated', { detail: { timestamp: newVer, slotKey: vars.slotKey } }));
       }
       queryClient.invalidateQueries({ queryKey: ['dash-assets'] });
     },
@@ -188,6 +204,7 @@ const CMSContentPage = () => {
     uploadMutation.mutate({
       file,
       targetFilename: slot.filename,
+      slotKey: slot.key,
     });
     e.target.value = '';
   };
@@ -285,7 +302,11 @@ const CMSContentPage = () => {
               {section.slots?.map((slot) => {
                 const targetName = slot.filename.toLowerCase();
                 const withoutExt = targetName.replace(/\.[^/.]+$/, '');
-                const currentAsset = assetsMap.get(targetName) || assetsMap.get(withoutExt);
+                const currentAsset =
+                  assetsMap.get(targetName) ||
+                  assetsMap.get(withoutExt) ||
+                  (slot.key === 'logo' ? assetsMap.get('logo.webp') || assetsMap.get('logo') : null) ||
+                  (slot.key === 'favicon' ? assetsMap.get('favicon.ico') || assetsMap.get('favicon') : null);
                 const isUploadingThisSlot =
                   activeUploadingSlot === slot.key && uploadMutation.isPending;
 

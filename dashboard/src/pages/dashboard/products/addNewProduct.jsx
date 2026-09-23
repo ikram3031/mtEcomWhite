@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, X } from "lucide-react";
 import { apiClient, baseURL } from "@/lib/api-client";
@@ -28,6 +28,7 @@ const emptyVariant = () => ({
   imageFile: null,
   imagePreview: "",
   imageError: "",
+  stockStatus: "instock",
 });
 
 function slugify(text) {
@@ -44,6 +45,9 @@ const API_BASE = (baseURL || "").replace(/\/$/, "");
 
 const AddNewProduct = () => {
   const navigate = useNavigate();
+  const { category: paramCategory } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryCategory = searchParams.get("category");
   const [isCreating, setIsCreating] = useState(false);
 
   // Draft source info (duplicate banner)
@@ -222,11 +226,39 @@ const AddNewProduct = () => {
           imagePreview: v.imageUrl || "",
           imageFile: null,
           imageError: "",
+          stockStatus: v.stockStatus || "instock",
         }))
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // শুধু mount-এ একবার
+  }, []);
+
+  useEffect(() => {
+    const rawCategory = paramCategory || queryCategory;
+    if (!rawCategory || categories.length === 0) return;
+
+    const cleanCategory = decodeURIComponent(rawCategory)
+      .replace(/^\/+|\/+$/g, "")
+      .trim()
+      .toLowerCase();
+
+    if (!cleanCategory) return;
+
+    const matchedCat = categories.find(
+      (c) =>
+        c.slug?.toLowerCase() === cleanCategory ||
+        c.name?.toLowerCase() === cleanCategory ||
+        c.slug?.toLowerCase().includes(cleanCategory) ||
+        c.name?.toLowerCase().includes(cleanCategory) ||
+        c.did?.toLowerCase() === cleanCategory ||
+        String(c._id).toLowerCase() === cleanCategory
+    );
+
+    if (matchedCat) {
+      const catVal = matchedCat.did || matchedCat.slug || String(matchedCat._id);
+      setCategorySlugs((prev) => (prev.includes(catVal) ? prev : [...prev, catVal]));
+    }
+  }, [paramCategory, queryCategory, categories]);
 
   useEffect(() => {
     const fetchAttributes = async () => {
@@ -518,6 +550,7 @@ const AddNewProduct = () => {
           sku: v.sku.trim(),
           sortOrder: i,
           imageUrl: varImageUrl || null,
+          stockStatus: v.stockStatus || "instock",
         });
       }
 

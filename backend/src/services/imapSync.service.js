@@ -37,6 +37,19 @@ const normalizeAddresses = (addressObject) => {
   }));
 };
 
+// Identifies automated bounce notices, delivery failure reports, and mailer-daemons
+const isBounceOrDaemonNotification = (fromAddress = "", subject = "") => {
+  const normalizedFrom = String(fromAddress || "").toLowerCase();
+  const normalizedSub = String(subject || "").toLowerCase();
+  return (
+    normalizedFrom.includes("mailer-daemon") ||
+    normalizedFrom.includes("postmaster") ||
+    normalizedSub.includes("undelivered mail") ||
+    normalizedSub.includes("delivery status notification") ||
+    normalizedSub.includes("failure notice")
+  );
+};
+
 // Parses a single MIME message stream and saves or updates it in MongoDB
 const parseAndSaveMessage = async (msgSource, uid, folder, flags = []) => {
   try {
@@ -108,7 +121,7 @@ const parseAndSaveMessage = async (msgSource, uid, folder, flags = []) => {
     );
 
     // If new email arrived in INBOX, trigger live WebSocket notification
-    if (isNewIncoming) {
+    if (isNewIncoming && !isBounceOrDaemonNotification(from.address, subject)) {
       try {
         const senderName = from.name || from.address;
         const log = await LogModel.create({

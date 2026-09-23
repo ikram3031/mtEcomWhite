@@ -22,7 +22,7 @@
   ],
   "stockManagement": {
     "simpleProduct": true,
-    "variableProduct": false
+    "variableProduct": true
   },
   "reports": {
     "enableInStoreFilter": true,
@@ -76,9 +76,11 @@
     "orders",
     "orders.new",
     "orders.list",
+    "orders.instore",
     "products",
     "products.new",
     "products.list",
+    "products.miniature",
     "products.categories",
     "products.brands",
     "products.attributes",

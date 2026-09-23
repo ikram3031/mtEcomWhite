@@ -27,6 +27,7 @@ const emptyVariant = () => ({
   imageFile: null,
   imagePreview: "",
   imageError: "",
+  stockStatus: "instock",
 });
 
 function slugify(text) {
@@ -281,6 +282,7 @@ const EditProductPage = () => {
                 imagePreview: v.imageUrl || "",
                 imageFile: null,
                 imageError: "",
+                stockStatus: v.stockStatus || "instock",
               }))
             );
           }
@@ -569,6 +571,7 @@ const EditProductPage = () => {
           sku: v.sku.trim(),
           sortOrder: i,
           imageUrl: varImageUrl || null,
+          stockStatus: v.stockStatus || "instock",
         });
       }
 

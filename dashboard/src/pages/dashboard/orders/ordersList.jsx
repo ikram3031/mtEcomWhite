@@ -3,6 +3,7 @@ import { OrdersTable } from '@/components/dashboard/orders-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Download, PlusCircle, Trash2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import {
   Select,
@@ -136,7 +137,7 @@ const OrdersPage = () => {
         <h2 className="text-3xl font-bold tracking-tight">Orders Management</h2>
         <div className="flex items-center gap-2">
           {clientConfig?.features?.inStoreOrder !== false && (
-            <Button variant="outline" nativeButton={false} render={<a href="/dashboard/orders/new" />}>
+            <Button variant="outline" nativeButton={false} render={<Link to="/dashboard/orders/new" />}>
               <PlusCircle className="mr-2 h-4 w-4" />
               New In-Store Order
             </Button>

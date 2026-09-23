@@ -12,6 +12,9 @@ CLIENT ?= $(shell if [ -f .client ]; then cat .client | tr -d ' \r\n'; \
 	elif [ -f /opt/decantre/configs/backend.env ]; then echo decantre; \
 	elif [ -f /opt/engulfic/configs/backend.env ]; then echo engulfic; \
 	elif [ -f /opt/toyoland/configs/backend.env ]; then echo toyoland; \
+	elif [ -f /opt/kawaiikutir/configs/backend.env ]; then echo kawaiikutir; \
+	elif [ -f /opt/mocondom/configs/backend.env ]; then echo mocondom; \
+	elif [ -f /opt/demo/configs/backend.env ]; then echo demo; \
 	elif [ -f .env ]; then echo local; \
 	else node scripts/sync-config.js --detect-only 2>/dev/null || echo decantre; fi)
 
@@ -53,8 +56,11 @@ deploy:
 	git pull origin Live
 	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache
-	$(COMPOSE) up -d
-	@echo "✓ Deployment complete for [$(CLIENT)]!"
+	$(COMPOSE) up -d --force-recreate
+	@docker builder prune -f 2>/dev/null || true
+	@systemctl reload nginx 2>/dev/null || true
+	@node scripts/purge-cf.js $(CLIENT)
+	@echo "✓ Full Deployment and Cache Purge complete for [$(CLIENT)]!"
 
 build: deploy
 
@@ -63,7 +69,9 @@ build-backend:
 	git pull origin Live
 	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache backend
-	$(COMPOSE) up -d backend
+	$(COMPOSE) up -d --force-recreate backend
+	@docker builder prune -f 2>/dev/null || true
+	@systemctl reload nginx 2>/dev/null || true
 	@echo "✓ Backend rebuild complete!"
 
 build-bg: build-backend
@@ -73,10 +81,16 @@ build-dashboard:
 	git pull origin Live
 	@node scripts/sync-config.js $(CLIENT)
 	$(COMPOSE) build --no-cache dashboard
-	$(COMPOSE) up -d dashboard
-	@echo "✓ Dashboard rebuild complete!"
+	$(COMPOSE) up -d --force-recreate dashboard
+	@docker builder prune -f 2>/dev/null || true
+	@systemctl reload nginx 2>/dev/null || true
+	@node scripts/purge-cf.js $(CLIENT)
+	@echo "✓ Dashboard rebuild, Docker recreation, Nginx reload & Cloudflare purge complete!"
 
 build-dash: build-dashboard
+
+purge-cf:
+	@node scripts/purge-cf.js $(CLIENT)
 
 status:
 	$(COMPOSE) ps

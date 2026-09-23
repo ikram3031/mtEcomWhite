@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { clientConfig } from '@/clientConfig';
-import { apiClient } from '@/lib/api-client';
-import engulficFallbackLogo from '@/assets/engulfic_logo.webp';
-import decantreFallbackLogo from '@/assets/decantre_logo.png';
-import plexiviaFallbackLogo from '@/assets/plexivia.png';
+import { apiClient, resolveImageUrl } from '@/lib/api-client';
+import surokkhaLogo from '@/assets/surokkha_logo.png';
+import decantreLogo from '@/assets/decantre_logo.png';
+import engulficLogo from '@/assets/engulfic_logo.webp';
 
-const fallbackAssets = {
-  engulfic: engulficFallbackLogo,
-  decantre: decantreFallbackLogo,
-  plexivia: plexiviaFallbackLogo,
+const staticClientLogos = {
+  surokkha: surokkhaLogo,
+  decantre: decantreLogo,
+  engulfic: engulficLogo,
 };
 
 // Renders the tenant branding logo with fixed proportional width and dynamic height
@@ -20,8 +20,7 @@ export const BrandLogo = ({
   iconOnly = false,
   centered = false,
 }) => {
-  const { clientKey = 'decantre', brandName = 'Decantre', logoUrl } = clientConfig || {};
-  const fallbackAsset = fallbackAssets[clientKey] || null;
+  const { clientKey = 'surokkha', brandName = 'Surokkha', logoUrl } = clientConfig || {};
 
   const [logoVersion, setLogoVersion] = useState(() => {
     try {
@@ -31,22 +30,16 @@ export const BrandLogo = ({
     }
   });
 
-  const defaultLogo = '/uploads/assets/logo.webp';
-  const rawUrl = src || logoUrl || import.meta.env?.VITE_LOGO_URL || defaultLogo;
+  const bundledLogo = staticClientLogos[clientKey?.toLowerCase()] || surokkhaLogo;
+  const rawUrl = src || (logoUrl && !logoUrl.includes('demo_logo') ? logoUrl : bundledLogo) || bundledLogo;
 
+  // Resolves image paths and appends version query string for real-time asset invalidation
   const resolveLogoUrl = (url, version) => {
     if (!url) return null;
-    let finalUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('data:') && !url.startsWith('blob:')) {
-      const base = apiClient?.defaults?.baseURL || '';
-      if (url.startsWith('/') && base.endsWith('/')) {
-        finalUrl = `${base.slice(0, -1)}${url}`;
-      } else if (!url.startsWith('/') && !base.endsWith('/')) {
-        finalUrl = `${base}/${url}`;
-      } else {
-        finalUrl = `${base}${url}`;
-      }
+    if (typeof url === 'string' && (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/src/assets/'))) {
+      return url;
     }
+    let finalUrl = resolveImageUrl(url);
     if (version && !finalUrl.startsWith('data:') && !finalUrl.startsWith('blob:')) {
       finalUrl += `${finalUrl.includes('?') ? '&' : '?'}v=${version}`;
     }
@@ -54,7 +47,7 @@ export const BrandLogo = ({
   };
 
   const primaryUrl = resolveLogoUrl(rawUrl, logoVersion);
-  const [currentSrc, setCurrentSrc] = useState(primaryUrl || fallbackAsset);
+  const [currentSrc, setCurrentSrc] = useState(primaryUrl || bundledLogo);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
@@ -73,13 +66,14 @@ export const BrandLogo = ({
   }, []);
 
   useEffect(() => {
-    setCurrentSrc(primaryUrl || fallbackAsset);
+    setCurrentSrc(primaryUrl || bundledLogo);
     setImageError(false);
-  }, [primaryUrl, fallbackAsset]);
+  }, [primaryUrl, bundledLogo]);
 
+  // Handles image load failures and falls back to bundled static logo
   const handleImageError = () => {
-    if (currentSrc !== fallbackAsset && fallbackAsset) {
-      setCurrentSrc(fallbackAsset);
+    if (currentSrc !== bundledLogo && bundledLogo) {
+      setCurrentSrc(bundledLogo);
     } else {
       setImageError(true);
     }
