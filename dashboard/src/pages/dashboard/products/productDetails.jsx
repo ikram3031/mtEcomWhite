@@ -218,8 +218,9 @@ const EditProductPage = () => {
               ? String(product.stock)
               : ""
           );
-          setUploadedImageUrl(product.imageUrl || "");
-          setImagePreview(product.imageUrl || "");
+          const mainImg = product.imageUrl || product.image_url || "";
+          setUploadedImageUrl(mainImg);
+          setImagePreview(mainImg);
           setTags(Array.isArray(product.tags) ? product.tags : []);
           if (product.season) {
             setSeason(
