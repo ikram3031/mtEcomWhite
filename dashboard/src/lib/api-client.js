@@ -2,42 +2,60 @@ import axios from 'axios';
 import { handleGlobalError } from './error-handler';
 import clientConfig from '@/clientConfig';
 
-export const baseURL = import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://server.decantrebd.com';
+// Dynamically determines active API Base URL from hostname or clientConfig
+export const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host.includes('surokkha')) {
+      return 'https://api.surokkha.store';
+    }
+    if (host.includes('engulfic')) {
+      return 'https://server.engulfic.com';
+    }
+    if (host.includes('decantre')) {
+      return 'https://server.decantrebd.com';
+    }
+  }
+  return import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://api.surokkha.store';
+};
+
+export const baseURL = getApiBaseUrl();
 
 // Resolves media asset paths to absolute URLs matching active Dev or Live environment endpoints
 export const resolveImageUrl = (raw) => {
   if (!raw || typeof raw !== 'string') return '';
   if (raw.startsWith('blob:') || raw.startsWith('data:')) return raw;
 
-  const cleanBase = (baseURL || '').replace(/\/$/, '');
+  const currentBase = getApiBaseUrl().replace(/\/$/, '');
 
   if (raw.startsWith('http://') || raw.startsWith('https://')) {
     try {
       const urlObj = new URL(raw);
       const isRawLocalhost = urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1';
-      const isBaseLocalhost = cleanBase.includes('localhost') || cleanBase.includes('127.0.0.1');
+      const isBaseLocalhost = currentBase.includes('localhost') || currentBase.includes('127.0.0.1');
 
       if (isBaseLocalhost && !isRawLocalhost && urlObj.pathname.startsWith('/uploads')) {
-        return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+        return `${currentBase}${urlObj.pathname}${urlObj.search}`;
       } else if (!isBaseLocalhost && isRawLocalhost && urlObj.pathname.startsWith('/uploads')) {
-        return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+        return `${currentBase}${urlObj.pathname}${urlObj.search}`;
       }
     } catch (_) {}
     return raw;
   }
 
-  return `${cleanBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
+  return `${currentBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
 };
 
 export const apiClient = axios.create({
-  baseURL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request Interceptor: Attach Bearer Token if available
+// Request Interceptor: Ensure dynamic baseURL and attach Bearer Token if available
 apiClient.interceptors.request.use((config) => {
+  config.baseURL = getApiBaseUrl();
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
     if (token) {

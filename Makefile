@@ -13,6 +13,7 @@ CLIENT ?= $(shell if [ -f .client ]; then cat .client | tr -d ' \r\n'; \
 	elif [ -f /opt/engulfic/configs/backend.env ]; then echo engulfic; \
 	elif [ -f /opt/toyoland/configs/backend.env ]; then echo toyoland; \
 	elif [ -f /opt/kawaiikutir/configs/backend.env ]; then echo kawaiikutir; \
+	elif [ -f /opt/surokkha/configs/backend.env ]; then echo surokkha; \
 	elif [ -f /opt/demo/configs/backend.env ]; then echo demo; \
 	elif [ -f .env ]; then echo local; \
 	else node scripts/sync-config.js --detect-only 2>/dev/null || echo decantre; fi)

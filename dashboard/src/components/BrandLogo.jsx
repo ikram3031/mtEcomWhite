@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { clientConfig } from '@/clientConfig';
 import { apiClient, resolveImageUrl } from '@/lib/api-client';
+import surokkhaLogo from '@/assets/surokkha_logo.png';
+import decantreLogo from '@/assets/decantre_logo.png';
+import engulficLogo from '@/assets/engulfic_logo.webp';
+
+const staticClientLogos = {
+  surokkha: surokkhaLogo,
+  decantre: decantreLogo,
+  engulfic: engulficLogo,
+};
+
 // Renders the tenant branding logo with fixed proportional width and dynamic height
 export const BrandLogo = ({
   src,
@@ -20,12 +30,16 @@ export const BrandLogo = ({
     }
   });
 
+  const bundledLogo = staticClientLogos[clientKey?.toLowerCase()] || null;
   const defaultLogo = '/uploads/assets/logo.webp';
-  const rawUrl = src || (logoUrl && !logoUrl.includes('demo_logo') ? logoUrl : defaultLogo) || defaultLogo;
+  const rawUrl = src || (logoUrl && !logoUrl.includes('demo_logo') ? logoUrl : (bundledLogo || defaultLogo)) || defaultLogo;
 
   // Resolves image paths and appends version query string for real-time asset invalidation
   const resolveLogoUrl = (url, version) => {
     if (!url) return null;
+    if (typeof url === 'string' && (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/src/assets/'))) {
+      return url;
+    }
     let finalUrl = resolveImageUrl(url);
     if (version && !finalUrl.startsWith('data:') && !finalUrl.startsWith('blob:')) {
       finalUrl += `${finalUrl.includes('?') ? '&' : '?'}v=${version}`;
@@ -34,7 +48,7 @@ export const BrandLogo = ({
   };
 
   const primaryUrl = resolveLogoUrl(rawUrl, logoVersion);
-  const [currentSrc, setCurrentSrc] = useState(primaryUrl);
+  const [currentSrc, setCurrentSrc] = useState(primaryUrl || bundledLogo);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
@@ -53,13 +67,17 @@ export const BrandLogo = ({
   }, []);
 
   useEffect(() => {
-    setCurrentSrc(primaryUrl);
+    setCurrentSrc(primaryUrl || bundledLogo);
     setImageError(false);
-  }, [primaryUrl]);
+  }, [primaryUrl, bundledLogo]);
 
-  // Handles image load failures and cleanly triggers text badge fallback
+  // Handles image load failures and falls back to bundled static logo
   const handleImageError = () => {
-    setImageError(true);
+    if (bundledLogo && currentSrc !== bundledLogo) {
+      setCurrentSrc(bundledLogo);
+    } else {
+      setImageError(true);
+    }
   };
 
   const isCentered = centered || className.includes('mx-auto') || className.includes('justify-center');

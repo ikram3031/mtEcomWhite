@@ -9,6 +9,7 @@ import coreRouter from "./routesIndex.js";
 import attributeRouter from "./dashboard/routes/attribute.route.js";
 import mediaAuditRouter from "./dashboard/routes/mediaAuditRoute.js";
 import developerRouter, { broadcastLogToClients } from "./routes/DeveloperRoute.js";
+import swaggerRouter from "./routes/SwaggerRoute.js";
 import { env } from "./config/env.js";
 import { getDynamicCorsConfig } from "./config/index.js";
 
@@ -205,8 +206,25 @@ export async function createApp() {
   });
 
   app.get("/", (req, res) => {
-    res.json({ "API is live": true });
+    res.json({
+      status: "success",
+      message: "Decantre BD Backend API is live",
+      documentation: {
+        swaggerUI: "/api-docs",
+        openApiJson: "/api/v1/swagger.json",
+        scalarUI: "/api/v1/developer/docs"
+      }
+    });
   });
+
+  // Swagger Documentation Routes
+  app.use("/api-docs", swaggerRouter);
+  app.use("/docs", swaggerRouter);
+  app.use("/swagger", swaggerRouter);
+  app.use("/api/v1/docs", swaggerRouter);
+  app.use("/api/v1/swagger", swaggerRouter);
+  app.get("/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
+  app.get("/api/v1/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
 
   app.use("/api/v1", coreRouter);
   app.use("/api/v1", attributeRouter);

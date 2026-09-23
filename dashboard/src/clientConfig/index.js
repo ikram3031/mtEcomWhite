@@ -2,6 +2,7 @@ import decantreConfig from './01decantre/config.json';
 import engulficConfig from './02engulfic/config.json';
 import toyolandConfig from './03toyoland/config.json';
 import kawaiikutirConfig from './04kawaiikutir/config.json';
+import surokkhaConfig from './05surokkha/config.json';
 import demoConfig from './00demo/config.json';
 import activeSyncedConfig from './activeConfig.json';
 
@@ -10,6 +11,7 @@ const clientConfigs = {
   engulfic: engulficConfig,
   toyoland: toyolandConfig,
   kawaiikutir: kawaiikutirConfig,
+  surokkha: surokkhaConfig,
   demo: demoConfig,
 };
 
@@ -24,11 +26,11 @@ const getClientFromHostname = () => {
 
 const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
 const detectedClient = getClientFromHostname();
-const activeKey = envClient || detectedClient || activeSyncedConfig?.clientKey || 'decantre';
+const activeKey = envClient || detectedClient || activeSyncedConfig?.clientKey || 'surokkha';
 
 export const clientConfig = activeKey === activeSyncedConfig?.clientKey
   ? activeSyncedConfig
-  : (clientConfigs[activeKey] || activeSyncedConfig || decantreConfig);
+  : (clientConfigs[activeKey] || activeSyncedConfig || surokkhaConfig);
 
 // Helper to inspect active policy options safely
 export const getPolicy = (policyPath, defaultValue = null) => {

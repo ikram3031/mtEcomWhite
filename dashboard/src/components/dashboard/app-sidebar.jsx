@@ -130,9 +130,11 @@ export const AppSidebar = ({ ...props }) => {
           {state === "expanded" ? (
             <>
               <div className="flex flex-col items-start gap-0.5 overflow-hidden">
-                <BrandLogo className="w-[115px] h-8 text-primary shrink-0" iconOnly={false} />
-                <span className="text-[10px] font-mono font-medium text-muted-foreground/75 tracking-wider pl-0.5">
-                  v{pkg.version || "3.03.01"}
+                <span className="text-xl font-heading font-extrabold text-white tracking-tight leading-tight">
+                  Surokkha
+                </span>
+                <span className="text-[11px] font-mono font-medium text-slate-400 tracking-wider">
+                  v{pkg.version || "3.03.06"}
                 </span>
               </div>
               <button
