@@ -1,13 +1,15 @@
 import { buildDecantreOrderInvoiceHtml } from "./decantreOrderInvoice.js";
+import { buildSurokkhaOrderInvoiceHtml } from "./surokkhaOrderInvoice.js";
 import { buildDashboardInvoiceHtml } from "../dashboardInvoiceTemplate.js";
 import { buildOrderInvoiceEmailHtml } from "../orderInvoiceEmailTemplate.js";
 
 /**
  * Registry of client-specific invoice templates.
- * Each client brand (Decantre, Engulfic, Toyoland, etc.) can maintain their own tailored invoice design.
+ * Each client brand (Decantre, Surokkha, Engulfic, Toyoland, etc.) can maintain their own tailored invoice design.
  */
 const CLIENT_INVOICE_TEMPLATES = {
   decantre: buildDecantreOrderInvoiceHtml,
+  surokkha: buildSurokkhaOrderInvoiceHtml,
   // Add other client templates here:
   // engulfic: buildEngulficOrderInvoiceHtml,
   // toyoland: buildToyolandOrderInvoiceHtml,
@@ -19,7 +21,7 @@ const CLIENT_INVOICE_TEMPLATES = {
  *
  * @param {Object} params
  * @param {Object} params.order - Formatted order data
- * @param {string} [params.client="decantre"] - Client store identifier ('decantre', 'engulfic', 'toyoland')
+ * @param {string} [params.client="decantre"] - Client store identifier ('decantre', 'surokkha', 'engulfic', 'toyoland')
  * @param {boolean} [params.isPrintView=false] - Print mode toggle
  * @param {string} [params.logoUrl] - Custom logo URL
  * @returns {string} Fully rendered HTML string
@@ -38,6 +40,7 @@ export const getClientInvoiceHtml = ({
 
 export {
   buildDecantreOrderInvoiceHtml,
+  buildSurokkhaOrderInvoiceHtml,
   buildDashboardInvoiceHtml,
   buildOrderInvoiceEmailHtml,
 };
