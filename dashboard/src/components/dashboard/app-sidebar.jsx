@@ -114,6 +114,8 @@ export const AppSidebar = ({ ...props }) => {
 
   // Evaluates menu visibility based on tenant feature flags and role access
   const isAllowed = (menuKey) => {
+    if (menuKey === "products.categories" && (features?.category === false || features?.categories === false)) return false
+    if ((menuKey === "products.attributes" || menuKey.startsWith("products.attributes")) && (features?.attribute === false || features?.attributes === false)) return false
     if (menuKey === "products.brands" && features?.brand === false) return false
     if (menuKey === "season" && features?.season === false) return false
     if ((menuKey === "tools.messages" || menuKey === "webmail") && features?.webmail === false) return false
@@ -131,7 +133,7 @@ export const AppSidebar = ({ ...props }) => {
             <>
               <div className="flex flex-col items-start gap-0.5 overflow-hidden">
                 <span className="text-xl font-heading font-extrabold text-white tracking-tight leading-tight">
-                  Surokkha
+                  {brandName || "Admin"}
                 </span>
                 <span className="text-[11px] font-mono font-medium text-slate-400 tracking-wider">
                   v{pkg.version || "3.03.06"}
