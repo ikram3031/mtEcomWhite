@@ -429,53 +429,6 @@ export const AppSidebar = ({ ...props }) => {
             </SidebarMenuItem>
           )}
 
-          {(isAllowed("analytics-reports") || isAllowed("analytics") || isAllowed("reports")) && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/reports")}
-                tooltip="Analytics & Reports"
-                onClick={() => toggleMenu("analytics-reports")}
-                className="cursor-pointer flex items-center justify-between w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Analytics & Reports</span>
-                </div>
-                <ChevronRight
-                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
-                    openMenu === "analytics-reports" ? "rotate-90 text-primary" : ""
-                  }`}
-                />
-              </SidebarMenuButton>
-              {openMenu === "analytics-reports" && (
-                <SidebarMenuSub>
-                  {(isAllowed("analytics") || isAllowed("tools.analytics")) && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}
-                        render={<Link to="/dashboard/analytics" />}
-                      >
-                        <LineChart className="h-3.5 w-3.5" />
-                        <span>Analytics</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                  {isAllowed("reports") && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/reports")}
-                        render={<Link to="/dashboard/reports" />}
-                      >
-                        <BarChart3 className="h-3.5 w-3.5" />
-                        <span>Reports</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                </SidebarMenuSub>
-              )}
-            </SidebarMenuItem>
-          )}
-
           {(isAllowed("tools") || isAllowed("logs")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -625,10 +578,12 @@ export const AppSidebar = ({ ...props }) => {
             </SidebarMenuItem>
           )}
 
-          {(isAllowed("admin") || isAllowed("users") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments")) && (
+          {(isAllowed("admin") || isAllowed("analytics") || isAllowed("reports") || isAllowed("users") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
+                  pathname.startsWith("/dashboard/analytics") ||
+                  pathname.startsWith("/dashboard/reports") ||
                   pathname.startsWith("/dashboard/users") ||
                   pathname.startsWith("/dashboard/activity-logs") ||
                   pathname.startsWith("/dashboard/billing") ||
@@ -651,6 +606,28 @@ export const AppSidebar = ({ ...props }) => {
               </SidebarMenuButton>
               {openMenu === "admin" && (
                 <SidebarMenuSub>
+                  {(isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("admin")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}
+                        render={<Link to="/dashboard/analytics" />}
+                      >
+                        <LineChart className="h-3.5 w-3.5" />
+                        <span>Analytics</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {(isAllowed("reports") || isAllowed("admin")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/reports")}
+                        render={<Link to="/dashboard/reports" />}
+                      >
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        <span>Reports</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                   {isAllowed("users") && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
