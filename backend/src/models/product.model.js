@@ -111,12 +111,12 @@ const productSchema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      default: null,
     },
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      default: null
+      default: null,
     },
   },
   {

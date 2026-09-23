@@ -351,6 +351,9 @@ export const updateProduct = async (req, res, next) => {
 
     if (userId) {
       product.updatedBy = userId;
+      if (!product.createdBy) {
+        product.createdBy = userId;
+      }
     }
 
     if (body.categories !== undefined || body.category !== undefined) {
