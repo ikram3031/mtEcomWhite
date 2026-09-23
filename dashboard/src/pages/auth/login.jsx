@@ -156,7 +156,7 @@ const LoginPage = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-9.5 h-10 text-sm bg-slate-950/80 border border-slate-700/80 text-white focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 placeholder:text-slate-500 rounded-xl transition shadow-inner"
-                      placeholder="admin@plexivia.com"
+                      placeholder="name@example.com"
                       required
                     />
                   </div>
