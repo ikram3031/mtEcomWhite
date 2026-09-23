@@ -48,6 +48,15 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "googleAnalytics": {
+    "measurementId": "G-3JHW9WK6GG",
+    "gtmId": "",
+    "propertyId": "",
+    "streamId": "15828364152",
+    "streamName": "Surokkha Web Stream",
+    "isVerified": true,
+    "enhancedMeasurement": true
+  },
   "logoUrl": "/uploads/assets/logo.png",
   "siteIconUrl": "/uploads/assets/favicon.ico",
   "assetsConfig": {
