@@ -20,7 +20,7 @@ export const BrandLogo = ({
   iconOnly = false,
   centered = false,
 }) => {
-  const { clientKey = 'surokkha', brandName = 'Surokkha', logoUrl } = clientConfig || {};
+  const { clientKey = 'decantre', brandName = 'Decantre', logoUrl } = clientConfig || {};
 
   const [logoVersion, setLogoVersion] = useState(() => {
     try {
@@ -30,8 +30,9 @@ export const BrandLogo = ({
     }
   });
 
-  const bundledLogo = staticClientLogos[clientKey?.toLowerCase()] || surokkhaLogo;
-  const rawUrl = src || (logoUrl && !logoUrl.includes('demo_logo') ? logoUrl : bundledLogo) || bundledLogo;
+  const bundledLogo = staticClientLogos[clientKey?.toLowerCase()] || null;
+  const defaultLogo = '/uploads/assets/logo.webp';
+  const rawUrl = src || (logoUrl && !logoUrl.includes('demo_logo') ? logoUrl : (bundledLogo || defaultLogo)) || defaultLogo;
 
   // Resolves image paths and appends version query string for real-time asset invalidation
   const resolveLogoUrl = (url, version) => {
@@ -72,7 +73,7 @@ export const BrandLogo = ({
 
   // Handles image load failures and falls back to bundled static logo
   const handleImageError = () => {
-    if (currentSrc !== bundledLogo && bundledLogo) {
+    if (bundledLogo && currentSrc !== bundledLogo) {
       setCurrentSrc(bundledLogo);
     } else {
       setImageError(true);

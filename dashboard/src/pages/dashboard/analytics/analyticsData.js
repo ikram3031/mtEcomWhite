@@ -159,9 +159,9 @@ export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
           { id: 2, type: 'add_to_cart', label: 'Added to Cart "Anime Plushie Keychain"', location: 'Chittagong, BD', time: '15s ago', badge: 'bg-purple-500/15 text-purple-500' },
         ],
       };
-    case 'mocondom':
+    case 'surokkha':
       return {
-        accentColor: '#e11d48',
+        accentColor: '#10b981',
         realtimeActive: 7,
         baseSessions: 5300,
         baseUsers: 4200,
@@ -169,18 +169,18 @@ export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
         baseRevenue: 85000,
         baseTransactions: 62,
         topPages: [
-          { path: '/', title: 'MO Condom Storefront', pageviews: 5100, uniqueViews: 3900, avgTime: '1m 40s', bounceRate: '23.0%', exitRate: '16.0%' },
+          { path: '/', title: 'Surokkha Storefront', pageviews: 5100, uniqueViews: 3900, avgTime: '1m 40s', bounceRate: '23.0%', exitRate: '16.0%' },
           { path: '/collections/combos', title: 'Special Combo Packs', pageviews: 3400, uniqueViews: 2600, avgTime: '2m 20s', bounceRate: '19.0%', exitRate: '14.0%' },
           { path: '/cart', title: 'Shopping Cart', pageviews: 1200, uniqueViews: 850, avgTime: '1m 35s', bounceRate: '15.0%', exitRate: '18.0%' },
           { path: '/checkout', title: 'Discreet Checkout', pageviews: 780, uniqueViews: 560, avgTime: '2m 05s', bounceRate: '7.5%', exitRate: '10.0%' },
         ],
         sampleProducts: [
-          { path: '/products/ultra-thin-combo', title: 'Ultra Thin Sensation Combo' },
-          { path: '/products/dotted-pleasure-pack', title: 'Dotted Pleasure Pack' },
+          { path: '/products/surokkha-combo', title: 'Surokkha Sensation Combo' },
+          { path: '/products/surokkha-pack', title: 'Surokkha Care Pack' },
         ],
         liveEvents: [
-          { id: 1, type: 'view_item', label: 'Viewed "Ultra Thin Sensation Combo"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-rose-500/15 text-rose-500' },
-          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Dotted Pleasure Pack"', location: 'Sylhet, BD', time: '10s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 1, type: 'view_item', label: 'Viewed "Surokkha Sensation Combo"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Surokkha Care Pack"', location: 'Sylhet, BD', time: '10s ago', badge: 'bg-amber-500/15 text-amber-500' },
           { id: 3, type: 'purchase', label: 'Completed Order (৳950 via bKash)', location: 'Chittagong, BD', time: '35s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
         ],
       };
