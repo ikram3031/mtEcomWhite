@@ -15,25 +15,27 @@ const CLIENT_INVOICE_TEMPLATES = {
   // toyoland: buildToyolandOrderInvoiceHtml,
 };
 
+import { config } from "../../config/index.js";
+
 /**
  * Multi-Client Invoice Template Resolver.
  * Resolves the tailored invoice template based on client identifier, with graceful fallback.
  *
  * @param {Object} params
  * @param {Object} params.order - Formatted order data
- * @param {string} [params.client="decantre"] - Client store identifier ('decantre', 'surokkha', 'engulfic', 'toyoland')
+ * @param {string} [params.client] - Client store identifier ('decantre', 'surokkha', 'engulfic', 'toyoland')
  * @param {boolean} [params.isPrintView=false] - Print mode toggle
  * @param {string} [params.logoUrl] - Custom logo URL
  * @returns {string} Fully rendered HTML string
  */
 export const getClientInvoiceHtml = ({
   order = {},
-  client = "decantre",
+  client,
   isPrintView = false,
   logoUrl,
 }) => {
-  const normalizedClient = (client || "decantre").toLowerCase().trim();
-  const templateBuilder = CLIENT_INVOICE_TEMPLATES[normalizedClient] || buildDecantreOrderInvoiceHtml;
+  const activeClient = (client || order?.client || config.clientKey || process.env.CLIENT_NAME || "surokkha").toLowerCase().trim();
+  const templateBuilder = CLIENT_INVOICE_TEMPLATES[activeClient] || (activeClient === "surokkha" ? buildSurokkhaOrderInvoiceHtml : buildDecantreOrderInvoiceHtml);
 
   return templateBuilder({ order, isPrintView, logoUrl });
 };

@@ -3,6 +3,7 @@ import { UserModel } from "../models/user.model.js";
 import { getClientInvoiceHtml } from "../templates/invoices/index.js";
 import { buildAdminOrderEmailHtml } from "../templates/adminOrderEmailTemplate.js";
 import { env } from "../config/env.js";
+import { config } from "../config/index.js";
 
 let defaultTransport;
 
@@ -65,9 +66,10 @@ export const sendOrderEmailsAsynchronously = (order) => {
       }
 
       const activeTransport = getTransport();
-      const fromName = env.SMTP_FROM_NAME || "Decantre BD";
+      const activeClientKey = (order.client || config.clientKey || process.env.CLIENT_NAME || env.CLIENT_NAME || "surokkha").toLowerCase().trim();
+      const brandDisplayName = env.SMTP_FROM_NAME || config.brandName || (activeClientKey === "surokkha" ? "Surokkha" : "Decantre BD");
       const fromEmail = env.SMTP_FROM || env.SMTP_USER;
-      const fromAddress = { name: fromName, address: fromEmail };
+      const fromAddress = { name: brandDisplayName, address: fromEmail };
 
       // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";
@@ -182,12 +184,13 @@ export const sendOrderEmailsAsynchronously = (order) => {
         try {
           const customerHtml = getClientInvoiceHtml({
             order: formattedOrderData,
-            client: order.client || "decantre",
+            client: activeClientKey,
+            logoUrl: config.logoUrl || undefined,
           });
           await activeTransport.sendMail({
             from: fromAddress,
             to: customerEmail,
-            subject: `${env.SMTP_FROM_NAME || "Store"}: Order Confirmation - #${orderId}`,
+            subject: `${brandDisplayName}: Order Confirmation - #${orderId}`,
             html: customerHtml
           });
           console.log(`[Email Notification] Customer confirmation email sent to: ${customerEmail}`);
@@ -198,7 +201,6 @@ export const sendOrderEmailsAsynchronously = (order) => {
 
       // 2. Resolve Admin Recipients
       const adminRecipientsSet = new Set();
-      const activeClientKey = env.CLIENT_NAME || "demo";
       if (activeClientKey === "decantre") {
         adminRecipientsSet.add("decantre.store@gmail.com");
       }
@@ -234,11 +236,15 @@ export const sendOrderEmailsAsynchronously = (order) => {
       // Send Admin New Order Notification Email to all resolved admin emails
       if (adminRecipients.length > 0) {
         try {
-          const adminHtml = buildAdminOrderEmailHtml({ order: formattedOrderData });
+          const adminHtml = getClientInvoiceHtml({
+            order: formattedOrderData,
+            client: activeClientKey,
+            logoUrl: config.logoUrl || undefined,
+          });
           await activeTransport.sendMail({
             from: fromAddress,
             to: adminRecipients,
-            subject: `${env.SMTP_FROM_NAME || "Store"}: You have got a new order - #${orderId}`,
+            subject: `${brandDisplayName}: You have got a new order - #${orderId}`,
             html: adminHtml
           });
           console.log(`[Email Notification] Admin notification email successfully sent to: ${adminRecipients.join(", ")}`);
