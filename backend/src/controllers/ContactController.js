@@ -4,6 +4,7 @@ import { LogModel } from "../models/log.model.js";
 import {
   sendContactAcknowledgment,
   sendContactReplyEmail,
+  forwardContactInquiryToAdmin,
 } from "../utils/contactEmailDelivery.js";
 import { broadcastLiveNotification } from "../websocket.js";
 
@@ -76,6 +77,17 @@ export const submitContact = async (req, res) => {
       message: contactMessage.message,
     }).catch((err) => {
       console.error("Non-blocking contact acknowledgment error:", err);
+    });
+
+    // 2b. Forward the inquiry to store admin (kawaiikutir@gmail.com)
+    forwardContactInquiryToAdmin({
+      name: contactMessage.name,
+      email: contactMessage.email,
+      phone: contactMessage.phone,
+      subject: contactMessage.subject,
+      message: contactMessage.message,
+    }).catch((err) => {
+      console.error("Non-blocking admin contact forwarding error:", err);
     });
 
     // 3. Create a live notification in LogModel for the Dashboard
