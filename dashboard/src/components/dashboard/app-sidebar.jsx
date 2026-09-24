@@ -136,7 +136,7 @@ export const AppSidebar = ({ ...props }) => {
                   {brandName || "Admin"}
                 </span>
                 <span className="text-[11px] font-mono font-medium text-slate-400 tracking-wider">
-                  v{pkg.version || "3.03.06"}
+                  v{pkg.version || "3.03.07"}
                 </span>
               </div>
               <button
