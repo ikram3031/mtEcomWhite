@@ -11,21 +11,29 @@ const getTransport = () => {
       Number(env.SMTP_PORT) === 465 ||
       String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
 
-    defaultTransport = nodemailer.createTransport({
+    const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+    const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+    const transportConfig = {
       host: env.SMTP_HOST,
       port: Number(env.SMTP_PORT),
       secure: isSecure,
       tls: {
         rejectUnauthorized: false,
       },
-      auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASSWORD,
-      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
-    });
+    };
+
+    if (hasAuth) {
+      transportConfig.auth = {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      };
+    }
+
+    defaultTransport = nodemailer.createTransport(transportConfig);
   }
   return defaultTransport;
 };
@@ -66,7 +74,7 @@ export const sendContactAcknowledgment = async ({ name, email, message }) => {
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Store Contact";
-    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
 
     const customerHtml = lightThemeHtml(
       "Thank you for contacting us!",
@@ -105,7 +113,7 @@ export const sendContactReplyEmail = async ({
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Customer Support";
-    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
 
     const replyHtml = lightThemeHtml(
       `Response to your inquiry`,
@@ -142,7 +150,7 @@ export const forwardContactInquiryToAdmin = async ({ name, email, phone, subject
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Surokkha";
-    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
     const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || "kawaiikutir@gmail.com";
 
     const forwardSubject = `📩 [New Inquiry from contact@surokkha.store] ${subject || "Contact Form"}`;

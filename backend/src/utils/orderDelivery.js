@@ -13,21 +13,29 @@ const getTransport = () => {
       Number(env.SMTP_PORT) === 465 ||
       String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
 
-    defaultTransport = nodemailer.createTransport({
+    const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+    const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+    const transportConfig = {
       host: env.SMTP_HOST,
       port: Number(env.SMTP_PORT),
       secure: isSecure,
       tls: {
         rejectUnauthorized: false,
       },
-      auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASSWORD,
-      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
-    });
+    };
+
+    if (hasAuth) {
+      transportConfig.auth = {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      };
+    }
+
+    defaultTransport = nodemailer.createTransport(transportConfig);
   }
   return defaultTransport;
 };
@@ -51,7 +59,7 @@ const isValidCustomerEmail = (email) => {
 export const sendOrderEmailsAsynchronously = (order) => {
   setImmediate(async () => {
     try {
-      if (!env.SMTP_USER || !env.SMTP_PASSWORD) {
+      if (!env.SMTP_USER) {
         console.warn("[Email Notification] SMTP credentials not configured. Skipping email dispatch.");
         return;
       }
@@ -59,7 +67,7 @@ export const sendOrderEmailsAsynchronously = (order) => {
       const activeTransport = getTransport();
       const fromName = env.SMTP_FROM_NAME || "Decantre BD";
       const fromEmail = env.SMTP_FROM || env.SMTP_USER;
-      const fromAddress = `"${fromName}" <${fromEmail}>`;
+      const fromAddress = { name: fromName, address: fromEmail };
 
       // Extract order details with complete alignment to OrderModel schema
       const orderId = order.orderNumber || order.did || order._id?.toString()?.slice(-6) || "N/A";

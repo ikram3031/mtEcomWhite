@@ -140,21 +140,32 @@ const parseAndSaveMessage = async (msgSource, uid, folder, flags = []) => {
 
         // Forward incoming support email to designated forward address (plexivia@gmail.com)
         const forwardTarget = process.env.SUPPORT_FORWARD_EMAIL || "plexivia@gmail.com";
-        if (forwardTarget && env.SMTP_USER && env.SMTP_PASSWORD) {
+        if (forwardTarget && env.SMTP_USER) {
           const isSecure =
             Number(env.SMTP_PORT) === 465 ||
             String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
 
-          const forwardTransport = nodemailer.createTransport({
+          const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+          const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+          const transportConfig = {
             host: env.SMTP_HOST,
             port: Number(env.SMTP_PORT),
             secure: isSecure,
             tls: { rejectUnauthorized: false },
-            auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
-          });
+          };
+
+          if (hasAuth) {
+            transportConfig.auth = { user: env.SMTP_USER, pass: env.SMTP_PASSWORD };
+          }
+
+          const forwardTransport = nodemailer.createTransport(transportConfig);
 
           forwardTransport.sendMail({
-            from: `"${env.SMTP_FROM_NAME || "Surokkha Support"}" <${env.SMTP_FROM || env.SMTP_USER}>`,
+            from: {
+              name: env.SMTP_FROM_NAME || "Surokkha Support",
+              address: env.SMTP_FROM || env.SMTP_USER,
+            },
             to: forwardTarget,
             replyTo: from.address,
             subject: `[Fwd: support@surokkha.store] ${subject}`,
