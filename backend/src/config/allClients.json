@@ -970,8 +970,12 @@
         "material": true,
         "packSize": true,
         "origin": true
+      },
+      "members": {
+        "forceMembershipFromOrder": true
       }
     },
+    "forceMembershipFromOrder": true,
     "features": {
       "season": false,
       "brand": false,

@@ -7,6 +7,7 @@ import { CouponModel } from '../models/coupon.model.js';
 import { PaymentModel } from '../models/payment.model.js';
 import { buildAllowedOrderUpdates,
   buildOrderDocument,
+  resolveOrForceMembershipFromOrder,
   syncMemberOrderSnapshot,
   syncPaymentDocument,
   updateMemberOrderReference,
@@ -98,8 +99,10 @@ export const createOrder = async (req, res, next) => {
     const orderData = await buildOrderDocument(payload);
     const createdOrder = await OrderModel.create(orderData);
 
+    const resolvedMemberId = await resolveOrForceMembershipFromOrder(createdOrder, payload);
+
     await syncPaymentDocument(createdOrder, payload);
-    await syncMemberOrderSnapshot(orderData.member, createdOrder, payload);
+    await syncMemberOrderSnapshot(resolvedMemberId || orderData.member, createdOrder, payload);
 
     // Safely trigger non-blocking email notifications for Customer and Admin
     sendOrderEmailsAsynchronously(createdOrder);
