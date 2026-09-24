@@ -4,7 +4,7 @@
   "brandName": "Surokkha",
   "domain": "surokkha.store",
   "supportEmail": "support@surokkha.store",
-  "phone": "01700000000",
+  "phone": "01600905774",
   "apiBaseUrl": "https://api.surokkha.store",
   "dashboardUrl": "https://admin.surokkha.store",
   "storefrontUrl": "https://surokkha.store",
@@ -26,9 +26,6 @@
       "defaultUnit": "piece"
     },
     "specifications": {
-      "material": true,
-      "packSize": true,
-      "origin": true
     }
   },
   "features": {
@@ -51,6 +48,12 @@
     "enableInStoreFilter": false,
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
+  },
+  "cloudFlareAnalytics": {
+    "active": true,
+    "zoneId": "bd131177db6d610b5d4e5beb0142108b",
+    "domain": "surokkha.store",
+    "accountEmail": "plexivia@gmail.com"
   },
   "googleAnalytics": {
     "measurementId": "G-3JHW9WK6GG",
@@ -103,9 +106,7 @@
     "products",
     "products.new",
     "products.list",
-    "products.categories",
     "products.coupons",
-    "reviews",
     "members",
     "billing",
     "billing.billings",

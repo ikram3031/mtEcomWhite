@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSystemInfo, getMetadata, getHealthCheck, purgeSystemCache } from "../controllers/SystemController.js";
+import { getSystemInfo, getMetadata, getHealthCheck, purgeSystemCache, getCloudflareAnalytics } from "../controllers/SystemController.js";
 import { authenticateToken, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const systemRouter = Router();
@@ -17,6 +17,14 @@ systemRouter.get(
 
 // Public utility endpoint for retrieving metadata (order/payment statuses, categories)
 systemRouter.get("/metadata", getMetadata);
+
+// Protected endpoint for retrieving real-time Cloudflare Edge Analytics
+systemRouter.get(
+  "/cloudflare-analytics",
+  authenticateToken,
+  authorizeRoles("Owner", "Admin", "Manager", "Super Admin"),
+  getCloudflareAnalytics
+);
 
 // Protected endpoint for flushing Cloudflare Edge & System Cache
 systemRouter.post(

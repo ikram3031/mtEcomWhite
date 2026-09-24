@@ -19,6 +19,9 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "cloudFlareAnalytics": {
+    "active": false
+  },
   "googleAnalytics": {
     "measurementId": "G-DEMO123456",
     "gtmId": "",

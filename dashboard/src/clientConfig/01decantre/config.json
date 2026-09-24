@@ -29,6 +29,9 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "cloudFlareAnalytics": {
+    "active": false
+  },
   "googleAnalytics": {
     "measurementId": "G-95TCXBZG7W",
     "gtmId": "GTM-DEC883Z",

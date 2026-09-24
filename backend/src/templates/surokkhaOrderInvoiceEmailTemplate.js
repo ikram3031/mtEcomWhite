@@ -189,29 +189,17 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
             </td>
           </tr>
 
-          <!-- Discreet Packaging Assurance Notice -->
+          <!-- Thank you message above footer -->
           <tr>
-            <td style="padding: 0 32px 24px 32px; background-color: #FFFFFF;">
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 14px 18px;">
-                <tr>
-                  <td width="30" style="vertical-align: top; font-size: 20px;">🔒</td>
-                  <td style="vertical-align: top; padding-left: 10px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #881337; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">100% Discreet & Confidential Delivery Guarantee</div>
-                    <div style="font-size: 11.5px; color: #4C0519; line-height: 1.45;">Your order is shipped in plain, unmarked courier bags. No product titles or sensitive personal wellness labels appear on the outer package.</div>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding: 16px 32px; background-color: #FFFFFF; text-align: center; font-size: 12.5px; color: #334155; border-top: 1px solid #F1F5F9;">
+              Thank you for choosing <a href="https://surokkha.store" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness
             </td>
           </tr>
 
           <!-- Clean Light Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; color: #475569; text-align: center; font-size: 12px; line-height: 1.6;">
-              <div style="display: inline-block; margin-bottom: 8px; padding: 4px 14px; border: 1px solid #FECDD3; border-radius: 9999px; color: #9F1239; background-color: #FFF1F2; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                ✦ 100% Authentic MO Product Standard • Factory Sealed ✦
-              </div>
-              <div style="margin-top: 4px;">Thank you for ordering with <a href="https://surokkha.store" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;"><strong>Surokkha.store</strong></a> — Your Trusted Personal Wellness Platform.</div>
-              <div style="margin-top: 4px; font-size: 11.5px; color: #64748B;">
+            <td style="padding: 20px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; color: #475569; text-align: center; font-size: 11.5px; line-height: 1.6;">
+              <div>
                 Helpline (WhatsApp): <a href="https://wa.me/8801600905774" target="_blank" style="color: #BE123C; text-decoration: underline; font-weight: 700;">01600905774</a> | Email: <a href="mailto:support@surokkha.store" style="color: #BE123C; text-decoration: none; font-weight: 600;">support@surokkha.store</a>
               </div>
             </td>

@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import pkg from "../../../package.json"
+import { clientConfig } from "@/clientConfig"
 import {
   Sidebar,
   SidebarContent,
@@ -71,7 +72,6 @@ import {
 } from "@/components/ui/sidebar"
 import { BrandLogo } from "@/components/BrandLogo"
 import { useAuth } from "@/lib/auth-context"
-import { clientConfig } from "@/clientConfig"
 import { hasMenuAccess } from "@/lib/rbac"
 
 // Renders the standard TikTok musical note brand icon
@@ -395,115 +395,6 @@ export const AppSidebar = ({ ...props }) => {
             </SidebarMenuItem>
           )}
 
-          {(isAllowed("customers") || isAllowed("members")) && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/dashboard/members")}
-                tooltip="Customers"
-                onClick={() => toggleMenu("customers")}
-                className="cursor-pointer flex items-center justify-between w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  <span>Customers</span>
-                </div>
-                <ChevronRight
-                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
-                    openMenu === "customers" ? "rotate-90 text-primary" : ""
-                  }`}
-                />
-              </SidebarMenuButton>
-              {openMenu === "customers" && (
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
-                      isActive={pathname.startsWith("/dashboard/members")}
-                      render={<Link to="/dashboard/members" />}
-                    >
-                      <Users className="h-3.5 w-3.5" />
-                      <span>Customer List</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              )}
-            </SidebarMenuItem>
-          )}
-
-          {(isAllowed("tools") || isAllowed("logs")) && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={
-                  pathname.startsWith("/dashboard/media") ||
-                  pathname.startsWith("/dashboard/tools/bulk-image-resize") ||
-                  pathname.startsWith("/dashboard/tools/meta-catalog") ||
-                  pathname.startsWith("/dashboard/logs") ||
-                  pathname.startsWith("/dashboard/tools/logs")
-                }
-                tooltip="Tools & Media"
-                onClick={() => toggleMenu("tools")}
-                className="cursor-pointer flex items-center justify-between w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4" />
-                  <span>Tools & Media</span>
-                </div>
-                <ChevronRight
-                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
-                    openMenu === "tools" ? "rotate-90 text-primary" : ""
-                  }`}
-                />
-              </SidebarMenuButton>
-              {openMenu === "tools" && (
-                <SidebarMenuSub>
-                  {(isAllowed("tools.assets") || isAllowed("tools.media") || isAllowed("tools")) && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname === "/dashboard/media" || pathname.startsWith("/dashboard/media")}
-                        render={<Link to="/dashboard/media" />}
-                      >
-                        <Images className="h-3.5 w-3.5" />
-                        <span>All Media</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                  {isAllowed("tools.bulk-image-resize") && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname === "/dashboard/tools/bulk-image-resize"}
-                        render={<Link to="/dashboard/tools/bulk-image-resize" />}
-                      >
-                        <ImageDown className="h-3.5 w-3.5" />
-                        <span>Bulk Image Resize</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                  {isAllowed("tools.meta-catalog") && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname === "/dashboard/tools/meta-catalog"}
-                        render={<Link to="/dashboard/tools/meta-catalog" />}
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                        <span>Meta Catalog</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                  {(isAllowed("logs") || isAllowed("tools.logs")) && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/logs") || pathname.startsWith("/dashboard/tools/logs")}
-                        render={<Link to="/dashboard/logs" />}
-                      >
-                        <Terminal className="h-3.5 w-3.5" />
-                        <span>System Logs</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                </SidebarMenuSub>
-              )}
-            </SidebarMenuItem>
-          )}
-
           {isAllowed("settings") && (
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -578,14 +469,13 @@ export const AppSidebar = ({ ...props }) => {
             </SidebarMenuItem>
           )}
 
-          {(isAllowed("admin") || isAllowed("analytics") || isAllowed("reports") || isAllowed("users") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments")) && (
+          {(isAllowed("admin") || isAllowed("reports") || isAllowed("users") || isAllowed("customers") || isAllowed("members") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
-                  pathname.startsWith("/dashboard/analytics") ||
                   pathname.startsWith("/dashboard/reports") ||
                   pathname.startsWith("/dashboard/users") ||
-                  pathname.startsWith("/dashboard/activity-logs") ||
+                  pathname.startsWith("/dashboard/members") ||
                   pathname.startsWith("/dashboard/billing") ||
                   pathname.startsWith("/dashboard/tools/support") ||
                   pathname.startsWith("/dashboard/trash")
@@ -606,17 +496,6 @@ export const AppSidebar = ({ ...props }) => {
               </SidebarMenuButton>
               {openMenu === "admin" && (
                 <SidebarMenuSub>
-                  {(isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("admin")) && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}
-                        render={<Link to="/dashboard/analytics" />}
-                      >
-                        <LineChart className="h-3.5 w-3.5" />
-                        <span>Analytics</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
                   {(isAllowed("reports") || isAllowed("admin")) && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
@@ -639,14 +518,14 @@ export const AppSidebar = ({ ...props }) => {
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
-                  {(isAllowed("activity-logs") || isAllowed("tools.activity-logs") || isAllowed("admin")) && (
+                  {(isAllowed("customers") || isAllowed("members") || isAllowed("admin")) && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/activity-logs") || pathname.startsWith("/dashboard/tools/activity-logs")}
-                        render={<Link to="/dashboard/activity-logs" />}
+                        isActive={pathname.startsWith("/dashboard/members")}
+                        render={<Link to="/dashboard/members" />}
                       >
-                        <Activity className="h-3.5 w-3.5" />
-                        <span>Activity Logs</span>
+                        <Users className="h-3.5 w-3.5" />
+                        <span>Customer List</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
@@ -692,6 +571,107 @@ export const AppSidebar = ({ ...props }) => {
                       <span className="text-destructive font-medium">Trash</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              )}
+            </SidebarMenuItem>
+          )}
+
+          {(isAllowed("tools") || isAllowed("logs") || isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("activity-logs") || isAllowed("tools.activity-logs")) && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={
+                  pathname.startsWith("/dashboard/analytics") ||
+                  pathname.startsWith("/dashboard/tools/analytics") ||
+                  pathname.startsWith("/dashboard/activity-logs") ||
+                  pathname.startsWith("/dashboard/tools/activity-logs") ||
+                  pathname.startsWith("/dashboard/media") ||
+                  pathname.startsWith("/dashboard/tools/bulk-image-resize") ||
+                  pathname.startsWith("/dashboard/tools/meta-catalog") ||
+                  pathname.startsWith("/dashboard/logs") ||
+                  pathname.startsWith("/dashboard/tools/logs")
+                }
+                tooltip="Tools & Media"
+                onClick={() => toggleMenu("tools")}
+                className="cursor-pointer flex items-center justify-between w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  <span>Tools & Media</span>
+                </div>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${
+                    openMenu === "tools" ? "rotate-90 text-primary" : ""
+                  }`}
+                />
+              </SidebarMenuButton>
+              {openMenu === "tools" && (
+                <SidebarMenuSub>
+                  {Boolean(clientConfig?.cloudFlareAnalytics?.active) && (isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}
+                        render={<Link to="/dashboard/analytics" />}
+                      >
+                        <LineChart className="h-3.5 w-3.5" />
+                        <span>Cloudflare Analytics</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {(isAllowed("activity-logs") || isAllowed("tools.activity-logs") || isAllowed("tools") || isAllowed("admin")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/activity-logs") || pathname.startsWith("/dashboard/tools/activity-logs")}
+                        render={<Link to="/dashboard/activity-logs" />}
+                      >
+                        <Activity className="h-3.5 w-3.5" />
+                        <span>Activity Logs</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {(isAllowed("tools.assets") || isAllowed("tools.media") || isAllowed("tools")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/media" || pathname.startsWith("/dashboard/media")}
+                        render={<Link to="/dashboard/media" />}
+                      >
+                        <Images className="h-3.5 w-3.5" />
+                        <span>All Media</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("tools.bulk-image-resize") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/bulk-image-resize"}
+                        render={<Link to="/dashboard/tools/bulk-image-resize" />}
+                      >
+                        <ImageDown className="h-3.5 w-3.5" />
+                        <span>Bulk Image Resize</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("tools.meta-catalog") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname === "/dashboard/tools/meta-catalog"}
+                        render={<Link to="/dashboard/tools/meta-catalog" />}
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Meta Catalog</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {(isAllowed("logs") || isAllowed("tools.logs")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/logs") || pathname.startsWith("/dashboard/tools/logs")}
+                        render={<Link to="/dashboard/logs" />}
+                      >
+                        <Terminal className="h-3.5 w-3.5" />
+                        <span>System Logs</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
                 </SidebarMenuSub>
               )}
             </SidebarMenuItem>

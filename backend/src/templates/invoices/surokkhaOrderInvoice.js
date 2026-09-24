@@ -477,20 +477,14 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       </div>
     </div>
 
-    <!-- 100% Discreet Packaging Assurance -->
-    <div class="discreet-notice-box">
-      <div style="font-size: 20px; line-height: 1;">🔒</div>
-      <div>
-        <h5>100% Discreet & Confidential Packaging Guarantee</h5>
-        <p>All orders are packed in unprinted, plain parcel bags with strict privacy. No product titles or sensitive wellness markings appear on the outer package.</p>
-      </div>
+    <!-- Thank you message above footer -->
+    <div style="padding: 16px 32px; text-align: center; font-size: 12.5px; color: #334155; border-top: 1px solid #F1F5F9;">
+      Thank you for choosing <a href="https://surokkha.store" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness
     </div>
 
     <!-- Surokkha Clean Light Footer -->
     <div class="invoice-footer-light">
-      <div class="authenticity-seal">✦ 100% Authentic MO Product Standard • Factory Sealed ✦</div>
-      <p style="margin-top: 4px;">Thank you for choosing <a href="https://surokkha.store" target="_blank"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness.</p>
-      <p style="margin-top: 4px; font-size: 11.5px; color: #64748B;">
+      <p style="font-size: 11.5px; color: #64748B;">
         For questions or assistance, reach out via WhatsApp at <a href="https://wa.me/8801600905774" target="_blank" style="text-decoration: underline;">01600905774</a> or email <a href="mailto:support@surokkha.store">support@surokkha.store</a>.
       </p>
     </div>
