@@ -14,7 +14,7 @@ export const dailyOrders = async (req, res, next) => {
     const from = new Date(todayLocal.getTime() - (days - 1) * 24 * 60 * 60 * 1000 - OFFSET_MS);
 
     const pipeline = [
-      { $match: { createdAt: { $gte: from } } },
+      { $match: { active: { $ne: false }, createdAt: { $gte: from } } },
       { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } }, count: { $sum: 1 } } },
       { $sort: { '_id': 1 } },
     ];
@@ -68,7 +68,7 @@ export const getKpiStats = async (req, res, next) => {
 
     // 1. Current Stats (Orders)
     const currentOrdersAgg = await OrderModel.aggregate([
-      { $match: { status: 'completed', createdAt: { $gte: currentStart, $lte: currentEnd } } },
+      { $match: { active: { $ne: false }, status: 'completed', createdAt: { $gte: currentStart, $lte: currentEnd } } },
       {
         $group: {
           _id: null,
@@ -89,7 +89,7 @@ export const getKpiStats = async (req, res, next) => {
 
     // 2. Previous Stats (Orders)
     const previousOrdersAgg = await OrderModel.aggregate([
-      { $match: { status: 'completed', createdAt: { $gte: prevStart, $lt: prevEnd } } },
+      { $match: { active: { $ne: false }, status: 'completed', createdAt: { $gte: prevStart, $lt: prevEnd } } },
       {
         $group: {
           _id: null,
@@ -159,7 +159,7 @@ export const getOrderStatusDistribution = async (req, res, next) => {
     const currentStart = new Date(todayLocalMidnight.getTime() - (days - 1) * 24 * 60 * 60 * 1000 - OFFSET_MS);
 
     const agg = await OrderModel.aggregate([
-      { $match: { createdAt: { $gte: currentStart } } },
+      { $match: { active: { $ne: false }, createdAt: { $gte: currentStart } } },
       { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
 
