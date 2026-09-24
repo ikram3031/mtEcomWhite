@@ -446,7 +446,7 @@ export const buildSurokkhaOrderInvoiceHtml = ({
         <p><strong>Order Date:</strong> ${createdAt}</p>
         <p><strong>Payment Method:</strong> ${paymentMethod}</p>
         <p><strong>Payment Status:</strong> <span style="color: ${paymentStatusColor}; font-weight: 700;">${paymentStatusText}</span></p>
-        <p style="margin-top: 6px; font-size: 12.5px;"><strong>Customer Helpline:</strong><br />01869151550 (WhatsApp Available)</p>
+        <p style="margin-top: 6px; font-size: 12.5px;"><strong>Customer Helpline:</strong><br /><a href="https://wa.me/8801600905774" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;">01600905774</a> (WhatsApp Available)</p>
       </div>
     </div>
 
@@ -504,9 +504,9 @@ export const buildSurokkhaOrderInvoiceHtml = ({
     <!-- Surokkha Footer -->
     <div class="invoice-footer">
       <div class="authenticity-seal">✦ 100% Authentic MO Product Standard • Factory Sealed ✦</div>
-      <p>Thank you for choosing <strong>Surokkha.store</strong> — Trusted Destination for Personal Wellness.</p>
+      <p>Thank you for choosing <a href="https://surokkha.store" target="_blank" style="color: #FDA4AF; text-decoration: none;"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness.</p>
       <p style="margin-top: 4px; font-size: 11px; color: #64748B;">
-        For questions or assistance, reach out via WhatsApp at <strong>01869151550</strong> or email <a href="mailto:support@surokkha.store">support@surokkha.store</a>.
+        For questions or assistance, reach out via WhatsApp at <a href="https://wa.me/8801600905774" target="_blank" style="color: #FDA4AF; text-decoration: underline; font-weight: 700;">01600905774</a> or email <a href="mailto:support@surokkha.store">support@surokkha.store</a>.
       </p>
     </div>
   </div>

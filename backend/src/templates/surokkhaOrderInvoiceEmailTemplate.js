@@ -147,7 +147,7 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
                     </div>
                     <div style="margin-top: 8px; font-size: 12.5px; color: #1E293B; line-height: 1.4;">
                       <strong style="color: #475569; font-size: 11px; text-transform: uppercase;">Customer Helpline:</strong><br />
-                      01869151550 (WhatsApp)
+                      <a href="https://wa.me/8801600905774" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;">01600905774</a> (WhatsApp)
                     </div>
                   </td>
                 </tr>
@@ -223,9 +223,9 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
               <div style="display: inline-block; margin-bottom: 8px; padding: 4px 12px; border: 1px solid #BE123C; border-radius: 6px; color: #FDA4AF; background-color: rgba(190, 18, 60, 0.15); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                 ✦ 100% Authentic MO Product Standard • Factory Sealed ✦
               </div>
-              <div>Thank you for ordering with <strong>Surokkha.store</strong> — Your Trusted Personal Wellness Platform.</div>
+              <div>Thank you for ordering with <a href="https://surokkha.store" target="_blank" style="color: #FDA4AF; text-decoration: none;"><strong>Surokkha.store</strong></a> — Your Trusted Personal Wellness Platform.</div>
               <div style="margin-top: 4px; font-size: 11px; color: #64748B;">
-                Helpline (WhatsApp): <strong>01869151550</strong> | Email: <a href="mailto:support@surokkha.store" style="color: #FDA4AF; text-decoration: none; font-weight: 600;">support@surokkha.store</a>
+                Helpline (WhatsApp): <a href="https://wa.me/8801600905774" target="_blank" style="color: #FDA4AF; text-decoration: underline; font-weight: 700;">01600905774</a> | Email: <a href="mailto:support@surokkha.store" style="color: #FDA4AF; text-decoration: none; font-weight: 600;">support@surokkha.store</a>
               </div>
             </td>
           </tr>
