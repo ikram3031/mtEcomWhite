@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 import { env } from "../config/env.js";
@@ -13,7 +14,6 @@ let idleClient = null;
 const createImapClient = () => {
   const user = env.IMAP_USER || env.SMTP_USER;
   const pass = env.IMAP_PASSWORD || env.SMTP_PASSWORD;
-
   return new ImapFlow({
     host: env.IMAP_HOST,
     port: env.IMAP_PORT,
@@ -35,6 +35,19 @@ const normalizeAddresses = (addressObject) => {
     name: item.name || "",
     address: (item.address || "").toLowerCase().trim(),
   }));
+};
+
+// Identifies automated bounce notices, delivery failure reports, and mailer-daemons
+const isBounceOrDaemonNotification = (fromAddress = "", subject = "") => {
+  const normalizedFrom = String(fromAddress || "").toLowerCase();
+  const normalizedSub = String(subject || "").toLowerCase();
+  return (
+    normalizedFrom.includes("mailer-daemon") ||
+    normalizedFrom.includes("postmaster") ||
+    normalizedSub.includes("undelivered mail") ||
+    normalizedSub.includes("delivery status notification") ||
+    normalizedSub.includes("failure notice")
+  );
 };
 
 // Parses a single MIME message stream and saves or updates it in MongoDB
@@ -107,8 +120,8 @@ const parseAndSaveMessage = async (msgSource, uid, folder, flags = []) => {
       { upsert: true, new: true }
     );
 
-    // If new email arrived in INBOX, trigger live WebSocket notification
-    if (isNewIncoming) {
+    // If new email arrived in INBOX, trigger live WebSocket notification and forward
+    if (isNewIncoming && !isBounceOrDaemonNotification(from.address, subject)) {
       try {
         const senderName = from.name || from.address;
         const log = await LogModel.create({
@@ -124,6 +137,51 @@ const parseAndSaveMessage = async (msgSource, uid, folder, flags = []) => {
         broadcastLiveNotification(log).catch((wsErr) => {
           logger.error({ wsErr }, "WebSocket broadcast error on incoming webmail");
         });
+
+        // Forward incoming support email to designated forward address (plexivia@gmail.com)
+        const forwardTarget = process.env.SUPPORT_FORWARD_EMAIL || "plexivia@gmail.com";
+        if (forwardTarget && env.SMTP_USER) {
+          const isSecure =
+            Number(env.SMTP_PORT) === 465 ||
+            String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
+
+          const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+          const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+          const transportConfig = {
+            host: env.SMTP_HOST,
+            port: Number(env.SMTP_PORT),
+            secure: isSecure,
+            tls: { rejectUnauthorized: false },
+          };
+
+          if (hasAuth) {
+            transportConfig.auth = { user: env.SMTP_USER, pass: env.SMTP_PASSWORD };
+          }
+
+          const forwardTransport = nodemailer.createTransport(transportConfig);
+
+          forwardTransport.sendMail({
+            from: {
+              name: env.SMTP_FROM_NAME || "Surokkha Support",
+              address: env.SMTP_FROM || env.SMTP_USER,
+            },
+            to: forwardTarget,
+            replyTo: from.address,
+            subject: `[Fwd: support@surokkha.store] ${subject}`,
+            html: `
+              <div style="font-family: -apple-system, sans-serif; padding: 15px; border-left: 4px solid #e11d48; background: #f8fafc; margin-bottom: 20px;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Forwarded from support@surokkha.store</strong></p>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>From:</strong> ${from.name ? `${from.name} &lt;${from.address}&gt;` : from.address}</p>
+                <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Subject:</strong> ${subject}</p>
+                <p style="margin: 0; font-size: 14px;"><strong>Date:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}</p>
+              </div>
+              <div>${bodyHtml || `<pre>${bodyText}</pre>`}</div>
+            `,
+          }).catch((fwdErr) => {
+            logger.error({ fwdErr }, "Non-blocking support email forward error");
+          });
+        }
       } catch (logErr) {
         logger.error({ logErr }, "Error creating activity log for incoming email");
       }

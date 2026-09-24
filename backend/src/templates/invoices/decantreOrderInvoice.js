@@ -22,6 +22,8 @@ export const buildDecantreOrderInvoiceHtml = ({
 }) => {
   const {
     orderId = "N/A",
+    status = "processing",
+    orderType = "online",
     createdAt = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
     customerName = "Valued Customer",
     customerEmail = "",
@@ -32,6 +34,7 @@ export const buildDecantreOrderInvoiceHtml = ({
     subtotal = 0,
     shippingFee = 0,
     discountAmount = 0,
+    couponCode = null,
     totalAmount = 0,
     paymentMethod = "Cash on Delivery (COD)",
   } = order;
@@ -52,22 +55,54 @@ export const buildDecantreOrderInvoiceHtml = ({
   };
 
   const deliveryAddressStr = formatAddress(finalShipping);
-  const billingAddressStr = formatAddress(billingAddress);
+  const isPaid = status === "completed" || paymentMethod.toLowerCase().includes("paid");
+  const isInstore = orderType === "instore" || String(orderId).startsWith("IS") || paymentMethod.toLowerCase().includes("instore") || paymentMethod.toLowerCase().includes("office");
+
+  let statusBadgeText = "✓ Order Processing";
+  let statusBadgeBg = "#FEF3C7";
+  let statusBadgeColor = "#92400E";
+  let statusBadgeBorder = "#FDE68A";
+
+  if (status === "completed" || isPaid) {
+    statusBadgeText = "✓ Order Completed";
+    statusBadgeBg = "#DCFCE7";
+    statusBadgeColor = "#166534";
+    statusBadgeBorder = "#BBF7D0";
+  } else if (status === "shipped") {
+    statusBadgeText = "🚚 In Transit / Shipped";
+    statusBadgeBg = "#E0E7FF";
+    statusBadgeColor = "#3730A3";
+    statusBadgeBorder = "#C7D2FE";
+  } else if (status === "cancelled") {
+    statusBadgeText = "✕ Cancelled";
+    statusBadgeBg = "#FEE2E2";
+    statusBadgeColor = "#991B1B";
+    statusBadgeBorder = "#FECACA";
+  } else if (isInstore) {
+    statusBadgeText = "🏢 In-Store Order";
+    statusBadgeBg = "#FEF3C7";
+    statusBadgeColor = "#92400E";
+    statusBadgeBorder = "#FDE68A";
+  }
+
+  const paymentStatusText = isPaid || isInstore ? "Paid / Confirmed" : "Pending (COD)";
+  const paymentStatusColor = isPaid || isInstore ? "#15803D" : "#D97706";
 
   // Build item rows
   const itemRowsHtml = items.map((item, index) => {
     const isEven = index % 2 === 1;
     const itemName = item.productName || item.name || "Fragrance Decant";
-    const variant = item.variantName || item.size || item.variant || "";
+    const variantParts = [item.size, item.concentration, item.variant, item.variantName].filter(Boolean);
+    const variant = [...new Set(variantParts)].join(" • ") || item.variantName || item.size || "";
     const qty = Number(item.quantity || 1);
-    const unitPrice = Number(item.price || item.unitPrice || 0);
+    const unitPrice = Number(item.unitPrice || item.price || 0);
     const itemTotal = Number(item.subtotal || (unitPrice * qty) || 0);
 
     return `
       <tr style="background-color: ${isEven ? "#F9FAFB" : "#FFFFFF"}; border-bottom: 1px solid #E5E7EB;">
         <td style="padding: 12px 14px; font-family: 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #111827; vertical-align: top;">
           <strong style="color: #0F172A; font-weight: 600; font-size: 13.5px;">${itemName}</strong>
-          ${variant ? `<div style="font-size: 11.5px; color: #B89343; font-weight: 600; margin-top: 2px;">✦ Size: ${variant}</div>` : ""}
+          ${variant ? `<div style="font-size: 11.5px; color: #B89343; font-weight: 600; margin-top: 2px;">✦ ${variant}</div>` : ""}
         </td>
         <td style="padding: 12px 14px; font-family: 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #374151; text-align: center; vertical-align: top;">
           ${qty}
@@ -139,9 +174,9 @@ export const buildDecantreOrderInvoiceHtml = ({
     .invoice-status-badge {
       display: inline-block;
       padding: 4px 12px;
-      background-color: #FEF3C7;
-      color: #92400E;
-      border: 1px solid #FDE68A;
+      background-color: ${statusBadgeBg};
+      color: ${statusBadgeColor};
+      border: 1px solid ${statusBadgeBorder};
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 700;
@@ -198,7 +233,7 @@ export const buildDecantreOrderInvoiceHtml = ({
       justify-content: flex-end;
     }
     .totals-table {
-      width: 260px;
+      width: 290px;
       border-collapse: collapse;
     }
     .totals-table td {
@@ -210,6 +245,20 @@ export const buildDecantreOrderInvoiceHtml = ({
       text-align: right;
       font-weight: 600;
       color: #1E293B;
+    }
+    .coupon-tag {
+      display: inline-block;
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px dashed #86EFAC;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+      vertical-align: middle;
     }
     .totals-table tr.grand-total td {
       padding-top: 10px;
@@ -307,16 +356,22 @@ export const buildDecantreOrderInvoiceHtml = ({
     @media print {
       @page {
         size: A4 portrait;
-        margin: 8mm;
+        margin: 6mm 8mm;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       body {
-        background-color: #FFFFFF;
-        padding: 0;
+        background-color: #FFFFFF !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
       .invoice-wrapper {
-        border: none;
-        box-shadow: none;
-        max-width: 100%;
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
       }
       .actions-bar {
         display: none !important;
@@ -324,7 +379,7 @@ export const buildDecantreOrderInvoiceHtml = ({
     }
   </style>
 </head>
-<body ${isPrintView ? 'onload="window.print()"' : ""}>
+<body ${isPrintView ? 'onload="setTimeout(function(){ window.print(); }, 400)"' : ""}>
   <div class="invoice-wrapper">
     <div class="gold-header-bar"></div>
 
@@ -340,7 +395,7 @@ export const buildDecantreOrderInvoiceHtml = ({
             <div style="font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px;">INVOICE</div>
             <div style="font-size: 13px; font-weight: 700; color: #B89343; margin-top: 2px;">#${orderId}</div>
             <div style="margin-top: 6px;">
-              <span class="invoice-status-badge">✓ Order Completed</span>
+              <span class="invoice-status-badge">${statusBadgeText}</span>
             </div>
           </td>
         </tr>
@@ -354,14 +409,14 @@ export const buildDecantreOrderInvoiceHtml = ({
         <p><strong>${customerName}</strong></p>
         <p style="color: #64748B;">${customerPhone}</p>
         ${customerEmail ? `<p style="color: #64748B; font-size: 12px;">${customerEmail}</p>` : ""}
-        <p style="margin-top: 6px; font-size: 12.5px;"><strong>Shipping Address:</strong><br />${deliveryAddressStr}</p>
+        <p style="margin-top: 6px; font-size: 12.5px;"><strong>${isInstore ? 'Pickup Location:' : 'Shipping Address:'}</strong><br />${isInstore ? '🏢 Decantre Store / Office Pickup' : deliveryAddressStr}</p>
       </div>
       
       <div class="meta-card">
         <h4>Order Summary & Payment</h4>
         <p><strong>Order Date:</strong> ${createdAt}</p>
         <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-        <p><strong>Payment Status:</strong> <span style="color: #15803D; font-weight: 700;">Paid / Confirmed</span></p>
+        <p><strong>Payment Status:</strong> <span style="color: ${paymentStatusColor}; font-weight: 700;">${paymentStatusText}</span></p>
         <p style="margin-top: 6px; font-size: 12.5px;"><strong>Store Helpline:</strong><br />01869151550 (WhatsApp Available)</p>
       </div>
     </div>
@@ -387,20 +442,22 @@ export const buildDecantreOrderInvoiceHtml = ({
         <table class="totals-table">
           <tr>
             <td>Items Subtotal:</td>
-            <td class="amount">৳${subtotal.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="amount">৳${Number(subtotal).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
           <tr>
             <td>Delivery Fee:</td>
-            <td class="amount">৳${shippingFee.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="amount">${Number(shippingFee) > 0 ? `৳${Number(shippingFee).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '<span style="color: #15803D; font-weight: 600;">Free</span>'}</td>
           </tr>
-          ${discountAmount > 0 ? `
+          ${Number(discountAmount) > 0 ? `
           <tr>
-            <td style="color: #15803D;">Discount:</td>
-            <td class="amount" style="color: #15803D;">-৳${discountAmount.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td style="color: #15803D; font-weight: 600;">
+              Discount ${couponCode ? `<span class="coupon-tag">${couponCode}</span>` : ""}:
+            </td>
+            <td class="amount" style="color: #15803D; font-weight: 700;">-৳${Number(discountAmount).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>` : ""}
           <tr class="grand-total">
             <td>Grand Total:</td>
-            <td class="amount">৳${totalAmount.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="amount">৳${Number(totalAmount).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
         </table>
       </div>

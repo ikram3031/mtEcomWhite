@@ -53,6 +53,11 @@ const productSchema = new Schema(
         sku: { type: String, trim: true },
         sortOrder: { type: Number, default: 0 },
         imageUrl: { type: String, default: null, trim: true },
+        stockStatus: {
+          type: String,
+          enum: ["instock", "outofstock", "preorder"],
+          default: "instock",
+        },
       },
     ],
 
@@ -106,12 +111,12 @@ const productSchema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      default: null,
     },
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      default: null
+      default: null,
     },
   },
   {

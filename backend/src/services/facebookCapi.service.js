@@ -190,9 +190,13 @@ export const sendServerPurchaseEvent = async (order, req = null) => {
 
     const contentIds = contents.map((c) => c.id).filter(Boolean);
 
+    const orderTotalAmount = Number(
+      order.totals?.total ?? order.total ?? order.totalAmount ?? 0
+    );
+
     const customData = {
       currency: "BDT",
-      value: Number(order.total || 0),
+      value: orderTotalAmount,
       content_type: "product",
       contents,
       content_ids: contentIds,

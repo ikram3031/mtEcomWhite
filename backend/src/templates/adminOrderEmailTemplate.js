@@ -41,6 +41,8 @@ export const buildAdminOrderEmailHtml = ({
     ],
     subtotal = 6100,
     shippingFee = 100,
+    discountAmount = 0,
+    couponCode = null,
     totalAmount = 6200,
     paymentMethod = "Cash on delivery",
   } = order;
@@ -312,6 +314,11 @@ export const buildAdminOrderEmailHtml = ({
             <td class="summary-label">Shipping: Flat rate</td>
             <td class="summary-val">৳ ${shippingFee.toFixed(2)}</td>
           </tr>
+          ${discountAmount > 0 ? `
+          <tr>
+            <td class="summary-label" style="color: #10B981;">Discount ${couponCode ? `(${couponCode})` : ''}:</td>
+            <td class="summary-val" style="color: #10B981;">-৳ ${discountAmount.toFixed(2)}</td>
+          </tr>` : ''}
           <tr class="total-row">
             <td class="summary-label">Total:</td>
             <td class="summary-val">৳ ${totalAmount.toFixed(2)}</td>
@@ -330,19 +337,19 @@ export const buildAdminOrderEmailHtml = ({
             <td width="48%" class="responsive-col" style="vertical-align: top;">
               <h3 class="address-title">Billing address</h3>
               <p class="address-text">
-                <strong style="color: #FFFFFF;">${billingAddress.name || customerName}</strong><br>
+                <strong style="color: #FFFFFF;">${billingAddress?.name || customerName}</strong><br>
                 ${billingStr}<br>
-                ${billingAddress.phone || customerPhone}<br>
-                <a href="mailto:${billingAddress.email || customerEmail}" style="color: #C5A059; text-decoration: none;">${billingAddress.email || customerEmail}</a>
+                ${billingAddress?.phone || customerPhone}<br>
+                ${billingAddress?.email || customerEmail ? `<a href="mailto:${billingAddress?.email || customerEmail}" style="color: #C5A059; text-decoration: none;">${billingAddress?.email || customerEmail}</a>` : ''}
               </p>
             </td>
             <td width="4%" class="responsive-col"></td>
             <td width="48%" class="responsive-col" style="vertical-align: top;">
               <h3 class="address-title">Shipping address</h3>
               <p class="address-text">
-                <strong style="color: #FFFFFF;">${shippingAddress.name || billingAddress.name || customerName}</strong><br>
+                <strong style="color: #FFFFFF;">${shippingAddress?.name || billingAddress?.name || customerName}</strong><br>
                 ${shippingStr}<br>
-                ${shippingAddress.phone || billingAddress.phone || customerPhone}
+                ${shippingAddress?.phone || billingAddress?.phone || customerPhone}
               </p>
             </td>
           </tr>

@@ -3,17 +3,29 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import { clientConfig } from './clientConfig';
+import { resolveImageUrl } from './lib/api-client';
 
-// Initialize dynamic page title & favicon immediately per client tenant
+// Automatically recovers from stale chunk errors when a new deployment occurs
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    window.location.reload();
+  });
+}
+
+// Initialize dynamic page title and favicon immediately per client tenant
 if (typeof document !== 'undefined') {
   const brandName = clientConfig?.brandName || 'Decantre';
   document.title = `Dashboard - ${brandName}`;
 
-  const faviconUrl = clientConfig?.siteIconUrl || clientConfig?.logoUrl;
-  if (faviconUrl) {
+  const rawFavicon = clientConfig?.siteIconUrl || clientConfig?.logoUrl || '/uploads/assets/logo.webp';
+  const cleanFavicon = (!rawFavicon || rawFavicon.includes('demo_logo')) ? '/uploads/assets/logo.webp' : rawFavicon;
+  const resolvedFavicon = resolveImageUrl(cleanFavicon);
+  if (resolvedFavicon) {
+    const version = typeof window !== 'undefined' ? localStorage.getItem('brand_logo_version') || '' : '';
     const link = document.querySelector("link[rel~='icon']");
     if (link) {
-      link.href = faviconUrl;
+      link.href = version ? `${resolvedFavicon}${resolvedFavicon.includes('?') ? '&' : '?'}v=${version}` : resolvedFavicon;
     }
   }
 

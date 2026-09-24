@@ -371,7 +371,7 @@ export const ProductShowcaseManager = ({ showcaseKey, title, icon: TagIcon, icon
                       <p>No products are currently added to {title}.</p>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="default"
                         onClick={() => setBrowseModalOpen(true)}
                         className="text-xs cursor-pointer"
                       >

@@ -92,29 +92,56 @@ const escapeCsvCell = (str) => {
   return s;
 };
 
-const LOCAL_STORAGE_STAGED_KEY = 'meta_catalog_staged_products_v2';
-const LOCAL_STORAGE_SETTINGS_KEY = 'meta_catalog_settings_v4';
+const getDynamicDefaults = () => {
+  const detectedStorefront =
+    clientConfig?.storefrontUrl ||
+    (clientConfig?.domain ? `https://${clientConfig.domain.replace(/^https?:\/\//, '')}` : null) ||
+    (typeof window !== 'undefined'
+      ? `${window.location.protocol}//${window.location.hostname.replace(/^admin\./, '')}`
+      : 'https://decantrebd.com');
 
-// Restores persisted feed configuration with default single-product variable export
+  const detectedApiBase = (
+    clientConfig?.apiBaseUrl ||
+    baseURL ||
+    (typeof window !== 'undefined'
+      ? `${window.location.protocol}//api.${window.location.hostname.replace(/^admin\./, '')}`
+      : 'https://server.decantrebd.com')
+  ).replace(/\/$/, '');
+
+  return {
+    siteUrl: detectedStorefront.replace(/\/$/, ''),
+    imageBaseUrl: detectedApiBase,
+    productPathPrefix: '/product/',
+    idMapping: 'did',
+    defaultCondition: 'new',
+    googleCategory: '',
+    customLabel0: '',
+    includeVariants: false,
+  };
+};
+
+const getClientStorageKey = (baseKey) => {
+  const clientKey = clientConfig?.clientKey || clientConfig?.brandName?.toLowerCase() || 'default';
+  return `${baseKey}_${clientKey}`;
+};
+
+// Restores persisted feed configuration dynamically scoped per client
 const getSavedSettings = () => {
+  const defaults = getDynamicDefaults();
   try {
-    const savedV4 = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
-    if (savedV4) return JSON.parse(savedV4);
-    const savedV3 = localStorage.getItem('meta_catalog_settings_v3');
-    if (savedV3) {
-      const parsed = JSON.parse(savedV3);
-      if (!parsed.productPathPrefix || parsed.productPathPrefix === '/products/' || parsed.productPathPrefix === '/products') {
-        parsed.productPathPrefix = '/product/';
-      }
-      return parsed;
-    }
-    const savedV2 = localStorage.getItem('meta_catalog_settings_v2');
-    if (savedV2) {
-      const parsed = JSON.parse(savedV2);
-      return { ...parsed, includeVariants: false, productPathPrefix: '/product/' };
+    const key = getClientStorageKey('meta_catalog_settings');
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaults,
+        ...parsed,
+        siteUrl: parsed.siteUrl || defaults.siteUrl,
+        imageBaseUrl: parsed.imageBaseUrl || defaults.imageBaseUrl,
+      };
     }
   } catch (_) {}
-  return {};
+  return defaults;
 };
 
 // Main Meta Catalog Feed Generator and CSV Builder component
@@ -129,40 +156,25 @@ const MetaCatalogGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Settings State (with LocalStorage restore)
+  // Settings State (Scoped dynamically to current client)
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const defaultDomain =
-    clientConfig?.brandName?.toLowerCase() === 'engulfic'
-      ? 'https://engulfic.com'
-      : clientConfig?.brandName?.toLowerCase() === 'toyoland'
-      ? 'https://toyoland.shop'
-      : 'https://decantrebd.com';
+  const initialSettings = useMemo(() => getSavedSettings(), []);
 
-  const savedSettings = useMemo(() => getSavedSettings(), []);
-
-  const [siteUrl, setSiteUrl] = useState(() => savedSettings.siteUrl || defaultDomain);
-  const [productPathPrefix, setProductPathPrefix] = useState(() => {
-    const prefix = savedSettings.productPathPrefix;
-    if (!prefix || prefix === '/products/' || prefix === '/products') {
-      return '/product/';
-    }
-    return prefix;
-  });
-  const [imageBaseUrl, setImageBaseUrl] = useState(
-    () => savedSettings.imageBaseUrl || (clientConfig?.apiBaseUrl || baseURL || 'https://server.decantrebd.com').replace(/\/$/, '')
-  );
-
+  const [siteUrl, setSiteUrl] = useState(initialSettings.siteUrl);
+  const [productPathPrefix, setProductPathPrefix] = useState(initialSettings.productPathPrefix);
+  const [imageBaseUrl, setImageBaseUrl] = useState(initialSettings.imageBaseUrl);
   const currency = 'BDT';
-  const [idMapping, setIdMapping] = useState(() => savedSettings.idMapping || 'did');
-  const [defaultCondition, setDefaultCondition] = useState(() => savedSettings.defaultCondition || 'new');
-  const [googleCategory, setGoogleCategory] = useState(() => savedSettings.googleCategory || '');
-  const [customLabel0, setCustomLabel0] = useState(() => savedSettings.customLabel0 || '');
-  const [includeVariants, setIncludeVariants] = useState(() => savedSettings.includeVariants ?? false);
+  const [idMapping, setIdMapping] = useState(initialSettings.idMapping);
+  const [defaultCondition, setDefaultCondition] = useState(initialSettings.defaultCondition);
+  const [googleCategory, setGoogleCategory] = useState(initialSettings.googleCategory);
+  const [customLabel0, setCustomLabel0] = useState(initialSettings.customLabel0);
+  const [includeVariants, setIncludeVariants] = useState(initialSettings.includeVariants);
 
-  // Staged Catalog State (with LocalStorage restore)
+  // Staged Catalog State (with LocalStorage restore scoped per client)
   const [stagedMap, setStagedMap] = useState(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_STAGED_KEY);
+      const stagedKey = getClientStorageKey('meta_catalog_staged');
+      const saved = localStorage.getItem(stagedKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
@@ -173,11 +185,12 @@ const MetaCatalogGenerator = () => {
     return new Map();
   });
 
-  // Save settings to LocalStorage
+  // Save settings to LocalStorage scoped per client
   useEffect(() => {
     try {
+      const settingsKey = getClientStorageKey('meta_catalog_settings');
       localStorage.setItem(
-        LOCAL_STORAGE_SETTINGS_KEY,
+        settingsKey,
         JSON.stringify({
           siteUrl,
           productPathPrefix,
@@ -201,11 +214,12 @@ const MetaCatalogGenerator = () => {
     includeVariants,
   ]);
 
-  // Save stagedMap to LocalStorage
+  // Save stagedMap to LocalStorage scoped per client
   useEffect(() => {
     try {
+      const stagedKey = getClientStorageKey('meta_catalog_staged');
       const arrayData = Array.from(stagedMap.values());
-      localStorage.setItem(LOCAL_STORAGE_STAGED_KEY, JSON.stringify(arrayData));
+      localStorage.setItem(stagedKey, JSON.stringify(arrayData));
     } catch (_) {}
   }, [stagedMap]);
 

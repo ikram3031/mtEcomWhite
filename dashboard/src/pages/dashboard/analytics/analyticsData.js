@@ -70,7 +70,7 @@ export const generateGtagScript = (measurementId) => {
 };
 
 // Supplies industry-tailored sample product events, live feed, metrics, and top pages per tenant
-export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
+export const getClientIndustryData = (clientKey = clientConfig?.clientKey || getActiveClientKey()) => {
   switch (clientKey) {
     case 'engulfic':
       return {
@@ -159,7 +159,32 @@ export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
           { id: 2, type: 'add_to_cart', label: 'Added to Cart "Anime Plushie Keychain"', location: 'Chittagong, BD', time: '15s ago', badge: 'bg-purple-500/15 text-purple-500' },
         ],
       };
-    default:
+    case 'surokkha':
+      return {
+        accentColor: '#10b981',
+        realtimeActive: 7,
+        baseSessions: 5300,
+        baseUsers: 4200,
+        basePageviews: 16000,
+        baseRevenue: 85000,
+        baseTransactions: 62,
+        topPages: [
+          { path: '/', title: 'Surokkha Official Storefront', pageviews: 5100, uniqueViews: 3900, avgTime: '1m 40s', bounceRate: '23.0%', exitRate: '16.0%' },
+          { path: '/collections/combos', title: 'Special Combo Packs', pageviews: 3400, uniqueViews: 2600, avgTime: '2m 20s', bounceRate: '19.0%', exitRate: '14.0%' },
+          { path: '/cart', title: 'Shopping Cart', pageviews: 1200, uniqueViews: 850, avgTime: '1m 35s', bounceRate: '15.0%', exitRate: '18.0%' },
+          { path: '/checkout', title: 'Discreet Checkout', pageviews: 780, uniqueViews: 560, avgTime: '2m 05s', bounceRate: '7.5%', exitRate: '10.0%' },
+        ],
+        sampleProducts: [
+          { path: '/products/surokkha-combo', title: 'Surokkha Sensation Combo' },
+          { path: '/products/surokkha-pack', title: 'Surokkha Care Pack' },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: 'Viewed "Surokkha Sensation Combo"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Surokkha Care Pack"', location: 'Sylhet, BD', time: '10s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 3, type: 'purchase', label: 'Completed Order (৳950 via bKash)', location: 'Chittagong, BD', time: '35s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+        ],
+      };
+    case 'decantre':
       return {
         accentColor: '#C5A059',
         realtimeActive: 34,
@@ -191,13 +216,64 @@ export const getClientIndustryData = (clientKey = getActiveClientKey()) => {
           { id: 6, type: 'search', label: 'Searched "oud wood luxury"', location: 'Khulna, BD', time: '2m ago', badge: 'bg-sky-500/15 text-sky-500' },
         ],
       };
+    case 'demo':
+      return {
+        accentColor: '#4f46e5',
+        realtimeActive: 12,
+        baseSessions: 8500,
+        baseUsers: 6200,
+        basePageviews: 24500,
+        baseRevenue: 145000,
+        baseTransactions: 98,
+        topPages: [
+          { path: '/', title: 'Demo Store Homepage', pageviews: 8200, uniqueViews: 5900, avgTime: '1m 45s', bounceRate: '24.0%', exitRate: '18.0%' },
+          { path: '/collections/featured', title: 'Featured Collection', pageviews: 5400, uniqueViews: 3800, avgTime: '2m 20s', bounceRate: '20.0%', exitRate: '15.0%' },
+          { path: '/cart', title: 'Shopping Cart', pageviews: 1800, uniqueViews: 1300, avgTime: '1m 30s', bounceRate: '15.0%', exitRate: '20.0%' },
+          { path: '/checkout', title: 'Secure Checkout', pageviews: 950, uniqueViews: 720, avgTime: '2m 05s', bounceRate: '8.0%', exitRate: '10.0%' },
+        ],
+        sampleProducts: [
+          { path: '/products/demo-item-alpha', title: 'Demo Item Alpha Pro' },
+          { path: '/products/demo-item-beta', title: 'Demo Item Beta Wireless' },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: 'Viewed "Demo Item Alpha Pro"', location: 'Dhaka, BD', time: 'Just now', badge: 'bg-indigo-500/15 text-indigo-500' },
+          { id: 2, type: 'add_to_cart', label: 'Added to Cart "Demo Item Beta Wireless"', location: 'Chittagong, BD', time: '20s ago', badge: 'bg-blue-500/15 text-blue-500' },
+          { id: 3, type: 'purchase', label: 'Completed Order (৳2,450 via bKash)', location: 'Dhaka, BD', time: '1m ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+        ],
+      };
+    default: {
+      const activeBrand = clientConfig?.brandName || 'Store';
+      return {
+        accentColor: '#10b981',
+        realtimeActive: 6,
+        baseSessions: 4500,
+        baseUsers: 3400,
+        basePageviews: 14000,
+        baseRevenue: 75000,
+        baseTransactions: 50,
+        topPages: [
+          { path: '/', title: `${activeBrand} Storefront`, pageviews: 4200, uniqueViews: 3100, avgTime: '1m 35s', bounceRate: '24.0%', exitRate: '17.0%' },
+          { path: '/collections/all-products', title: 'All Products Catalog', pageviews: 2900, uniqueViews: 2200, avgTime: '2m 15s', bounceRate: '21.0%', exitRate: '15.0%' },
+          { path: '/cart', title: 'Shopping Cart', pageviews: 1100, uniqueViews: 750, avgTime: '1m 30s', bounceRate: '16.0%', exitRate: '19.0%' },
+          { path: '/checkout', title: 'Secure Checkout', pageviews: 650, uniqueViews: 480, avgTime: '2m 00s', bounceRate: '8.0%', exitRate: '11.0%' },
+        ],
+        sampleProducts: [
+          { path: '/products/featured-item', title: `${activeBrand} Featured Product` },
+        ],
+        liveEvents: [
+          { id: 1, type: 'view_item', label: `Viewed "${activeBrand} Product"`, location: 'Dhaka, BD', time: 'Just now', badge: 'bg-emerald-500/15 text-emerald-500' },
+          { id: 2, type: 'add_to_cart', label: `Added to Cart "${activeBrand} Product"`, location: 'Chittagong, BD', time: '15s ago', badge: 'bg-amber-500/15 text-amber-500' },
+          { id: 3, type: 'purchase', label: 'Completed Order (৳1,250 via bKash)', location: 'Dhaka, BD', time: '40s ago', badge: 'bg-emerald-500/15 text-emerald-500' },
+        ],
+      };
+    }
   }
 };
 
 // Generates comprehensive Google Analytics dataset based on selected date range and active client
 export const getAnalyticsDataForRange = (range = '30days', brandName = null, storeStats = null) => {
   const activeBrand = brandName || clientConfig?.brandName || 'Store';
-  const clientKey = getActiveClientKey();
+  const clientKey = clientConfig?.clientKey || getActiveClientKey();
   const industry = getClientIndustryData(clientKey);
   const accentColor = industry.accentColor || '#10b981';
 

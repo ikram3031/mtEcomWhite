@@ -16,9 +16,9 @@ import Members from './pages/dashboard/members';
 import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
 import Reviews from './pages/dashboard/reviews';
-import SettingsPage from './pages/dashboard/settings';
 import ProductShowcasesPage from './pages/dashboard/settings/productShowcases';
 import MetaPixelPage from './pages/dashboard/settings/metaPixel';
+import TikTokPixelPage from './pages/dashboard/settings/tiktokPixel';
 import CMSContentPage from './pages/dashboard/settings/cmsContent';
 import GoogleAnalyticsPage from './pages/dashboard/settings/googleAnalytics';
 import SEOSettingsPage from './pages/dashboard/settings/seoSettings';
@@ -26,6 +26,8 @@ import AllMedia from './pages/dashboard/allMedia';
 
 // Products
 import ProductsList from './pages/dashboard/products/productsList';
+import OnSaleProductsList from './pages/dashboard/products/onSaleProductsList';
+import MiniatureProductsList from './pages/dashboard/products/miniatureProductsList';
 import ProductDetails from './pages/dashboard/products/productDetails';
 import AddNewProduct from './pages/dashboard/products/addNewProduct';
 // import Stock from './pages/dashboard/products/stock';
@@ -52,7 +54,6 @@ import MessagesManager from './pages/dashboard/tools/messagesManager';
 import BulkImageResize from './pages/dashboard/tools/bulkImageResize';
 import MetaCatalog from './pages/dashboard/tools/metaCatalog';
 import SystemLogs from './pages/dashboard/tools/systemLogs';
-import AssetsManager from './pages/dashboard/tools/assetsManager';
 import SupportDesk from './pages/dashboard/tools/supportDesk';
 
 // AI Studio
@@ -177,6 +178,14 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: 'tiktok-pixel',
+            element: (
+              <RoleGuard menuKey="settings">
+                <TikTokPixelPage />
+              </RoleGuard>
+            ),
+          },
+          {
             path: 'cms-content',
             element: (
               <RoleGuard menuKey="settings">
@@ -282,7 +291,31 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: 'on-sale',
+            element: (
+              <RoleGuard menuKey="products.on-sale">
+                <OnSaleProductsList />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'miniature',
+            element: (
+              <RoleGuard menuKey="products.miniature">
+                <MiniatureProductsList />
+              </RoleGuard>
+            ),
+          },
+          {
             path: 'new',
+            element: (
+              <RoleGuard menuKey="products.new">
+                <AddNewProduct />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'new/:category',
             element: (
               <RoleGuard menuKey="products.new">
                 <AddNewProduct />

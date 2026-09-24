@@ -303,7 +303,7 @@ export function CouponDialog({ open, onOpenChange, couponToEdit }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" showCloseButton={!isSubmitting}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto" showCloseButton={!isSubmitting}>
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Coupon' : 'Create New Coupon'}</DialogTitle>
           <DialogDescription>

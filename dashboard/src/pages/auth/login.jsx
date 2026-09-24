@@ -97,146 +97,156 @@ const LoginPage = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="dark h-screen w-screen bg-background flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <div className="h-8 w-8 border-3 border-border border-t-primary rounded-full animate-spin" />
+      <div className="min-h-screen w-screen bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-400">
+        <div className="h-8 w-8 border-3 border-slate-700 border-t-rose-500 rounded-full animate-spin" />
         <span className="text-xs font-medium font-sans">Booting secure session...</span>
       </div>
     );
   }
 
   return (
-    <div className="dark h-screen w-screen max-h-screen bg-background text-foreground flex items-center justify-center p-3 relative overflow-hidden font-sans selection:bg-indigo-500/35 selection:text-foreground">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-primary/10 rounded-full blur-[120px] pointer-events-none opacity-70 animate-pulse [animation-duration:8s]" />
-      <div className="absolute top-1/3 left-1/4 w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none opacity-40 animate-pulse [animation-duration:12s]" />
-      <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-sky-500/10 rounded-full blur-[100px] pointer-events-none opacity-45 animate-pulse [animation-duration:10s]" />
+    <div className="min-h-screen w-screen max-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-rose-500/40 selection:text-white">
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-rose-600/15 rounded-full blur-[140px] pointer-events-none opacity-60 animate-pulse [animation-duration:8s]" />
+      <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-brand-600/15 rounded-full blur-[120px] pointer-events-none opacity-40 animate-pulse [animation-duration:12s]" />
 
-      <div className="absolute inset-0 bg-[radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none opacity-30" />
+      {/* Grid Pattern overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-[400px] relative z-10 my-auto"
+        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="w-full max-w-[420px] relative z-10 my-auto"
       >
-        <Card className="shadow-2xl border-border bg-card/90 text-card-foreground backdrop-blur-xl overflow-hidden rounded-2xl">
-          <CardHeader className="px-5 pt-5 pb-3 text-center border-b border-border/80 bg-card/40">
-            
-            <CardTitle className="text-xl font-bold tracking-tight flex items-center justify-center gap-1.5 text-foreground">
-              {step === 1 ? <BrandLogo className="w-[180px] sm:w-[210px] h-12 mx-auto mb-2" centered /> : '2FA VERIFICATION'}
+        <Card className="shadow-2xl shadow-black/80 border border-slate-800/90 bg-slate-900/95 text-white backdrop-blur-2xl overflow-hidden rounded-2xl ring-1 ring-white/10">
+          <CardHeader className="px-6 pt-6 pb-4 text-center border-b border-slate-800/80 bg-slate-950/50">
+            <CardTitle className="text-xl font-bold tracking-tight flex flex-col items-center justify-center text-white">
+              {step === 1 ? (
+                <div className="flex flex-col items-center justify-center my-1 gap-1">
+                  <span className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight leading-tight">
+                    Surokkha
+                  </span>
+                  <span className="text-xs font-mono font-medium text-slate-400">
+                    v{__APP_VERSION__}
+                  </span>
+                </div>
+              ) : (
+                '2FA VERIFICATION'
+              )}
             </CardTitle>
-            <CardDescription className="text-[11px] text-muted-foreground mt-0.5">
-              {step === 1 ? 'Secure store administration portal' : 'Google Authenticator verification'}
+            <CardDescription className="text-xs text-slate-400 mt-1 font-medium">
+              {step === 1 ? 'Secure Store Administration Portal' : 'Google Authenticator Verification'}
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="p-4 sm:p-5 space-y-3.5">
+          <CardContent className="p-5 sm:p-6 space-y-4">
             {step === 1 ? (
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-semibold text-muted-foreground">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
                     Email Address
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground/60">
-                      <Mail className="h-3.5 w-3.5" />
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <Mail className="h-4 w-4" />
                     </span>
                     <Input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 h-9 text-xs bg-background/60 border-border text-foreground focus:border-primary placeholder:text-muted-foreground/40 rounded-lg"
+                      className="pl-9.5 h-10 text-sm bg-slate-950/80 border border-slate-700/80 text-white focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 placeholder:text-slate-500 rounded-xl transition shadow-inner"
                       placeholder="name@example.com"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-semibold text-muted-foreground">
+                    <label className="block text-xs font-semibold text-slate-300">
                       Password
                     </label>
-                    <a href="#" className="text-[11px] text-muted-foreground hover:text-foreground hover:underline">
+                    <a href="#" className="text-xs font-medium text-rose-400 hover:text-rose-300 hover:underline transition">
                       Forgot?
                     </a>
                   </div>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground/60">
-                      <Lock className="h-3.5 w-3.5" />
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <Lock className="h-4 w-4" />
                     </span>
                     <Input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 pr-9 h-9 text-xs bg-background/60 border-border text-foreground focus:border-primary placeholder:text-muted-foreground/40 rounded-lg"
+                      className="pl-9.5 pr-10 h-10 text-sm bg-slate-950/80 border border-slate-700/80 text-white focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 placeholder:text-slate-500 rounded-xl transition shadow-inner"
                       placeholder="••••••••"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition cursor-pointer"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-white transition cursor-pointer"
                       title={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-3.5 w-3.5" />
+                        <EyeOff className="h-4 w-4" />
                       ) : (
-                        <Eye className="h-3.5 w-3.5" />
+                        <Eye className="h-4 w-4" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    size="sm"
-                    className="w-full h-9 flex items-center justify-center font-semibold text-xs bg-foreground hover:bg-foreground/90 text-background transition cursor-pointer shadow-md rounded-lg"
+                    size="default"
+                    className="w-full h-10 flex items-center justify-center font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/60 rounded-xl transition cursor-pointer border border-rose-500/40"
                   >
                     {isSubmitting ? (
-                      <div className="h-4 w-4 border-2 border-background/30 border-t-background rounded-full animate-spin mr-2" />
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                     ) : (
-                      <LogIn className="h-3.5 w-3.5 mr-1" />
+                      <LogIn className="h-4 w-4 mr-1.5" />
                     )}
                     {isSubmitting ? 'Signing In…' : 'Log In'}
                   </Button>
                 </div>
-
               </form>
             ) : (
               <form onSubmit={handleVerify2FA} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-semibold text-muted-foreground">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
                     Google Authenticator Code
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground/60">
-                      <Shield className="h-3.5 w-3.5 text-primary" />
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <Shield className="h-4 w-4 text-rose-500" />
                     </span>
                     <Input
                       type="text"
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                      className="pl-9 h-9 text-xs bg-background/60 border-border text-foreground focus:border-primary placeholder:text-muted-foreground/40 rounded-lg tracking-[0.5em] text-center font-bold"
+                      className="pl-9.5 h-10 text-sm bg-slate-950/80 border border-slate-700/80 text-white focus:border-rose-500 placeholder:text-slate-500 rounded-xl tracking-[0.4em] text-center font-bold"
                       placeholder="000000"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 pt-1">
                   <Button
                     type="submit"
                     disabled={is2faVerifying}
-                    size="sm"
-                    className="w-full h-9 flex items-center justify-center font-semibold text-xs bg-primary hover:bg-primary/95 text-black transition cursor-pointer shadow-md rounded-lg"
+                    size="default"
+                    className="w-full h-10 flex items-center justify-center font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white transition cursor-pointer shadow-lg shadow-rose-950/50 rounded-xl"
                   >
                     {is2faVerifying ? (
-                      <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin mr-2" />
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                     ) : (
-                      <Shield className="h-3.5 w-3.5 mr-1" />
+                      <Shield className="h-4 w-4 mr-1.5" />
                     )}
                     {is2faVerifying ? 'Verifying…' : 'Verify Code'}
                   </Button>
@@ -246,12 +256,12 @@ const LoginPage = () => {
                     variant="outline"
                     disabled={isRequestingQr}
                     onClick={handleSendQrCode}
-                    className="w-full h-9 flex items-center justify-center font-semibold text-xs border-border bg-background/40 hover:bg-background/80 transition cursor-pointer shadow-sm rounded-lg"
+                    className="w-full h-10 flex items-center justify-center font-semibold text-xs border border-slate-700 bg-slate-950/60 hover:bg-slate-800 text-slate-200 transition cursor-pointer rounded-xl"
                   >
                     {isRequestingQr ? (
                       <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                     ) : (
-                      <QrCode className="h-3.5 w-3.5 mr-1" />
+                      <QrCode className="h-4 w-4 mr-1.5" />
                     )}
                     Get QR Code via Email
                   </Button>
@@ -260,9 +270,9 @@ const LoginPage = () => {
                     type="button"
                     variant="ghost"
                     onClick={handleCancel2FA}
-                    className="w-full h-9 flex items-center justify-center font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-background/20 transition cursor-pointer rounded-lg"
+                    className="w-full h-9 flex items-center justify-center font-semibold text-xs text-slate-400 hover:text-white hover:bg-slate-800/40 transition cursor-pointer rounded-xl"
                   >
-                    <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+                    <ArrowLeft className="h-4 w-4 mr-1.5" />
                     Cancel
                   </Button>
                 </div>
@@ -271,18 +281,19 @@ const LoginPage = () => {
           </CardContent>
         </Card>
       </motion.div>
-      <p className="fixed bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground/80 font-mono z-20 select-none">
+
+      <p className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-slate-500 font-mono z-20 select-none">
         v{__APP_VERSION__}
       </p>
 
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 flex flex-col items-end gap-1 select-none pointer-events-auto">
-        <span className="text-[10px] sm:text-[11px] font-medium tracking-wide text-muted-foreground/75">
+        <span className="text-xs font-semibold tracking-wide text-slate-400">
           Powered By
         </span>
         <img
           src={plexiviaLogo}
           alt="Plexivia"
-          className="h-5 sm:h-6 w-auto max-w-[120px] sm:max-w-[140px] object-contain opacity-80 hover:opacity-100 transition-opacity"
+          className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[150px] object-contain opacity-90 hover:opacity-100 transition-opacity drop-shadow-md"
         />
       </div>
     </div>

@@ -1,9 +1,12 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { OrderModel } from '../models/order.model.js';
 import { MemberModel } from '../models/member.model.js';
 import { PaymentModel } from '../models/payment.model.js';
 import { UserModel } from '../models/user.model.js';
 import { buildOrderNumber } from './orderHelper.js';
+import { config, getClientPolicy } from '../config/index.js';
 
 const { Types } = mongoose;
 
@@ -238,6 +241,122 @@ export const updateMemberOrderReference = async (memberId, orderDid, orderValue)
       $addToSet: { orders: { did: orderDid, value: orderValue } },
     },
   );
+};
+
+// Resolves or creates a Member record if the client has forceMembershipFromOrder enabled.
+// Checks for existing member by email or phone before inserting.
+export const resolveOrForceMembershipFromOrder = async (createdOrder, payload = {}) => {
+  try {
+    const isForceMembershipEnabled = Boolean(
+      config.forceMembershipFromOrder ||
+      getClientPolicy('members.forceMembershipFromOrder') ||
+      getClientPolicy('forceMembershipFromOrder')
+    );
+
+    // If explicit memberId was passed in payload, use it
+    if (createdOrder.member && Types.ObjectId.isValid(createdOrder.member)) {
+      return createdOrder.member;
+    }
+    if (payload.memberId && Types.ObjectId.isValid(payload.memberId)) {
+      return payload.memberId;
+    }
+
+    if (!isForceMembershipEnabled) {
+      return null;
+    }
+
+    const billing = createdOrder.billingInfo || payload.billingInfo || {};
+    const shipping = createdOrder.shippingInfo || payload.shippingInfo || {};
+
+    const rawEmail = normalizeText(billing.email || payload.email || shipping.email).toLowerCase();
+    const rawPhone = normalizeText(billing.phone || payload.phone || shipping.phone);
+    const fullName = normalizeText(billing.fullName || payload.fullName || shipping.fullName || payload.name) || 'Customer';
+
+    // Build query conditions for existing member search
+    const queryConditions = [];
+    if (rawEmail && !rawEmail.startsWith('instore@') && !rawEmail.includes('@store.com')) {
+      queryConditions.push({ email: rawEmail });
+    }
+    if (rawPhone) {
+      queryConditions.push({ phone: rawPhone });
+    }
+
+    let existingMember = null;
+    if (queryConditions.length > 0) {
+      existingMember = await MemberModel.findOne({ $or: queryConditions });
+    }
+
+    if (existingMember) {
+      // Update order with member reference if missing
+      if (!createdOrder.member || String(createdOrder.member) !== String(existingMember._id)) {
+        await OrderModel.findByIdAndUpdate(createdOrder._id, { member: existingMember._id });
+        createdOrder.member = existingMember._id;
+      }
+      return existingMember._id;
+    }
+
+    // Otherwise create new member
+    const domain = config.domain || 'surokkha.store';
+    const cleanPhoneDigits = rawPhone.replace(/\D/g, '');
+    const fallbackEmail = rawEmail || (cleanPhoneDigits ? `${cleanPhoneDigits}@${domain}` : `customer_${Date.now()}@${domain}`);
+    const randomPassword = crypto.randomBytes(16).toString('hex');
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0] || fullName;
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const newMemberData = {
+      name: fullName,
+      email: fallbackEmail,
+      phone: rawPhone,
+      passwordHash,
+      isActive: true,
+      role: 'Customer',
+      isEmailVerified: Boolean(rawEmail),
+      billingAddress: {
+        firstName,
+        lastName,
+        address1: normalizeText(billing.address || shipping.address),
+        city: normalizeText(billing.district || shipping.district),
+        state: normalizeText(billing.thana || shipping.thana),
+        postcode: normalizeText(billing.zip || shipping.zip),
+        country: 'Bangladesh',
+        email: fallbackEmail,
+        phone: rawPhone,
+      },
+      shippingAddress: {
+        firstName,
+        lastName,
+        address1: normalizeText(shipping.address || billing.address),
+        city: normalizeText(shipping.district || billing.district),
+        state: normalizeText(shipping.thana || billing.thana),
+        postcode: normalizeText(shipping.zip || billing.zip),
+        country: 'Bangladesh',
+        email: fallbackEmail,
+        phone: rawPhone,
+      },
+      orders: [
+        {
+          did: createdOrder.did,
+          value: Number(createdOrder.totals?.total || 0),
+        },
+      ],
+      totalOrderAmount: Number(createdOrder.totals?.total || 0),
+    };
+
+    const createdMember = await MemberModel.create(newMemberData);
+
+    // Link the created member to the created order
+    await OrderModel.findByIdAndUpdate(createdOrder._id, { member: createdMember._id });
+    createdOrder.member = createdMember._id;
+
+    return createdMember._id;
+  } catch (error) {
+    console.error('[resolveOrForceMembershipFromOrder] Failed to force create/resolve member:', error);
+    return null;
+  }
 };
 
 // Persist the created order snapshot onto the member and refresh derived totals.

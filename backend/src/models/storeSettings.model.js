@@ -55,6 +55,52 @@ const storeSettingsSchema = new Schema(
         default: "",
       },
     },
+    tiktokPixel: {
+      pixelId: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accessToken: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      testEventCode: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      isEnabled: {
+        type: Boolean,
+        default: true,
+      },
+      enableBrowserPixel: {
+        type: Boolean,
+        default: true,
+      },
+      enableEventsApi: {
+        type: Boolean,
+        default: true,
+      },
+      advancedMatching: {
+        type: Boolean,
+        default: true,
+      },
+      lastVerifiedAt: {
+        type: Date,
+        default: null,
+      },
+      lastTestStatus: {
+        type: String,
+        enum: ["connected", "failed", "untested"],
+        default: "untested",
+      },
+      lastTestMessage: {
+        type: String,
+        default: "",
+      },
+    },
     googleAnalytics: {
       measurementId: {
         type: String,

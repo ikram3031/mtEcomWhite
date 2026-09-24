@@ -3,6 +3,10 @@ import {
   getMetaPixelConfig,
   testMetaCapiConnection,
 } from "../services/facebookCapi.service.js";
+import {
+  getTikTokPixelConfig,
+  testTikTokEventsApiConnection,
+} from "../services/tiktokEventsApi.service.js";
 import { config as clientConfig } from "../config/index.js";
 
 // Retrieves full Meta Pixel and Conversions API settings for Dashboard administration
@@ -131,6 +135,146 @@ export const testMetaPixelConnection = async (req, res, next) => {
 export const getPublicMetaPixelConfig = async (req, res, next) => {
   try {
     const config = await getMetaPixelConfig();
+
+    return res.json({
+      status: "success",
+      data: {
+        pixelId: config.isEnabled ? config.pixelId : "",
+        isEnabled: config.isEnabled,
+        enableBrowserPixel: config.enableBrowserPixel,
+        advancedMatching: config.advancedMatching,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Retrieves full TikTok Pixel and Events API settings for Dashboard administration
+export const getTikTokPixelSettings = async (req, res, next) => {
+  try {
+    const config = await getTikTokPixelConfig();
+    const doc = await StoreSettingsModel.findOne({ key: "default" }).lean();
+
+    return res.json({
+      status: "success",
+      data: {
+        ...config,
+        isPersistedInDb: Boolean(doc?.tiktokPixel?.pixelId),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Persists updated TikTok Pixel and Events API settings to database
+export const updateTikTokPixelSettings = async (req, res, next) => {
+  try {
+    const {
+      pixelId = "",
+      accessToken = "",
+      testEventCode = "",
+      isEnabled = true,
+      enableBrowserPixel = true,
+      enableEventsApi = true,
+      advancedMatching = true,
+    } = req.body || {};
+
+    const cleanPixelId = String(pixelId).trim();
+    const cleanAccessToken = String(accessToken).trim();
+    const cleanTestEventCode = String(testEventCode).trim();
+
+    const updatePayload = {
+      "tiktokPixel.pixelId": cleanPixelId,
+      "tiktokPixel.accessToken": cleanAccessToken,
+      "tiktokPixel.testEventCode": cleanTestEventCode,
+      "tiktokPixel.isEnabled": Boolean(isEnabled),
+      "tiktokPixel.enableBrowserPixel": Boolean(enableBrowserPixel),
+      "tiktokPixel.enableEventsApi": Boolean(enableEventsApi),
+      "tiktokPixel.advancedMatching": Boolean(advancedMatching),
+      updatedBy: req.user?.userId || null,
+    };
+
+    const updatedDoc = await StoreSettingsModel.findOneAndUpdate(
+      { key: "default" },
+      { $set: updatePayload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean();
+
+    return res.json({
+      status: "success",
+      message: "TikTok Pixel settings saved successfully.",
+      data: updatedDoc.tiktokPixel,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Executes a live test event against TikTok Events API and updates verification status
+export const testTikTokPixelConnection = async (req, res, next) => {
+  try {
+    const currentConfig = await getTikTokPixelConfig();
+    const targetPixelId = (req.body?.pixelId || currentConfig.pixelId || "").trim();
+    const targetAccessToken = (req.body?.accessToken || currentConfig.accessToken || "").trim();
+    const targetTestEventCode = (req.body?.testEventCode ?? currentConfig.testEventCode ?? "").trim();
+
+    if (!targetPixelId || !targetAccessToken) {
+      return res.status(400).json({
+        status: "error",
+        message: "Both Pixel ID and Events API Access Token must be provided to test the connection.",
+      });
+    }
+
+    const testResult = await testTikTokEventsApiConnection({
+      pixelId: targetPixelId,
+      accessToken: targetAccessToken,
+      testEventCode: targetTestEventCode,
+    });
+
+    const isSuccess = testResult.success === true;
+    const now = new Date();
+    const statusVal = isSuccess ? "connected" : "failed";
+    const statusMsg = testResult.message || (isSuccess ? "Connected" : "Test failed");
+
+    await StoreSettingsModel.updateOne(
+      { key: "default" },
+      {
+        $set: {
+          "tiktokPixel.lastVerifiedAt": isSuccess ? now : currentConfig.lastVerifiedAt,
+          "tiktokPixel.lastTestStatus": statusVal,
+          "tiktokPixel.lastTestMessage": statusMsg,
+        },
+      },
+      { upsert: true }
+    );
+
+    if (!isSuccess) {
+      return res.status(testResult.status >= 400 && testResult.status < 600 ? testResult.status : 400).json({
+        status: "error",
+        message: testResult.message,
+        details: testResult.raw || null,
+      });
+    }
+
+    return res.json({
+      status: "success",
+      message: testResult.message,
+      data: {
+        requestId: testResult.requestId,
+        verifiedAt: now,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Returns public sanitized TikTok Pixel configuration for customer storefront integration
+export const getPublicTikTokPixelConfig = async (req, res, next) => {
+  try {
+    const config = await getTikTokPixelConfig();
 
     return res.json({
       status: "success",

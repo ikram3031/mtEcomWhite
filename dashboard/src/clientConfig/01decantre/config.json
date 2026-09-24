@@ -22,12 +22,15 @@
   ],
   "stockManagement": {
     "simpleProduct": true,
-    "variableProduct": false
+    "variableProduct": true
   },
   "reports": {
     "enableInStoreFilter": true,
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
+  },
+  "cloudFlareAnalytics": {
+    "active": false
   },
   "googleAnalytics": {
     "measurementId": "G-95TCXBZG7W",
@@ -76,9 +79,11 @@
     "orders",
     "orders.new",
     "orders.list",
+    "orders.instore",
     "products",
     "products.new",
     "products.list",
+    "products.miniature",
     "products.categories",
     "products.brands",
     "products.attributes",

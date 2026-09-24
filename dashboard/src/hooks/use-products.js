@@ -22,6 +22,7 @@ const fetchProducts = async (params) => {
   if (params?.category) queryParams.category = params.category;
   if (params?.brand) queryParams.brand = params.brand;
   if (params?.stockStatus && params.stockStatus !== 'all') queryParams.stockStatus = params.stockStatus;
+  if (params?.onSale) queryParams.onSale = true;
 
   const response = await apiClient.get('/api/v1/products', { params: queryParams });
 
@@ -71,6 +72,7 @@ const fetchProducts = async (params) => {
           price: Number(v.price ?? 0),
           offerPrice: v.offerPrice != null ? Number(v.offerPrice) : null,
           stockQuantity: Number(v.stockQuantity ?? 0),
+          stockStatus: v.stockStatus || 'instock',
           sku: v.sku ?? '',
           sortOrder: Number(v.sortOrder ?? 0),
         }))

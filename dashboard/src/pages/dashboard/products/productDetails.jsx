@@ -27,6 +27,7 @@ const emptyVariant = () => ({
   imageFile: null,
   imagePreview: "",
   imageError: "",
+  stockStatus: "instock",
 });
 
 function slugify(text) {
@@ -217,8 +218,9 @@ const EditProductPage = () => {
               ? String(product.stock)
               : ""
           );
-          setUploadedImageUrl(product.imageUrl || "");
-          setImagePreview(product.imageUrl || "");
+          const mainImg = product.imageUrl || product.image_url || "";
+          setUploadedImageUrl(mainImg);
+          setImagePreview(mainImg);
           setTags(Array.isArray(product.tags) ? product.tags : []);
           if (product.season) {
             setSeason(
@@ -281,6 +283,7 @@ const EditProductPage = () => {
                 imagePreview: v.imageUrl || "",
                 imageFile: null,
                 imageError: "",
+                stockStatus: v.stockStatus || "instock",
               }))
             );
           }
@@ -569,6 +572,7 @@ const EditProductPage = () => {
           sku: v.sku.trim(),
           sortOrder: i,
           imageUrl: varImageUrl || null,
+          stockStatus: v.stockStatus || "instock",
         });
       }
 

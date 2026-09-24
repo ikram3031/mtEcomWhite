@@ -66,6 +66,8 @@ import {
   mapOrderItemsToCart,
   buildUpdatePayload,
   getPaymentMethodLabel,
+  getBillingInfo,
+  getShippingInfo,
 } from "@/utils/orderDetailsHelper";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -270,14 +272,21 @@ const OrderDetailsPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
-  const [customerCity, setCustomerCity] = useState("Dhaka");
-  const [customerThana, setCustomerThana] = useState("Dhaka");
-  const [customerDistrict, setCustomerDistrict] = useState("Dhaka");
-  const [customerZip, setCustomerZip] = useState("1000");
+  const [billingName, setBillingName] = useState("");
+  const [billingPhone, setBillingPhone] = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingThana, setBillingThana] = useState("");
+  const [billingDistrict, setBillingDistrict] = useState("Dhaka");
+  const [billingZip, setBillingZip] = useState("");
+
+  const [shippingName, setShippingName] = useState("");
+  const [shippingPhone, setShippingPhone] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingThana, setShippingThana] = useState("");
+  const [shippingDistrict, setShippingDistrict] = useState("Dhaka");
+  const [shippingZip, setShippingZip] = useState("");
+  const [sameAsBilling, setSameAsBilling] = useState(true);
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paidAmount, setPaidAmount] = useState(0);
@@ -306,14 +315,32 @@ const OrderDetailsPage = () => {
 
   useEffect(() => {
     if (order) {
-      setCustomerName(order.customer?.fullName || order.customerName || "");
-      setCustomerPhone((order.customer?.phone || "").replace(/^\+880?/, ""));
-      setCustomerEmail(order.customer?.email || "");
-      setCustomerAddress(order.customer?.address || "");
-      setCustomerCity(order.customer?.city || "Dhaka");
-      setCustomerThana(order.customer?.thana || "Dhaka");
-      setCustomerDistrict(order.customer?.district || "Dhaka");
-      setCustomerZip(order.customer?.zip || "1000");
+      const bInfo = getBillingInfo(order);
+      const sInfo = getShippingInfo(order);
+
+      setBillingName(bInfo.fullName);
+      setBillingPhone(bInfo.phone.replace(/^\+880?/, ""));
+      setBillingEmail(bInfo.email);
+      setBillingAddress(bInfo.address);
+      setBillingThana(bInfo.thana);
+      setBillingDistrict(bInfo.district || "Dhaka");
+      setBillingZip(bInfo.zip);
+
+      setShippingName(sInfo.fullName || bInfo.fullName);
+      setShippingPhone((sInfo.phone || bInfo.phone).replace(/^\+880?/, ""));
+      setShippingAddress(sInfo.address || bInfo.address);
+      setShippingThana(sInfo.thana || bInfo.thana);
+      setShippingDistrict(sInfo.district || bInfo.district || "Dhaka");
+      setShippingZip(sInfo.zip || bInfo.zip);
+
+      const isSame =
+        !sInfo.address ||
+        (sInfo.address === bInfo.address &&
+          sInfo.district === bInfo.district &&
+          sInfo.thana === bInfo.thana &&
+          sInfo.fullName === bInfo.fullName &&
+          sInfo.phone === bInfo.phone);
+      setSameAsBilling(isSame);
 
       const initMethod = getInitialPaymentMethod(order, isInStoreOrder);
       setPaymentMethod(initMethod);
@@ -410,31 +437,68 @@ const OrderDetailsPage = () => {
       toast.error("Cart is empty. Add at least one product.");
       return;
     }
-    if (!customerName.trim()) {
-      toast.error("Customer Name is required.");
+    if (!billingName.trim()) {
+      toast.error(isInStoreOrder ? "Customer Name is required." : "Billing Full Name is required.");
       return;
     }
-    if (customerPhone.replace(/\D/g, "").length < 9) {
+    if (billingPhone.replace(/\D/g, "").length < 9) {
       toast.error("Please enter a valid Phone Number.");
       return;
     }
 
+    if (!isInStoreOrder && !sameAsBilling) {
+      if (!shippingName.trim()) {
+        toast.error("Shipping Recipient Name is required.");
+        return;
+      }
+      if (shippingPhone.replace(/\D/g, "").length < 9) {
+        toast.error("Please enter a valid Shipping Phone Number.");
+        return;
+      }
+      if (!shippingAddress.trim()) {
+        toast.error("Shipping Address is required.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
+      const billingPayload = {
+        fullName: billingName,
+        phone: billingPhone,
+        email: billingEmail,
+        address: billingAddress,
+        thana: billingThana,
+        district: billingDistrict,
+        zip: billingZip,
+      };
+
+      const shippingPayload = isInStoreOrder || sameAsBilling
+        ? {
+            fullName: billingName,
+            phone: billingPhone,
+            address: billingAddress,
+            thana: billingThana,
+            district: billingDistrict,
+            zip: billingZip,
+          }
+        : {
+            fullName: shippingName,
+            phone: shippingPhone,
+            address: shippingAddress,
+            thana: shippingThana,
+            district: shippingDistrict,
+            zip: shippingZip,
+          };
+
       const orderPayload = buildUpdatePayload({
         orderStatus,
         paymentMethod,
         paidAmount,
         paymentPhone,
         isDigitalPayment,
-        customerName,
-        customerPhone,
-        customerEmail,
-        customerAddress,
-        customerCity,
-        customerThana,
-        customerDistrict,
-        customerZip,
+        billingInfo: billingPayload,
+        shippingInfo: shippingPayload,
         isInStoreOrder,
         cart,
         subtotal,
@@ -660,46 +724,199 @@ const OrderDetailsPage = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
-              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
-                <User className="h-4 w-4 text-primary" /> Customer Info
-              </h3>
-              <div className="space-y-3.5 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Full Name</span>
-                    <span className="font-medium text-foreground">{order.customer?.fullName || order.customerName || "N/A"}</span>
-                  </div>
+            {isInStoreOrder ? (
+              <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" /> Customer Info
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                    In-Store
+                  </Badge>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Phone</span>
-                    <span className="font-medium text-foreground">{order.customer?.phone || "N/A"}</span>
+                <div className="space-y-3.5 text-sm">
+                  <div className="flex items-start gap-2.5">
+                    <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Customer Name</span>
+                      <span className="font-medium text-foreground">
+                        {order.billingInfo?.fullName || order.customer?.fullName || order.customerName || "Walk-in Customer"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Email</span>
-                    <span className="font-medium text-foreground">{order.customer?.email || "N/A"}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-xs text-muted-foreground block">Address</span>
-                    <span className="font-medium text-foreground">
-                      {order.customer?.address || "N/A"}
-                      {order.customer?.city ? `, ${order.customer.city}` : ""}
-                      {order.customer?.thana ? `, ${order.customer.thana}` : ""}
-                      {order.customer?.zip ? ` - ${order.customer.zip}` : ""}
-                    </span>
-                  </div>
+                  {(order.billingInfo?.phone || order.customer?.phone) && (
+                    <div className="flex items-start gap-2.5">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Phone</span>
+                        <span className="font-medium text-foreground">
+                          {order.billingInfo?.phone || order.customer?.phone}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {(order.billingInfo?.email || order.customer?.email) && (
+                    <div className="flex items-start gap-2.5">
+                      <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Email</span>
+                        <span className="font-medium text-foreground">
+                          {order.billingInfo?.email || order.customer?.email}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Billing Address Card */}
+                <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h3 className="font-semibold text-base flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" /> Billing Address
+                    </h3>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0 text-muted-foreground font-normal">
+                      Billing
+                    </Badge>
+                  </div>
+                  <div className="space-y-3.5 text-sm">
+                    <div className="flex items-start gap-2.5">
+                      <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Customer Name</span>
+                        <span className="font-semibold text-foreground">
+                          {order.billingInfo?.fullName || order.customer?.fullName || order.customerName || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Phone</span>
+                        {order.billingInfo?.phone || order.customer?.phone ? (
+                          <a
+                            href={`tel:${order.billingInfo?.phone || order.customer?.phone}`}
+                            className="font-semibold text-primary hover:underline"
+                          >
+                            {order.billingInfo?.phone || order.customer?.phone}
+                          </a>
+                        ) : (
+                          <span className="font-medium text-foreground">N/A</span>
+                        )}
+                      </div>
+                    </div>
+                    {(order.billingInfo?.email || order.customer?.email) && (
+                      <div className="flex items-start gap-2.5">
+                        <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Email</span>
+                          <span className="font-medium text-foreground">
+                            {order.billingInfo?.email || order.customer?.email}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Address</span>
+                        <span className="font-medium text-foreground leading-snug block">
+                          {order.billingInfo?.address || order.customer?.address || "N/A"}
+                        </span>
+                        {(order.billingInfo?.thana || order.billingInfo?.district || order.billingInfo?.zip || order.customer?.thana || order.customer?.district || order.customer?.city || order.customer?.zip) && (
+                          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground flex-wrap">
+                            {(order.billingInfo?.thana || order.customer?.thana) && (
+                              <span>Thana: {order.billingInfo?.thana || order.customer?.thana}</span>
+                            )}
+                            {(order.billingInfo?.thana || order.customer?.thana) && (order.billingInfo?.district || order.customer?.district || order.customer?.city) && <span>•</span>}
+                            {(order.billingInfo?.district || order.customer?.district || order.customer?.city) && (
+                              <span>District: {order.billingInfo?.district || order.customer?.district || order.customer?.city}</span>
+                            )}
+                            {(order.billingInfo?.zip || order.customer?.zip) && <span>•</span>}
+                            {(order.billingInfo?.zip || order.customer?.zip) && (
+                              <span>Zip: {order.billingInfo?.zip || order.customer?.zip}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shipping Address Card */}
+                <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h3 className="font-semibold text-base flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-primary" /> Shipping Address
+                    </h3>
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0 text-primary bg-primary/10 border-primary/20">
+                      Delivery
+                    </Badge>
+                  </div>
+                  <div className="space-y-3.5 text-sm">
+                    <div className="flex items-start gap-2.5">
+                      <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Recipient Name</span>
+                        <span className="font-semibold text-foreground">
+                          {order.shippingInfo?.fullName || order.billingInfo?.fullName || order.customer?.fullName || order.customerName || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Phone</span>
+                        {order.shippingInfo?.phone || order.billingInfo?.phone || order.customer?.phone ? (
+                          <a
+                            href={`tel:${order.shippingInfo?.phone || order.billingInfo?.phone || order.customer?.phone}`}
+                            className="font-semibold text-primary hover:underline"
+                          >
+                            {order.shippingInfo?.phone || order.billingInfo?.phone || order.customer?.phone}
+                          </a>
+                        ) : (
+                          <span className="font-medium text-foreground">N/A</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Delivery Address</span>
+                        <span className="font-medium text-foreground leading-snug block">
+                          {order.shippingInfo?.address || order.billingInfo?.address || order.customer?.address || "N/A"}
+                        </span>
+                        {(order.shippingInfo?.thana || order.shippingInfo?.district || order.shippingInfo?.zip || order.billingInfo?.thana || order.billingInfo?.district || order.billingInfo?.zip) && (
+                          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground flex-wrap">
+                            {(order.shippingInfo?.thana || order.billingInfo?.thana) && (
+                              <span>Thana: {order.shippingInfo?.thana || order.billingInfo?.thana}</span>
+                            )}
+                            {(order.shippingInfo?.thana || order.billingInfo?.thana) && (order.shippingInfo?.district || order.shippingInfo?.city || order.billingInfo?.district) && <span>•</span>}
+                            {(order.shippingInfo?.district || order.shippingInfo?.city || order.billingInfo?.district) && (
+                              <span>District: {order.shippingInfo?.district || order.shippingInfo?.city || order.billingInfo?.district}</span>
+                            )}
+                            {(order.shippingInfo?.zip || order.billingInfo?.zip) && <span>•</span>}
+                            {(order.shippingInfo?.zip || order.billingInfo?.zip) && (
+                              <span>Zip: {order.shippingInfo?.zip || order.billingInfo?.zip}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5 pt-1 border-t border-border/60">
+                      <Truck className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Shipping Method</span>
+                        <span className="font-medium text-foreground">
+                          {(order.totals?.shippingFee ?? order.shippingTotalAmount) === 0 ? "Free Shipping" : "Flat Rate Delivery"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-3">
@@ -861,41 +1078,170 @@ const OrderDetailsPage = () => {
           </div>
 
           <div className="lg:col-span-2 space-y-4 animate-in fade-in duration-300">
-            <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
-              <h3 className="font-semibold text-base flex items-center gap-2 border-b pb-2">Customer Details</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground mb-0.5 block">Customer Name</label>
-                  <Input placeholder="Customer Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            {isInStoreOrder ? (
+              <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" /> In-Store Customer Details
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                    In-Store
+                  </Badge>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-0.5 block">Phone Number</label>
-                  <div className="flex items-center h-9 w-full rounded-lg border border-input bg-transparent overflow-hidden">
-                    <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
-                    <input
-                      type="text"
-                      className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
-                      placeholder="1XXXXXXXXX"
-                      maxLength={11}
-                      value={customerPhone}
-                      onChange={(e) => {
-                        let val = e.target.value.replace(/\D/g, "");
-                        if (val.startsWith("0")) val = val.slice(1);
-                        setCustomerPhone(val.slice(0, 10));
-                      }}
-                    />
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-0.5 block">Customer Name</label>
+                    <Input placeholder="Walk-in Customer" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-0.5 block">Phone Number</label>
+                    <div className="flex items-center h-9 w-full rounded-lg border border-input bg-transparent overflow-hidden">
+                      <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
+                      <input
+                        type="text"
+                        className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
+                        placeholder="1XXXXXXXXX"
+                        maxLength={11}
+                        value={billingPhone}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, "");
+                          if (val.startsWith("0")) val = val.slice(1);
+                          setBillingPhone(val.slice(0, 10));
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-0.5 block">Email</label>
+                    <Input placeholder="email@example.com" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-0.5 block">Email</label>
-                  <Input placeholder="email@example.com" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground mb-0.5 block">Address</label>
-                  <Input placeholder="Street address details" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
-                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Billing Address Edit Form */}
+                <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="font-semibold text-base flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" /> Billing Address
+                    </h3>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0 text-muted-foreground font-normal">
+                      Billing
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="col-span-2">
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Full Name *</label>
+                      <Input placeholder="Full Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Phone Number *</label>
+                      <div className="flex items-center h-9 w-full rounded-lg border border-input bg-transparent overflow-hidden">
+                        <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
+                        <input
+                          type="text"
+                          className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
+                          placeholder="1XXXXXXXXX"
+                          maxLength={11}
+                          value={billingPhone}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/\D/g, "");
+                            if (val.startsWith("0")) val = val.slice(1);
+                            setBillingPhone(val.slice(0, 10));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Email Address</label>
+                      <Input placeholder="email@example.com" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Street Address *</label>
+                      <Input placeholder="Street address details" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Thana</label>
+                      <Input placeholder="Thana" value={billingThana} onChange={(e) => setBillingThana(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-0.5 block">District / City *</label>
+                      <Input placeholder="District" value={billingDistrict} onChange={(e) => setBillingDistrict(e.target.value)} />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="text-xs text-muted-foreground mb-0.5 block">Postal Code / Zip</label>
+                      <Input placeholder="Zip Code" value={billingZip} onChange={(e) => setBillingZip(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shipping Address Edit Form */}
+                <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="font-semibold text-base flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-primary" /> Shipping Address
+                    </h3>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none">
+                      <input
+                        type="checkbox"
+                        checked={sameAsBilling}
+                        onChange={(e) => setSameAsBilling(e.target.checked)}
+                        className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                      />
+                      <span className="text-muted-foreground font-medium">Same as billing</span>
+                    </label>
+                  </div>
+
+                  {!sameAsBilling ? (
+                    <div className="grid grid-cols-2 gap-2 text-sm pt-1">
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground mb-0.5 block">Recipient Full Name *</label>
+                        <Input placeholder="Recipient Name" value={shippingName} onChange={(e) => setShippingName(e.target.value)} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground mb-0.5 block">Contact Phone Number *</label>
+                        <div className="flex items-center h-9 w-full rounded-lg border border-input bg-transparent overflow-hidden">
+                          <span className="bg-muted/50 h-full flex items-center px-2 text-xs text-muted-foreground border-r font-medium">+880</span>
+                          <input
+                            type="text"
+                            className="flex-1 h-full bg-transparent px-2 text-xs outline-none"
+                            placeholder="1XXXXXXXXX"
+                            maxLength={11}
+                            value={shippingPhone}
+                            onChange={(e) => {
+                              let val = e.target.value.replace(/\D/g, "");
+                              if (val.startsWith("0")) val = val.slice(1);
+                              setShippingPhone(val.slice(0, 10));
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-muted-foreground mb-0.5 block">Shipping Address *</label>
+                        <Input placeholder="Street address details" value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-0.5 block">Thana</label>
+                        <Input placeholder="Thana" value={shippingThana} onChange={(e) => setShippingThana(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-0.5 block">District / City *</label>
+                        <Input placeholder="District" value={shippingDistrict} onChange={(e) => setShippingDistrict(e.target.value)} />
+                      </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="text-xs text-muted-foreground mb-0.5 block">Postal Code / Zip</label>
+                        <Input placeholder="Zip Code" value={shippingZip} onChange={(e) => setShippingZip(e.target.value)} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground border border-dashed flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>Delivery address is same as billing address.</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="bg-card border border-border/80 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-base mb-3 flex items-center gap-2 border-b pb-2">

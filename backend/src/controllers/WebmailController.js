@@ -17,21 +17,29 @@ const getSmtpTransport = () => {
       Number(env.SMTP_PORT) === 465 ||
       String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
 
-    defaultTransport = nodemailer.createTransport({
+    const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+    const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+    const transportConfig = {
       host: env.SMTP_HOST,
       port: Number(env.SMTP_PORT),
       secure: isSecure,
       tls: {
         rejectUnauthorized: false,
       },
-      auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASSWORD,
-      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
-    });
+    };
+
+    if (hasAuth) {
+      transportConfig.auth = {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      };
+    }
+
+    defaultTransport = nodemailer.createTransport(transportConfig);
   }
   return defaultTransport;
 };
@@ -165,14 +173,16 @@ export const sendWebmailMessage = async (req, res, next) => {
     const transport = getSmtpTransport();
     const fromName = env.SMTP_FROM_NAME || "Decantre BD";
     const fromAddress = env.SMTP_FROM || env.SMTP_USER;
-    const fromHeader = `"${fromName}" <${fromAddress}>`;
 
     const toAddresses = Array.isArray(to)
       ? to.map((t) => (typeof t === "string" ? t : t.address)).filter(Boolean)
       : [to];
 
     const mailOptions = {
-      from: fromHeader,
+      from: {
+        name: fromName,
+        address: fromAddress,
+      },
       to: toAddresses.join(", "),
       subject: subject || "(No Subject)",
       html: bodyHtml || `<p>${(bodyText || "").replace(/\n/g, "<br>")}</p>`,

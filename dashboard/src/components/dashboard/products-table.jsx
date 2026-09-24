@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, ImageIcon, PackageX, Trash2, Eye, Copy } from 'lucide-react';
+import { MoreHorizontal, ImageIcon, PackageX, Trash2, Eye, Copy, Check, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import {
@@ -56,6 +56,7 @@ export function ProductsTable({
   onTotalPagesChange,
   selectedIds,
   onSelectedIdsChange,
+  fixedOnSale = false,
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -83,6 +84,7 @@ export function ProductsTable({
     category: categoryFilter !== 'All' && categoryFilter !== 'LowStock' ? categoryFilter : undefined,
     brand: brandFilter !== 'All' ? brandFilter : undefined,
     stockStatus: stockStatusFilter !== 'all' ? stockStatusFilter : undefined,
+    onSale: fixedOnSale ? true : undefined,
     page,
     limit: 15,
   });
@@ -117,21 +119,55 @@ export function ProductsTable({
 
   const [stockTarget, setStockTarget] = useState(null);
   const [targetStockStatus, setTargetStockStatus] = useState('instock');
+  const [targetVariants, setTargetVariants] = useState([]);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
 
   useEffect(() => {
     if (stockTarget) {
       setTargetStockStatus(stockTarget.status === 'In Stock' ? 'instock' : 'outofstock');
+      if (stockTarget.type === 'variant' && Array.isArray(stockTarget.variants)) {
+        setTargetVariants(
+          stockTarget.variants.map((v) => ({
+            ...v,
+            stockStatus: v.stockStatus || 'instock',
+          }))
+        );
+      } else {
+        setTargetVariants([]);
+      }
     }
   }, [stockTarget]);
 
+  // Updates availability status for a specific product variation
+  const handleVariantStockChange = (size, newStatus) => {
+    setTargetVariants((prev) =>
+      prev.map((v) => (v.size === size ? { ...v, stockStatus: newStatus } : v))
+    );
+  };
+
+  // Bulk marks all product variations to the target stock status
+  const handleMarkAllVariants = (status) => {
+    setTargetVariants((prev) =>
+      prev.map((v) => ({ ...v, stockStatus: status }))
+    );
+  };
+
+  // Persists product or variation stock status updates to backend API
   const handleUpdateStockStatus = async () => {
     if (!stockTarget) return;
     setIsUpdatingStock(true);
     try {
-      await apiClient.put(`/api/v1/products/${stockTarget.id}`, {
-        stockStatus: targetStockStatus,
-      });
+      if (stockTarget.type === 'variant' && targetVariants.length > 0) {
+        const anyInStock = targetVariants.some((v) => v.stockStatus === 'instock');
+        await apiClient.put(`/api/v1/products/${stockTarget.id}`, {
+          variants: targetVariants,
+          stockStatus: anyInStock ? 'instock' : 'outofstock',
+        });
+      } else {
+        await apiClient.put(`/api/v1/products/${stockTarget.id}`, {
+          stockStatus: targetStockStatus,
+        });
+      }
       toast.success(`Stock status of "${stockTarget.name}" updated successfully.`);
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setStockTarget(null);
@@ -332,37 +368,107 @@ export function ProductsTable({
       </Table>
 
       <Dialog open={!!stockTarget} onOpenChange={(open) => !open && setStockTarget(null)}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className={stockTarget?.type === 'variant' && targetVariants.length > 0 ? "sm:max-w-[520px]" : "sm:max-w-[420px]"}>
           <DialogHeader>
-            <DialogTitle>Change Stock Status</DialogTitle>
+            <DialogTitle>
+              {stockTarget?.type === 'variant' && targetVariants.length > 0 ? 'Change Variation Stock' : 'Change Stock Status'}
+            </DialogTitle>
             <DialogDescription>
-              Update the availability status for <span className="font-semibold text-foreground">{stockTarget?.name}</span>.
+              Update availability status for <span className="font-semibold text-foreground">{stockTarget?.name}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-muted-foreground">Current Status:</span>
-              <span className="text-sm font-semibold">
-                {stockTarget?.status === 'In Stock' ? (
-                  <span className="text-emerald-600">In Stock</span>
-                ) : (
-                  <span className="text-red-600">Out of Stock</span>
-                )}
-              </span>
+
+          {stockTarget?.type === 'variant' && targetVariants.length > 0 ? (
+            <div className="space-y-3.5 py-1">
+              <div className="flex items-center justify-between bg-muted/30 px-3 py-2 rounded-lg border text-xs">
+                <span className="font-medium text-muted-foreground">
+                  Status: <span className="font-semibold text-foreground">{targetVariants.filter((v) => v.stockStatus === 'instock').length}</span> of {targetVariants.length} In Stock
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] px-2 gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 cursor-pointer"
+                    onClick={() => handleMarkAllVariants('instock')}
+                  >
+                    <Check className="h-3 w-3" /> All In
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] px-2 gap-1 text-red-600 border-red-500/30 hover:bg-red-500/10 cursor-pointer"
+                    onClick={() => handleMarkAllVariants('outofstock')}
+                  >
+                    <X className="h-3 w-3" /> All Out
+                  </Button>
+                </div>
+              </div>
+
+              <div className="max-h-[260px] overflow-y-auto divide-y border rounded-lg bg-background">
+                {targetVariants.map((v, idx) => (
+                  <div key={v.size || idx} className="flex items-center justify-between px-3 py-2.5 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{v.size}</p>
+                      {v.sku && <p className="text-[10px] text-muted-foreground font-mono truncate">{v.sku}</p>}
+                    </div>
+
+                    <div className="w-[145px] shrink-0">
+                      <Select
+                        value={v.stockStatus || 'instock'}
+                        onValueChange={(val) => handleVariantStockChange(v.size, val || 'instock')}
+                      >
+                        <SelectTrigger className="h-8 text-xs bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border shadow-md">
+                          <SelectItem value="instock" className="text-xs cursor-pointer">
+                            <span className="flex items-center gap-1.5 font-medium text-emerald-600">
+                              <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                              In Stock
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="outofstock" className="text-xs cursor-pointer">
+                            <span className="flex items-center gap-1.5 font-medium text-red-600">
+                              <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
+                              Out of Stock
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-muted-foreground">New Availability:</span>
-              <Select value={targetStockStatus} onValueChange={(val) => setTargetStockStatus(val || "")}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instock">In Stock</SelectItem>
-                  <SelectItem value="outofstock">Out of Stock</SelectItem>
-                </SelectContent>
-              </Select>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-muted-foreground">Current Status:</span>
+                <span className="text-sm font-semibold">
+                  {stockTarget?.status === 'In Stock' ? (
+                    <span className="text-emerald-600">In Stock</span>
+                  ) : (
+                    <span className="text-red-600">Out of Stock</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-muted-foreground">New Availability:</span>
+                <Select value={targetStockStatus} onValueChange={(val) => setTargetStockStatus(val || "")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-md">
+                    <SelectItem value="instock" className="cursor-pointer">In Stock</SelectItem>
+                    <SelectItem value="outofstock" className="cursor-pointer">Out of Stock</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
+          )}
+
           <DialogFooter>
             <Button
               variant="outline"

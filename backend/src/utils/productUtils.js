@@ -46,8 +46,21 @@ export const serializeProduct = (product) => {
 
   const primaryCategory = populatedCategories.length > 0 ? populatedCategories[0] : null;
 
+  const rawVariants = Array.isArray(source?.variants)
+    ? source.variants.map((v) => ({
+        size: v.size ?? "",
+        price: Number(v.price ?? 0),
+        offerPrice: v.offerPrice != null ? Number(v.offerPrice) : null,
+        sku: v.sku ?? "",
+        sortOrder: Number(v.sortOrder ?? 0),
+        imageUrl: v.imageUrl ?? null,
+        stockStatus: v.stockStatus || "instock",
+      }))
+    : undefined;
+
   return {
     ...rest,
+    ...(rawVariants !== undefined ? { variants: rawVariants } : {}),
     id,
     category: primaryCategory,
     categories: populatedCategories.length > 0 ? populatedCategories : rawCategories,
@@ -322,6 +335,25 @@ export const buildProductFilter = async (input = {}) => {
       delete filter.$or;
     } else {
       filter.$or = priceConditions;
+    }
+  }
+
+  if (source.onSale === true || source.onSale === "true" || source.on_sale === true || source.on_sale === "true") {
+    const onSaleConditions = [
+      { offerPrice: { $gt: 0, $ne: null } },
+      { "variants.offerPrice": { $gt: 0, $ne: null } },
+      { tags: { $in: ["sale", "on-sale", "Sale", "On-Sale"] } }
+    ];
+    if (filter.$and) {
+      filter.$and.push({ $or: onSaleConditions });
+    } else if (filter.$or) {
+      filter.$and = [
+        { $or: filter.$or },
+        { $or: onSaleConditions }
+      ];
+      delete filter.$or;
+    } else {
+      filter.$or = onSaleConditions;
     }
   }
 

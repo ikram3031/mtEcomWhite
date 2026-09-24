@@ -11,7 +11,9 @@ const getRequiredPermission = (pathname) => {
   if (cleanPath === '/dashboard/orders/in-store' || cleanPath === '/dashboard/orders/instore') return 'orders.instore';
   if (cleanPath.startsWith('/dashboard/orders')) return 'orders.list';
   
-  if (cleanPath === '/dashboard/products/new') return 'products.new';
+  if (cleanPath === '/dashboard/products/new' || cleanPath.startsWith('/dashboard/products/new/')) return 'products.new';
+  if (cleanPath === '/dashboard/products/on-sale') return 'products.on-sale';
+  if (cleanPath === '/dashboard/products/miniature') return 'products.miniature';
   if (cleanPath === '/dashboard/products/categories') return 'products.categories';
   if (cleanPath === '/dashboard/products/brands') return 'products.brands';
   if (cleanPath === '/dashboard/products/attributes') return 'products.attributes';
@@ -47,8 +49,13 @@ export const ClientRouteGuard = ({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiredPermission && !allowedMenus.includes(requiredPermission)) {
-    return <Navigate to="/dashboard" replace />;
+  if (requiredPermission && !allowedMenus.includes('*')) {
+    const parentPermission = requiredPermission.includes('.') ? requiredPermission.split('.')[0] : null;
+    const isExplicitlyAllowed = allowedMenus.includes(requiredPermission);
+    const isParentAllowed = parentPermission && allowedMenus.includes(parentPermission);
+    if (!isExplicitlyAllowed && !isParentAllowed) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

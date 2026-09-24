@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NotificationBell } from './NotificationBell';
+import { CacheCleanButton } from './CacheCleanButton';
 import { useDashboardStore } from '@/store/use-dashboard-store';
 
 export const Header = () => {
@@ -23,6 +24,7 @@ export const Header = () => {
           </div>
         </form>
         <div className="flex items-center gap-3">
+          <CacheCleanButton />
           <ThemeToggle />
           <NotificationBell />
         </div>

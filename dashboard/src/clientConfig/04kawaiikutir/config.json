@@ -7,7 +7,8 @@
     "season": false,
     "brand": false,
     "variantImage": true,
-    "webmail": true
+    "webmail": true,
+    "inStoreOrder": false
   },
   "stockManagement": {
     "simpleProduct": true,
@@ -17,6 +18,9 @@
     "enableInStoreFilter": true,
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
+  },
+  "cloudFlareAnalytics": {
+    "active": false
   },
   "logoUrl": "/src/uploads/assets/logo.webp",
   "siteIconUrl": "/src/uploads/assets/logo.webp",
@@ -54,7 +58,6 @@
     "*",
     "overview",
     "orders",
-    "orders.new",
     "orders.list",
     "products",
     "products.new",

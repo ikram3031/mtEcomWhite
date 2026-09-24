@@ -11,21 +11,29 @@ const getTransport = () => {
       Number(env.SMTP_PORT) === 465 ||
       String(env.SMTP_ENCRYPTION).toLowerCase() === "ssl";
 
-    defaultTransport = nodemailer.createTransport({
+    const isLocalhost = env.SMTP_HOST === "127.0.0.1" || env.SMTP_HOST === "localhost";
+    const hasAuth = !isLocalhost && env.SMTP_PASSWORD && env.SMTP_PASSWORD !== "none" && env.SMTP_USER;
+
+    const transportConfig = {
       host: env.SMTP_HOST,
       port: Number(env.SMTP_PORT),
       secure: isSecure,
       tls: {
         rejectUnauthorized: false,
       },
-      auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASSWORD,
-      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
-    });
+    };
+
+    if (hasAuth) {
+      transportConfig.auth = {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      };
+    }
+
+    defaultTransport = nodemailer.createTransport(transportConfig);
   }
   return defaultTransport;
 };
@@ -66,7 +74,7 @@ export const sendContactAcknowledgment = async ({ name, email, message }) => {
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Store Contact";
-    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
 
     const customerHtml = lightThemeHtml(
       "Thank you for contacting us!",
@@ -105,7 +113,7 @@ export const sendContactReplyEmail = async ({
 
     const transport = getTransport();
     const fromName = env.SMTP_FROM_NAME || "Customer Support";
-    const fromAddress = `"${fromName}" <${env.SMTP_FROM || env.SMTP_USER}>`;
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
 
     const replyHtml = lightThemeHtml(
       `Response to your inquiry`,
@@ -134,3 +142,43 @@ export const sendContactReplyEmail = async ({
     throw error;
   }
 };
+
+// Forwards incoming contact inquiry to store admin (e.g. kawaiikutir@gmail.com)
+export const forwardContactInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
+  try {
+    if (!env.SMTP_USER || !env.SMTP_PASSWORD) return;
+
+    const transport = getTransport();
+    const fromName = env.SMTP_FROM_NAME || "Surokkha";
+    const fromAddress = { name: fromName, address: env.SMTP_FROM || env.SMTP_USER };
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || "kawaiikutir@gmail.com";
+
+    const forwardSubject = `📩 [New Inquiry from contact@surokkha.store] ${subject || "Contact Form"}`;
+    const forwardHtml = lightThemeHtml(
+      "New Customer Inquiry Received",
+      `<p>A new customer inquiry has been received on <strong>contact@surokkha.store</strong>:</p>
+       <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;">
+         <tr><td style="padding: 8px; font-weight: bold; color: #64748b; width: 120px;">Name:</td><td style="padding: 8px; color: #0f172a;">${name || "Anonymous"}</td></tr>
+         <tr><td style="padding: 8px; font-weight: bold; color: #64748b;">Email:</td><td style="padding: 8px; color: #0f172a;"><a href="mailto:${email}">${email}</a></td></tr>
+         <tr><td style="padding: 8px; font-weight: bold; color: #64748b;">Phone:</td><td style="padding: 8px; color: #0f172a;">${phone || "N/A"}</td></tr>
+         <tr><td style="padding: 8px; font-weight: bold; color: #64748b;">Subject:</td><td style="padding: 8px; color: #0f172a;">${subject || "General Inquiry"}</td></tr>
+       </table>
+       <p><strong>Message:</strong></p>
+       <div style="background: #f8fafc; padding: 15px; border-radius: 6px; color: #334155; border-left: 4px solid #e11d48;">
+         ${(message || "").replace(/\n/g, "<br>")}
+       </div>
+       <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">You can reply directly to this email to respond to the customer.</p>`
+    );
+
+    await transport.sendMail({
+      from: fromAddress,
+      to: adminEmail,
+      replyTo: email,
+      subject: forwardSubject,
+      html: forwardHtml,
+    });
+  } catch (error) {
+    console.error("Error forwarding contact inquiry to admin:", error);
+  }
+};
+

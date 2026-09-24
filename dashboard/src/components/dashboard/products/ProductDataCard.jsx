@@ -433,9 +433,21 @@ export const ProductDataCard = ({
               >
                 {/* Nested Card Header */}
                 <div className="flex items-center justify-between border-b border-border/70 pb-2.5 -mx-4 -mt-4 px-4 pt-3 rounded-t-xl bg-muted/50 dark:bg-muted/30">
-                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    Variation #{i + 1} {v.size ? `— ${v.size}` : ""}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      Variation #{i + 1} {v.size ? `— ${v.size}` : ""}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        (v.stockStatus || "instock") === "instock"
+                          ? "text-emerald-600 border-emerald-500/30 bg-emerald-500/10 text-[10px] py-0 px-1.5 font-medium"
+                          : "text-red-600 border-red-500/30 bg-red-500/10 text-[10px] py-0 px-1.5 font-medium"
+                      }
+                    >
+                      {(v.stockStatus || "instock") === "instock" ? "In Stock" : "Out of Stock"}
+                    </Badge>
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -522,7 +534,40 @@ export const ProductDataCard = ({
                   </div>
                 </div>
 
-                {/* Row 3: Image Thumbnail (Conditional on clientConfig) */}
+                {/* Row 3: Stock Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-muted-foreground block">
+                      Stock Status *
+                    </label>
+                    <Select
+                      value={v.stockStatus || "instock"}
+                      onValueChange={(val) =>
+                        updateVariant(i, "stockStatus", val || "instock")
+                      }
+                    >
+                      <SelectTrigger className="h-9 bg-background">
+                        <SelectValue placeholder="Stock Status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border shadow-md">
+                        <SelectItem value="instock" className="cursor-pointer">
+                          <span className="flex items-center gap-1.5 font-medium text-emerald-600">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                            In Stock
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="outofstock" className="cursor-pointer">
+                          <span className="flex items-center gap-1.5 font-medium text-red-600">
+                            <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
+                            Out of Stock
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Row 4: Image Thumbnail (Conditional on clientConfig) */}
                 {clientConfig?.features?.variantImage !== false && (
                   <div className="space-y-1.5 pt-2 border-t border-border/60">
                     <label className="text-[11px] font-semibold text-muted-foreground block">
