@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -73,6 +73,80 @@ const formatDateTime = (dateStr) => {
     hour: '2-digit',
     minute: '2-digit',
   });
+};
+
+// Encapsulated Email HTML Preview with Auto-Height and Zero CSS Leaks
+const EmailHtmlPreview = ({ html }) => {
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const adjustHeight = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc && doc.body) {
+          const body = doc.body;
+          const htmlEl = doc.documentElement;
+          const scrollHeight = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            htmlEl.clientHeight,
+            htmlEl.scrollHeight,
+            htmlEl.offsetHeight
+          );
+          iframe.style.height = `${Math.max(scrollHeight + 20, 200)}px`;
+        }
+      } catch (e) {
+        // safe fallback
+      }
+    };
+
+    const handleLoad = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc && doc.head) {
+          const style = doc.createElement('style');
+          style.textContent = `
+            html, body {
+              margin: 0;
+              padding: 16px;
+              box-sizing: border-box;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #1e293b;
+              background-color: #ffffff;
+              word-break: break-word;
+            }
+            img { max-width: 100% !important; height: auto !important; }
+            table { max-width: 100% !important; width: 100% !important; table-layout: auto !important; }
+            a { color: #800020; }
+          `;
+          doc.head.appendChild(style);
+        }
+        adjustHeight();
+        setTimeout(adjustHeight, 150);
+        setTimeout(adjustHeight, 500);
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    return () => iframe.removeEventListener('load', handleLoad);
+  }, [html]);
+
+  return (
+    <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-white shadow-xs">
+      <iframe
+        ref={iframeRef}
+        srcDoc={html}
+        title="Email message preview"
+        sandbox="allow-same-origin allow-popups"
+        className="w-full min-w-full border-0 block min-h-[260px] transition-[height] duration-200"
+      />
+    </div>
+  );
 };
 
 // Full Webmail and Messaging Management Component
@@ -340,7 +414,7 @@ const MessagesManager = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0 max-w-full overflow-hidden">
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-border/60">
         <div className="flex items-center gap-3">
@@ -382,9 +456,9 @@ const MessagesManager = () => {
       </div>
 
       {/* Main Webmail 3-Pane / Split-Pane Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-[640px] rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-[640px] rounded-xl border border-border bg-card overflow-hidden shadow-xs w-full min-w-0 max-w-full">
         {/* Left Navigation: Folders Sidebar */}
-        <div className="lg:col-span-3 xl:col-span-2 border-r border-border bg-muted/20 p-3 flex flex-col justify-between">
+        <div className="lg:col-span-3 xl:col-span-2 border-r border-border bg-muted/20 p-3 flex flex-col justify-between min-w-0 shrink-0">
           <div className="space-y-1">
             <Button
               onClick={() => setIsComposeOpen(true)}
@@ -453,7 +527,7 @@ const MessagesManager = () => {
 
         {/* Middle Pane: Email List */}
         <div
-          className={`lg:col-span-4 xl:col-span-4 border-r border-border flex flex-col bg-background ${
+          className={`lg:col-span-4 xl:col-span-4 border-r border-border flex flex-col bg-background min-w-0 ${
             selectedMessageId ? 'hidden lg:flex' : 'flex'
           }`}
         >
@@ -660,15 +734,15 @@ const MessagesManager = () => {
 
         {/* Right Pane: Reading & Conversation Thread */}
         <div
-          className={`lg:col-span-5 xl:col-span-6 flex flex-col bg-background ${
+          className={`lg:col-span-5 xl:col-span-6 flex flex-col bg-background min-w-0 overflow-hidden ${
             !selectedMessageId ? 'hidden lg:flex' : 'flex'
           }`}
         >
           {activeMessage ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full min-w-0">
               {/* Message Header Bar */}
-              <div className="p-4 border-b border-border flex items-start justify-between gap-3 bg-muted/10">
-                <div className="flex items-start gap-3 overflow-hidden">
+              <div className="p-4 border-b border-border flex items-start justify-between gap-3 bg-muted/10 min-w-0">
+                <div className="flex items-start gap-3 overflow-hidden min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -684,9 +758,9 @@ const MessagesManager = () => {
                       .toUpperCase()}
                   </div>
 
-                  <div className="space-y-1 overflow-hidden">
+                  <div className="space-y-1 overflow-hidden min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-sm font-bold text-foreground">
+                      <h2 className="text-sm font-bold text-foreground truncate">
                         {isWebsiteInquiryFolder
                           ? activeMessage.name
                           : activeMessage.from?.name || activeMessage.from?.address}
@@ -695,23 +769,23 @@ const MessagesManager = () => {
                       {isWebsiteInquiryFolder ? (
                         <Badge
                           variant="outline"
-                          className="text-[10px] bg-primary/10 text-primary border-primary/20"
+                          className="text-[10px] bg-primary/10 text-primary border-primary/20 shrink-0"
                         >
                           Website Inquiry
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-[10px] shrink-0">
                           {activeFolder}
                         </Badge>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1 font-mono">
-                        <Mail className="h-3 w-3" />
+                      <span className="flex items-center gap-1 font-mono truncate max-w-full">
+                        <Mail className="h-3 w-3 shrink-0" />
                         <a
                           href={`mailto:${isWebsiteInquiryFolder ? activeMessage.email : activeMessage.from?.address}`}
-                          className="hover:text-primary hover:underline"
+                          className="hover:text-primary hover:underline truncate"
                         >
                           {isWebsiteInquiryFolder ? activeMessage.email : activeMessage.from?.address}
                         </a>
@@ -723,13 +797,13 @@ const MessagesManager = () => {
                               'Email'
                             )
                           }
-                          className="p-0.5 hover:text-foreground cursor-pointer"
+                          className="p-0.5 hover:text-foreground cursor-pointer shrink-0"
                         >
                           <Copy className="h-2.5 w-2.5" />
                         </button>
                       </span>
 
-                      <span className="flex items-center gap-1 text-[11px]">
+                      <span className="flex items-center gap-1 text-[11px] shrink-0">
                         <Clock className="h-3 w-3" />
                         {formatDateTime(activeMessage.date || activeMessage.createdAt)}
                       </span>
@@ -770,22 +844,19 @@ const MessagesManager = () => {
               </div>
 
               {/* Message Subject and Body Content */}
-              <div className="flex-1 p-5 overflow-y-auto space-y-4 max-h-[460px]">
-                <h3 className="text-base font-bold text-foreground">
+              <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 max-h-[580px] min-w-0">
+                <h3 className="text-base font-bold text-foreground break-words">
                   {activeMessage.subject || (isWebsiteInquiryFolder ? activeMessage.subject || 'Website Inquiry' : '(No Subject)')}
                 </h3>
 
                 {/* Message Body Content */}
-                <div className="p-4 rounded-xl bg-muted/30 border border-border text-sm leading-relaxed text-foreground shadow-xs overflow-x-auto">
-                  {activeMessage.bodyHtml ? (
-                    <div
-                      className="prose prose-sm dark:prose-invert max-w-none text-foreground"
-                      dangerouslySetInnerHTML={{ __html: activeMessage.bodyHtml }}
-                    />
-                  ) : (
-                    <p className="whitespace-pre-wrap">{activeMessage.bodyText || activeMessage.message}</p>
-                  )}
-                </div>
+                {activeMessage.bodyHtml ? (
+                  <EmailHtmlPreview html={activeMessage.bodyHtml} />
+                ) : (
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border text-sm leading-relaxed text-foreground shadow-xs overflow-x-auto min-w-0">
+                    <p className="whitespace-pre-wrap break-words">{activeMessage.bodyText || activeMessage.message}</p>
+                  </div>
+                )}
 
                 {/* Attachments list if any */}
                 {activeMessage.attachments && activeMessage.attachments.length > 0 && (

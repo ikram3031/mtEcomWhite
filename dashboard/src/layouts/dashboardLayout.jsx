@@ -12,9 +12,9 @@ const DashboardLayout = ({ children }) => {
       <ClientThemeProvider>
         <ClientSidebarProvider>
           <AppSidebar />
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden min-w-0 w-full">
             <Header />
-            <main className="flex-1 overflow-y-auto bg-muted/20">
+            <main className="flex-1 overflow-y-auto bg-muted/20 min-w-0 p-4 sm:p-6">
               <ClientRouteGuard>
                 {children || <Outlet />}
               </ClientRouteGuard>
