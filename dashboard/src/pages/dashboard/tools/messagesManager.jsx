@@ -352,7 +352,7 @@ const MessagesManager = () => {
               Webmail & Inquiries
             </h1>
             <p className="text-xs text-muted-foreground">
-              Official Hostinger IMAP mail client and website contact form inquiries.
+              Official store webmail client and customer communication desk.
             </p>
           </div>
         </div>
