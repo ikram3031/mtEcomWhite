@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { UserModel } from "../models/user.model.js";
+import { EmailMessageModel } from "../models/emailMessage.model.js";
 import { getClientInvoiceHtml } from "../templates/invoices/index.js";
 import { buildAdminOrderEmailHtml } from "../templates/adminOrderEmailTemplate.js";
 import { env } from "../config/env.js";
@@ -179,19 +180,21 @@ export const sendOrderEmailsAsynchronously = (order) => {
         paymentMethod
       };
 
+      const invoiceHtml = getClientInvoiceHtml({
+        order: formattedOrderData,
+        client: activeClientKey,
+        logoUrl: config.logoUrl || undefined,
+      });
+
       // 1. Send Customer Order Confirmation Email (to customer email)
       if (isValidCustomerEmail(customerEmail)) {
         try {
-          const customerHtml = getClientInvoiceHtml({
-            order: formattedOrderData,
-            client: activeClientKey,
-            logoUrl: config.logoUrl || undefined,
-          });
           await activeTransport.sendMail({
             from: fromAddress,
             to: customerEmail,
+            replyTo: { name: brandDisplayName, address: fromEmail },
             subject: `${brandDisplayName}: Order Confirmation - #${orderId}`,
-            html: customerHtml
+            html: invoiceHtml
           });
           console.log(`[Email Notification] Customer confirmation email sent to: ${customerEmail}`);
         } catch (custErr) {
@@ -236,21 +239,61 @@ export const sendOrderEmailsAsynchronously = (order) => {
       // Send Admin New Order Notification Email to all resolved admin emails
       if (adminRecipients.length > 0) {
         try {
-          const adminHtml = getClientInvoiceHtml({
-            order: formattedOrderData,
-            client: activeClientKey,
-            logoUrl: config.logoUrl || undefined,
-          });
           await activeTransport.sendMail({
             from: fromAddress,
             to: adminRecipients,
+            replyTo: isValidCustomerEmail(customerEmail)
+              ? { name: customerName, address: customerEmail }
+              : { name: brandDisplayName, address: fromEmail },
             subject: `${brandDisplayName}: You have got a new order - #${orderId}`,
-            html: adminHtml
+            html: invoiceHtml
           });
           console.log(`[Email Notification] Admin notification email successfully sent to: ${adminRecipients.join(", ")}`);
         } catch (adminErr) {
           console.error(`[Email Notification] Failed sending admin email to ${adminRecipients.join(", ")}:`, adminErr.message);
         }
+      }
+
+      // 3. Ingest New Order directly into Dashboard Webmail INBOX
+      try {
+        const existingOrderEmail = await EmailMessageModel.findOne({
+          subject: { $regex: `#${orderId}`, $options: "i" },
+          folder: "INBOX",
+        });
+
+        if (!existingOrderEmail) {
+          const customerSenderAddress = isValidCustomerEmail(customerEmail)
+            ? customerEmail
+            : `orders@${config.domain || "surokkha.store"}`;
+
+          await EmailMessageModel.create({
+            messageId: `order-${orderId}-${Date.now()}@${config.domain || "surokkha.store"}`,
+            folder: "INBOX",
+            from: {
+              name: customerName || "Online Store Customer",
+              address: customerSenderAddress,
+            },
+            to: [{
+              name: brandDisplayName,
+              address: fromEmail,
+            }],
+            replyTo: [{
+              name: customerName || "Online Store Customer",
+              address: customerSenderAddress,
+            }],
+            subject: `🛒 New Order Placed: #${orderId} (${customerName}) - ৳${totalAmount}`,
+            snippet: `New order #${orderId} placed by ${customerName}. Total: ৳${totalAmount}. Phone: ${customerPhone}. Payment: ${paymentMethod}`,
+            bodyHtml: invoiceHtml,
+            bodyText: `New order #${orderId} placed by ${customerName}.\nTotal: ৳${totalAmount}\nPhone: ${customerPhone}\nAddress: ${billingAddress?.fullAddress || ""}\nPayment: ${paymentMethod}`,
+            date: new Date(),
+            isRead: false,
+            isStarred: true,
+            active: true,
+          });
+          console.log(`[Email Notification] Successfully ingested order #${orderId} into Dashboard Webmail INBOX.`);
+        }
+      } catch (inboxErr) {
+        console.error(`[Email Notification] Failed to ingest order #${orderId} into Dashboard INBOX:`, inboxErr.message);
       }
 
     } catch (globalErr) {

@@ -2,11 +2,14 @@
  * Surokkha Personal Wellness Store — Order Complete Invoice & Email Template
  * Tailored specifically for authentic MO personal wellness products with 100% discreet packaging.
  * 
- * Features:
- * - Clean light background (#F8FAFC / #FFFFFF) with Surokkha brand rose/burgundy accents (#881337 / #BE123C)
- * - Authentic product specifications & discreet packaging assurance
- * - Order metadata, delivery coordinates, and itemized breakdown
- * - 1-Page A4 print optimization + full HTML email client compatibility
+ * Design specifications:
+ * - 100% Clean White background (#FFFFFF) - No dark blocks
+ * - Centered Official Surokkha Logo
+ * - Next Line: Bold Centered Invoice ID
+ * - Next Line: Centered Status Badge (Order Confirmed)
+ * - Clean structured metadata & itemized breakdown
+ * - 100% Discreet packaging guarantee
+ * - Clean light footer with official WhatsApp & support links
  *
  * @param {Object} params
  * @param {Object} params.order - Formatted order data
@@ -17,7 +20,7 @@
 export const buildSurokkhaOrderInvoiceHtml = ({
   order = {},
   isPrintView = false,
-  logoUrl = "https://surokkha.store/assets/log-D8ALCVK7.png",
+  logoUrl = "https://admin.surokkha.store/logo.png",
 }) => {
   const {
     orderId = "N/A",
@@ -58,28 +61,28 @@ export const buildSurokkhaOrderInvoiceHtml = ({
   const isPaid = status === "completed" || paymentMethod.toLowerCase().includes("paid");
   const isInstore = orderType === "instore" || String(orderId).startsWith("IS") || paymentMethod.toLowerCase().includes("instore") || paymentMethod.toLowerCase().includes("office");
 
-  let statusBadgeText = "✓ Order Confirmed";
+  let statusBadgeText = "✓ ORDER CONFIRMED";
   let statusBadgeBg = "#FFF1F2";
   let statusBadgeColor = "#9F1239";
   let statusBadgeBorder = "#FECDD3";
 
   if (status === "completed" || isPaid) {
-    statusBadgeText = "✓ Order Completed";
+    statusBadgeText = "✓ ORDER COMPLETED";
     statusBadgeBg = "#DCFCE7";
     statusBadgeColor = "#166534";
     statusBadgeBorder = "#BBF7D0";
   } else if (status === "shipped") {
-    statusBadgeText = "🚚 In Transit / Shipped";
+    statusBadgeText = "🚚 IN TRANSIT / SHIPPED";
     statusBadgeBg = "#E0E7FF";
     statusBadgeColor = "#3730A3";
     statusBadgeBorder = "#C7D2FE";
   } else if (status === "cancelled") {
-    statusBadgeText = "✕ Cancelled";
+    statusBadgeText = "✕ CANCELLED";
     statusBadgeBg = "#FEE2E2";
     statusBadgeColor = "#991B1B";
     statusBadgeBorder = "#FECACA";
   } else if (isInstore) {
-    statusBadgeText = "🏢 In-Store Order";
+    statusBadgeText = "🏢 IN-STORE ORDER";
     statusBadgeBg = "#FEF3C7";
     statusBadgeColor = "#92400E";
     statusBadgeBorder = "#FDE68A";
@@ -99,18 +102,18 @@ export const buildSurokkhaOrderInvoiceHtml = ({
     const itemTotal = Number(item.subtotal || (unitPrice * qty) || 0);
 
     return `
-      <tr style="background-color: ${isEven ? "#FFF1F2" : "#FFFFFF"}; border-bottom: 1px solid #F1F5F9;">
-        <td style="padding: 12px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #0F172A; vertical-align: top;">
-          <strong style="color: #0F172A; font-weight: 700; font-size: 13.5px;">${itemName}</strong>
-          ${variant ? `<div style="font-size: 11px; color: #9F1239; font-weight: 600; margin-top: 2px;">✦ ${variant}</div>` : ""}
+      <tr style="background-color: ${isEven ? "#FFF5F7" : "#FFFFFF"}; border-bottom: 1px solid #F1F5F9;">
+        <td style="padding: 12px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #0F172A; vertical-align: top;">
+          <strong style="color: #0F172A; font-weight: 700; font-size: 14px;">${itemName}</strong>
+          ${variant ? `<div style="font-size: 11.5px; color: #9F1239; font-weight: 600; margin-top: 3px;">✦ ${variant}</div>` : ""}
         </td>
-        <td style="padding: 12px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #334155; text-align: center; vertical-align: top;">
+        <td style="padding: 12px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #334155; text-align: center; vertical-align: top;">
           ${qty}
         </td>
-        <td style="padding: 12px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #334155; text-align: right; vertical-align: top; white-space: nowrap;">
+        <td style="padding: 12px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #334155; text-align: right; vertical-align: top; white-space: nowrap;">
           ৳${unitPrice.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </td>
-        <td style="padding: 12px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #881337; font-weight: 700; text-align: right; vertical-align: top; white-space: nowrap;">
+        <td style="padding: 12px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #881337; font-weight: 700; text-align: right; vertical-align: top; white-space: nowrap;">
           ৳${itemTotal.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </td>
       </tr>
@@ -133,7 +136,7 @@ export const buildSurokkhaOrderInvoiceHtml = ({
     }
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #F8FAFC;
+      background-color: #FFFFFF;
       color: #0F172A;
       margin: 0;
       padding: 24px 12px;
@@ -146,66 +149,56 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       border: 1px solid #E2E8F0;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
     }
     .brand-header-bar {
-      height: 6px;
+      height: 5px;
       background: linear-gradient(90deg, #881337 0%, #BE123C 50%, #FDA4AF 100%);
     }
-    .invoice-header {
-      padding: 28px 32px 20px 32px;
+    
+    /* Centered Header Section */
+    .invoice-header-center {
+      padding: 32px 24px 24px 24px;
+      text-align: center;
+      background-color: #FFFFFF;
       border-bottom: 1px solid #F1F5F9;
     }
-    .brand-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .invoice-logo-img {
+      max-height: 52px;
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 14px auto;
     }
-    .brand-logo-badge {
-      width: 28px;
-      height: 28px;
-      background-color: #9F1239;
-      color: #FFFFFF;
-      font-weight: 800;
-      font-size: 15px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-    .brand-title {
+    .invoice-id-line {
       font-size: 20px;
       font-weight: 800;
-      letter-spacing: -0.5px;
       color: #0F172A;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
     }
-    .brand-title span {
+    .invoice-id-line span {
       color: #BE123C;
-    }
-    .brand-subtitle {
-      font-size: 11px;
-      color: #64748B;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-top: 3px;
     }
     .invoice-status-badge {
       display: inline-block;
-      padding: 4px 12px;
+      padding: 5px 16px;
       background-color: ${statusBadgeBg};
       color: ${statusBadgeColor};
       border: 1px solid ${statusBadgeBorder};
       border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 11.5px;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.75px;
     }
+    
+    /* Meta Information Cards */
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 16px;
       padding: 24px 32px;
       background-color: #FAFAFA;
       border-bottom: 1px solid #F1F5F9;
@@ -216,20 +209,23 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       color: #64748B;
       text-transform: uppercase;
       letter-spacing: 0.75px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .meta-card p {
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.5;
       color: #1E293B;
     }
+    
+    /* Items Section */
     .items-container {
       padding: 24px 32px;
+      background-color: #FFFFFF;
     }
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     .items-table th {
       background-color: #881337;
@@ -238,7 +234,7 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 11px 14px;
+      padding: 12px 16px;
       text-align: left;
     }
     .items-table th:first-child {
@@ -258,12 +254,12 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       justify-content: flex-end;
     }
     .totals-table {
-      width: 290px;
+      width: 300px;
       border-collapse: collapse;
     }
     .totals-table td {
-      padding: 5px 0;
-      font-size: 13px;
+      padding: 6px 0;
+      font-size: 13.5px;
       color: #475569;
     }
     .totals-table td.amount {
@@ -286,7 +282,7 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       vertical-align: middle;
     }
     .totals-table tr.grand-total td {
-      padding-top: 10px;
+      padding-top: 12px;
       border-top: 1px solid #E2E8F0;
       font-size: 15px;
       font-weight: 700;
@@ -294,13 +290,13 @@ export const buildSurokkhaOrderInvoiceHtml = ({
     }
     .totals-table tr.grand-total td.amount {
       color: #881337;
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 800;
     }
     
     /* Discreet Packaging Notice Box */
     .discreet-notice-box {
-      margin: 20px 32px;
+      margin: 10px 32px 24px 32px;
       padding: 14px 18px;
       background-color: #FFF1F2;
       border: 1px solid #FECDD3;
@@ -323,28 +319,30 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       line-height: 1.45;
     }
     
-    .invoice-footer {
+    /* Clean Light Footer */
+    .invoice-footer-light {
       padding: 24px 32px;
-      background-color: #0F172A;
-      color: #94A3B8;
+      background-color: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      color: #475569;
       text-align: center;
       font-size: 12px;
       line-height: 1.6;
     }
-    .invoice-footer a {
-      color: #FDA4AF;
+    .invoice-footer-light a {
+      color: #BE123C;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
     }
     .authenticity-seal {
       display: inline-block;
       margin-bottom: 8px;
-      padding: 4px 12px;
-      border: 1px solid #BE123C;
-      border-radius: 6px;
-      color: #FDA4AF;
-      background-color: rgba(190, 18, 60, 0.15);
-      font-size: 10px;
+      padding: 4px 14px;
+      border: 1px solid #FECDD3;
+      border-radius: 9999px;
+      color: #9F1239;
+      background-color: #FFF1F2;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -362,8 +360,8 @@ export const buildSurokkhaOrderInvoiceHtml = ({
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 10px 18px;
-      font-size: 12.5px;
+      padding: 10px 20px;
+      font-size: 13px;
       font-weight: 700;
       border-radius: 10px;
       text-decoration: none;
@@ -409,26 +407,13 @@ export const buildSurokkhaOrderInvoiceHtml = ({
   <div class="invoice-wrapper">
     <div class="brand-header-bar"></div>
 
-    <!-- Header Section -->
-    <div class="invoice-header">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="vertical-align: middle;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 28px; height: 28px; background-color: #881337; color: #FFFFFF; font-weight: 800; font-size: 15px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; line-height: 1;">S</div>
-              <div class="brand-title">Surokkha<span>.store</span></div>
-            </div>
-            <div class="brand-subtitle">Authentic Personal Wellness • Bangladesh</div>
-          </td>
-          <td style="text-align: right; vertical-align: middle;">
-            <div style="font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px;">INVOICE</div>
-            <div style="font-size: 13px; font-weight: 700; color: #BE123C; margin-top: 2px;">#${orderId}</div>
-            <div style="margin-top: 6px;">
-              <span class="invoice-status-badge">${statusBadgeText}</span>
-            </div>
-          </td>
-        </tr>
-      </table>
+    <!-- Centered Header Section -->
+    <div class="invoice-header-center">
+      <img src="${logoUrl}" alt="Surokkha Logo" class="invoice-logo-img" />
+      <div class="invoice-id-line">INVOICE <span>#${orderId}</span></div>
+      <div>
+        <span class="invoice-status-badge">${statusBadgeText}</span>
+      </div>
     </div>
 
     <!-- Meta Information Cards -->
@@ -494,19 +479,19 @@ export const buildSurokkhaOrderInvoiceHtml = ({
 
     <!-- 100% Discreet Packaging Assurance -->
     <div class="discreet-notice-box">
-      <div style="font-size: 18px; line-height: 1;">🔒</div>
+      <div style="font-size: 20px; line-height: 1;">🔒</div>
       <div>
         <h5>100% Discreet & Confidential Packaging Guarantee</h5>
         <p>All orders are packed in unprinted, plain parcel bags with strict privacy. No product titles or sensitive wellness markings appear on the outer package.</p>
       </div>
     </div>
 
-    <!-- Surokkha Footer -->
-    <div class="invoice-footer">
+    <!-- Surokkha Clean Light Footer -->
+    <div class="invoice-footer-light">
       <div class="authenticity-seal">✦ 100% Authentic MO Product Standard • Factory Sealed ✦</div>
-      <p>Thank you for choosing <a href="https://surokkha.store" target="_blank" style="color: #FDA4AF; text-decoration: none;"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness.</p>
-      <p style="margin-top: 4px; font-size: 11px; color: #64748B;">
-        For questions or assistance, reach out via WhatsApp at <a href="https://wa.me/8801600905774" target="_blank" style="color: #FDA4AF; text-decoration: underline; font-weight: 700;">01600905774</a> or email <a href="mailto:support@surokkha.store">support@surokkha.store</a>.
+      <p style="margin-top: 4px;">Thank you for choosing <a href="https://surokkha.store" target="_blank"><strong>Surokkha.store</strong></a> — Trusted Destination for Personal Wellness.</p>
+      <p style="margin-top: 4px; font-size: 11.5px; color: #64748B;">
+        For questions or assistance, reach out via WhatsApp at <a href="https://wa.me/8801600905774" target="_blank" style="text-decoration: underline;">01600905774</a> or email <a href="mailto:support@surokkha.store">support@surokkha.store</a>.
       </p>
     </div>
   </div>

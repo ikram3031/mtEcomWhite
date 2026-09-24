@@ -14,7 +14,7 @@
  */
 export const buildSurokkhaOrderInvoiceEmailHtml = ({
   order = {},
-  logoUrl = "https://surokkha.store/assets/log-D8ALCVK7.png",
+  logoUrl = "https://admin.surokkha.store/logo.png",
 }) => {
   const {
     orderId = "N/A",
@@ -62,7 +62,7 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
     const itemTotal = Number(item.subtotal || (unitPrice * qty) || 0);
 
     return `
-      <tr style="background-color: ${isEven ? "#FFF1F2" : "#FFFFFF"}; border-bottom: 1px solid #F1F5F9;">
+      <tr style="background-color: ${isEven ? "#FFF5F7" : "#FFFFFF"}; border-bottom: 1px solid #F1F5F9;">
         <td style="padding: 12px 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #0F172A; vertical-align: top;">
           <strong style="color: #0F172A; font-weight: 700; font-size: 13.5px;">${itemName}</strong>
           ${variant ? `<div style="font-size: 11px; color: #9F1239; font-weight: 600; margin-top: 2px;">✦ ${variant}</div>` : ""}
@@ -87,39 +87,26 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmation #${orderId}</title>
 </head>
-<body style="margin: 0; padding: 24px 10px; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+<body style="margin: 0; padding: 24px 10px; background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
     <tr>
       <td align="center">
         <!-- Main Container -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 640px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 640px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);">
           
           <!-- Top Accent Gradient Line -->
           <tr>
-            <td style="height: 6px; background: linear-gradient(90deg, #881337 0%, #BE123C 50%, #FDA4AF 100%);"></td>
+            <td style="height: 5px; background: linear-gradient(90deg, #881337 0%, #BE123C 50%, #FDA4AF 100%);"></td>
           </tr>
 
-          <!-- Header -->
+          <!-- Centered Header -->
           <tr>
-            <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #F1F5F9;">
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td style="vertical-align: middle;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span style="display: inline-block; width: 28px; height: 28px; background-color: #881337; color: #FFFFFF; font-weight: 800; font-size: 15px; border-radius: 8px; text-align: center; line-height: 28px;">S</span>
-                      <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #0F172A;">Surokkha<span style="color: #BE123C;">.store</span></span>
-                    </div>
-                    <div style="font-size: 11px; color: #64748B; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">Authentic Personal Wellness • Bangladesh</div>
-                  </td>
-                  <td style="text-align: right; vertical-align: middle;">
-                    <div style="font-size: 18px; font-weight: 800; color: #0F172A;">ORDER CONFIRMED</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #BE123C; margin-top: 2px;">#${orderId}</div>
-                    <div style="margin-top: 6px;">
-                      <span style="display: inline-block; padding: 4px 12px; background-color: #FFF1F2; color: #9F1239; border: 1px solid #FECDD3; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase;">✓ Processing</span>
-                    </div>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="padding: 32px 24px 20px 24px; border-bottom: 1px solid #F1F5F9; text-align: center;">
+              <img src="${logoUrl}" alt="Surokkha Logo" style="max-height: 52px; height: 52px; width: auto; object-fit: contain; display: block; margin: 0 auto 14px auto;" />
+              <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #0F172A; margin-bottom: 8px;">INVOICE <span style="color: #BE123C;">#${orderId}</span></div>
+              <div>
+                <span style="display: inline-block; padding: 5px 16px; background-color: #FFF1F2; color: #9F1239; border: 1px solid #FECDD3; border-radius: 9999px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.75px;">✓ ORDER CONFIRMED</span>
+              </div>
             </td>
           </tr>
 
@@ -143,7 +130,7 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
                     <div style="font-size: 13px; color: #1E293B; line-height: 1.5;">
                       <strong>Order Date:</strong> ${createdAt}<br />
                       <strong>Payment Method:</strong> ${paymentMethod}<br />
-                      <strong>Payment Status:</strong> <span style="color: #BE123C; font-weight: 700;">Pending (COD)</span>
+                      <strong>Payment Status:</strong> <span style="color: #15803D; font-weight: 700;">Pending (COD)</span>
                     </div>
                     <div style="margin-top: 8px; font-size: 12.5px; color: #1E293B; line-height: 1.4;">
                       <strong style="color: #475569; font-size: 11px; text-transform: uppercase;">Customer Helpline:</strong><br />
@@ -157,7 +144,7 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
 
           <!-- Items Table -->
           <tr>
-            <td style="padding: 24px 32px;">
+            <td style="padding: 24px 32px; background-color: #FFFFFF;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
                 <thead>
                   <tr style="background-color: #881337; color: #FFFFFF;">
@@ -204,7 +191,7 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
 
           <!-- Discreet Packaging Assurance Notice -->
           <tr>
-            <td style="padding: 0 32px 24px 32px;">
+            <td style="padding: 0 32px 24px 32px; background-color: #FFFFFF;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 14px 18px;">
                 <tr>
                   <td width="30" style="vertical-align: top; font-size: 20px;">🔒</td>
@@ -217,18 +204,27 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Clean Light Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #0F172A; color: #94A3B8; text-align: center; font-size: 12px; line-height: 1.6;">
-              <div style="display: inline-block; margin-bottom: 8px; padding: 4px 12px; border: 1px solid #BE123C; border-radius: 6px; color: #FDA4AF; background-color: rgba(190, 18, 60, 0.15); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            <td style="padding: 24px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; color: #475569; text-align: center; font-size: 12px; line-height: 1.6;">
+              <div style="display: inline-block; margin-bottom: 8px; padding: 4px 14px; border: 1px solid #FECDD3; border-radius: 9999px; color: #9F1239; background-color: #FFF1F2; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                 ✦ 100% Authentic MO Product Standard • Factory Sealed ✦
               </div>
-              <div>Thank you for ordering with <a href="https://surokkha.store" target="_blank" style="color: #FDA4AF; text-decoration: none;"><strong>Surokkha.store</strong></a> — Your Trusted Personal Wellness Platform.</div>
-              <div style="margin-top: 4px; font-size: 11px; color: #64748B;">
-                Helpline (WhatsApp): <a href="https://wa.me/8801600905774" target="_blank" style="color: #FDA4AF; text-decoration: underline; font-weight: 700;">01600905774</a> | Email: <a href="mailto:support@surokkha.store" style="color: #FDA4AF; text-decoration: none; font-weight: 600;">support@surokkha.store</a>
+              <div style="margin-top: 4px;">Thank you for ordering with <a href="https://surokkha.store" target="_blank" style="color: #BE123C; text-decoration: none; font-weight: 700;"><strong>Surokkha.store</strong></a> — Your Trusted Personal Wellness Platform.</div>
+              <div style="margin-top: 4px; font-size: 11.5px; color: #64748B;">
+                Helpline (WhatsApp): <a href="https://wa.me/8801600905774" target="_blank" style="color: #BE123C; text-decoration: underline; font-weight: 700;">01600905774</a> | Email: <a href="mailto:support@surokkha.store" style="color: #BE123C; text-decoration: none; font-weight: 600;">support@surokkha.store</a>
               </div>
             </td>
           </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
 
         </table>
       </td>
