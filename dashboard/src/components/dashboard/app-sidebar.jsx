@@ -606,25 +606,14 @@ export const AppSidebar = ({ ...props }) => {
               </SidebarMenuButton>
               {openMenu === "tools" && (
                 <SidebarMenuSub>
-                  {Boolean(clientConfig?.cloudFlareAnalytics?.active || clientConfig?.clientKey === "surokkha") && (isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
+                  {(isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}
                         render={<Link to="/dashboard/analytics" />}
                       >
-                        <LineChart className="h-3.5 w-3.5" />
-                        <span>Cloudflare Analytics</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )}
-                  {(isAllowed("settings") || isAllowed("tools") || isAllowed("admin") || isAllowed("analytics")) && (
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={pathname.startsWith("/dashboard/settings/google-analytics") || pathname.startsWith("/dashboard/tools/google-analytics")}
-                        render={<Link to="/dashboard/settings/google-analytics" />}
-                      >
-                        <BarChart3 className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Google Analytics</span>
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        <span>Analytics</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
