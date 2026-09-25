@@ -33,6 +33,48 @@ services:
     networks:
       - decantre-network
 
+  backend-storefront:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${STOREFRONT_BACKEND_CONTAINER_NAME:-decantre-backend-storefront-dev}
+    restart: always
+    env_file:
+      - .env
+    environment:
+      APP_ROLE: storefront
+      PORT: ${STOREFRONT_BACKEND_PORT:-4001}
+    command: ["node", "src/server.storefront.js"]
+    ports:
+      - "127.0.0.1:${STOREFRONT_BACKEND_PORT:-4001}:${STOREFRONT_BACKEND_PORT:-4001}"
+    volumes:
+      - /decantre/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - decantre-network
+
+  backend-dashboard:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${DASHBOARD_BACKEND_CONTAINER_NAME:-decantre-backend-dashboard-dev}
+    restart: always
+    env_file:
+      - .env
+    environment:
+      APP_ROLE: dashboard
+      PORT: ${DASHBOARD_BACKEND_PORT:-4002}
+    command: ["node", "src/server.dashboard.js"]
+    ports:
+      - "127.0.0.1:${DASHBOARD_BACKEND_PORT:-4002}:${DASHBOARD_BACKEND_PORT:-4002}"
+    volumes:
+      - /decantre/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - decantre-network
+
   frontend:
     build:
       context: ./frontend

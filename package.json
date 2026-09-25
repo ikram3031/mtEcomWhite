@@ -43,6 +43,8 @@
     "build:surokkha": "node scripts/sync-config.js surokkha && npm run build:surokkha --prefix dashboard",
     "build:demo": "node scripts/sync-config.js demo && npm run build:demo --prefix dashboard",
     "dev:dashboard": "npm run dev --prefix dashboard",
-    "dev:backend": "npm run dev --prefix backend"
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:backend:storefront": "npm run dev:storefront --prefix backend",
+    "dev:backend:dashboard": "npm run dev:dashboard --prefix backend"
   }
 }

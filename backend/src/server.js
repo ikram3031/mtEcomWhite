@@ -10,36 +10,33 @@ import { initHeartbeatScheduler, stopHeartbeatScheduler } from "./schedulers/hea
 
 // Bootstraps backend server, database connections, and background schedulers
 const bootstrap = async () => {
-  // await connectMySQL();
   await connectDatabase();
 
-  const app = await createApp();
-  const port = Number.parseInt(process.env.PORT ?? process.env.BACKEND_PORT ?? "4000", 10);
+  const role = process.env.APP_ROLE || "all";
+  const app = await createApp({ role });
+  const defaultPort = role === "storefront" ? "4001" : role === "dashboard" ? "4002" : "4000";
+  const port = Number.parseInt(process.env.PORT ?? process.env.BACKEND_PORT ?? defaultPort, 10);
 
   const server = app.listen(port, "0.0.0.0", () => {
-    logger.info({ port, environment: env.NODE_ENV }, "Server listening");
+    logger.info({ port, role, environment: env.NODE_ENV }, "Server listening");
   });
 
-  // Initialize Real-time Notification WebSocket Server
-  const wss = initWebSocketServer(server);
+  if (role === "dashboard" || role === "all") {
+    const wss = initWebSocketServer(server);
+    initMediaSchedulers();
+    initHeartbeatScheduler();
 
-  // Initialize Cloudflare R2 Sync & Orphan Image Cleanup Background Schedulers
-  initMediaSchedulers();
-
-  // Initialize Fleet Telemetry Heartbeat Scheduler
-  initHeartbeatScheduler();
-
-  // Initialize Real-time IMAP Webmail Synchronizer
-  if (env.IMAP_SYNC_ENABLED) {
-    import("./services/imapSync.service.js")
-      .then(({ startImapIdleListener }) => {
-        startImapIdleListener().catch((err) => {
-          logger.error({ err }, "Failed to start IMAP IDLE listener");
+    if (env.IMAP_SYNC_ENABLED) {
+      import("./services/imapSync.service.js")
+        .then(({ startImapIdleListener }) => {
+          startImapIdleListener().catch((err) => {
+            logger.error({ err }, "Failed to start IMAP IDLE listener");
+          });
+        })
+        .catch((err) => {
+          logger.error({ err }, "Could not load IMAP service");
         });
-      })
-      .catch((err) => {
-        logger.error({ err }, "Could not load IMAP service");
-      });
+    }
   }
 
   const shutdown = (signal) => {

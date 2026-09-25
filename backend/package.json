@@ -8,7 +8,11 @@
 	},
 	"scripts": {
 		"dev": "node --watch src/server.js",
+		"dev:storefront": "node --watch src/server.storefront.js",
+		"dev:dashboard": "node --watch src/server.dashboard.js",
 		"prod": "node src/server.js",
+		"prod:storefront": "node src/server.storefront.js",
+		"prod:dashboard": "node src/server.dashboard.js",
 		"img": "node scripts/check-img-urls.js",
 		"lint": "eslint .",
 		"format": "prettier --write ."

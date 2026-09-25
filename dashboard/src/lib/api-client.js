@@ -16,7 +16,13 @@ export const getApiBaseUrl = () => {
       return 'https://server.decantrebd.com';
     }
   }
-  return import.meta.env.VITE_API_BASE_URL || clientConfig?.apiBaseUrl || 'https://api.surokkha.store';
+  return (
+    import.meta.env.VITE_SERVICE_API_BASE_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    clientConfig?.serviceApiBaseUrl ||
+    clientConfig?.apiBaseUrl ||
+    'https://api.surokkha.store'
+  );
 };
 
 export const baseURL = getApiBaseUrl();
