@@ -47,6 +47,9 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "cloudFlareAnalytics": {
+    "active": false
+  },
   "logoUrl": "/uploads/assets/logo.webp",
   "siteIconUrl": "/uploads/assets/logo.webp",
   "assetsConfig": {

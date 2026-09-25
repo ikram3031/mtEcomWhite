@@ -48,6 +48,9 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "cloudFlareAnalytics": {
+    "active": false
+  },
   "logoUrl": "/src/uploads/assets/kawaiikutir_logo.png",
   "siteIconUrl": "/src/uploads/assets/kawaiikutir_logo.png",
   "assetsConfig": {

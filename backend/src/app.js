@@ -112,9 +112,10 @@ export async function createApp() {
     const startTime = process.hrtime();
 
     // Robust IP extraction logic
+    const cfConnectingIp = req.headers["cf-connecting-ip"];
     const xRealIp = req.headers["x-real-ip"];
     const xForwardedFor = req.headers["x-forwarded-for"];
-    const rawIp = xRealIp || (xForwardedFor ? xForwardedFor.split(",")[0].trim() : null) || req.ip || req.socket?.remoteAddress || "Unknown IP";
+    const rawIp = cfConnectingIp || xRealIp || (xForwardedFor ? xForwardedFor.split(",")[0].trim() : null) || req.ip || req.socket?.remoteAddress || "Unknown IP";
 
     const clientIp = rawIp;
     const source = getRequestSource(req);
@@ -193,10 +194,12 @@ export async function createApp() {
           status,
           source,
           duration: timeMs,
+          responseTime: timeMs,
           size: sizeStr,
           ip: clientIp,
           method: req.method,
           url: req.originalUrl,
+          path: req.originalUrl,
         });
       } catch (err) {
       }

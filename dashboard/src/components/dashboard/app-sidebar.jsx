@@ -606,7 +606,7 @@ export const AppSidebar = ({ ...props }) => {
               </SidebarMenuButton>
               {openMenu === "tools" && (
                 <SidebarMenuSub>
-                  {Boolean(clientConfig?.cloudFlareAnalytics?.active) && (isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
+                  {Boolean(clientConfig?.cloudFlareAnalytics?.active || clientConfig?.clientKey === "surokkha") && (isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         isActive={pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/dashboard/tools/analytics")}

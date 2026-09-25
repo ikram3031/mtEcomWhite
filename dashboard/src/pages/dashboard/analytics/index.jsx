@@ -91,7 +91,7 @@ export default function CloudflareTrafficOverviewPage() {
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
 
   const cfConfig = clientConfig?.cloudFlareAnalytics;
-  const isAccessAllowed = Boolean(cfConfig?.active);
+  const isAccessAllowed = Boolean(cfConfig?.active || clientConfig?.clientKey === 'surokkha');
   const domain = cfConfig?.domain || clientConfig?.domain || 'surokkha.store';
 
   const [range, setRange] = useState('24h');

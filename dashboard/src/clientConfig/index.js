@@ -28,8 +28,9 @@ const envClient = import.meta.env?.VITE_CLIENT?.toLowerCase().trim();
 const detectedClient = getClientFromHostname();
 const activeKey = envClient || detectedClient || activeSyncedConfig?.clientKey || 'surokkha';
 
+const baseConfig = clientConfigs[activeKey] || surokkhaConfig;
 export const clientConfig = activeKey === activeSyncedConfig?.clientKey
-  ? activeSyncedConfig
+  ? { ...baseConfig, ...activeSyncedConfig, cloudFlareAnalytics: activeSyncedConfig?.cloudFlareAnalytics || baseConfig?.cloudFlareAnalytics }
   : (clientConfigs[activeKey] || activeSyncedConfig || surokkhaConfig);
 
 // Helper to inspect active policy options safely

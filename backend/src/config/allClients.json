@@ -59,6 +59,9 @@
         "inventory"
       ]
     },
+    "cloudFlareAnalytics": {
+      "active": false
+    },
     "googleAnalytics": {
       "measurementId": "G-95TCXBZG7W",
       "gtmId": "GTM-DEC883Z",
@@ -302,6 +305,9 @@
         "inventory"
       ]
     },
+    "cloudFlareAnalytics": {
+      "active": false
+    },
     "logoUrl": "/uploads/assets/logo.webp",
     "siteIconUrl": "/uploads/assets/logo.webp",
     "assetsConfig": {
@@ -532,6 +538,9 @@
         "payments",
         "inventory"
       ]
+    },
+    "cloudFlareAnalytics": {
+      "active": false
     },
     "googleAnalytics": {
       "measurementId": "G-V2H268T9Q5",
@@ -765,6 +774,9 @@
         "payments",
         "inventory"
       ]
+    },
+    "cloudFlareAnalytics": {
+      "active": false
     },
     "logoUrl": "/src/uploads/assets/kawaiikutir_logo.png",
     "siteIconUrl": "/src/uploads/assets/kawaiikutir_logo.png",
@@ -1001,6 +1013,12 @@
         "payments",
         "inventory"
       ]
+    },
+    "cloudFlareAnalytics": {
+      "active": true,
+      "zoneId": "bd131177db6d610b5d4e5beb0142108b",
+      "domain": "surokkha.store",
+      "accountEmail": "plexivia@gmail.com"
     },
     "googleAnalytics": {
       "measurementId": "G-3JHW9WK6GG",
@@ -1244,6 +1262,9 @@
         "payments",
         "inventory"
       ]
+    },
+    "cloudFlareAnalytics": {
+      "active": false
     },
     "logoUrl": "/src/uploads/assets/toyoland_logo.png",
     "siteIconUrl": "/src/uploads/assets/toyoland_logo.png",

@@ -344,15 +344,18 @@ export default function SystemLogs() {
                     <span className="shrink-0">{getStatusBadge(log.status)}</span>
                   )}
 
-                  {log.responseTime && (
-                    <span className="text-zinc-500 text-[10px] shrink-0 font-mono">
-                      {log.responseTime}ms
+                  {(log.responseTime !== undefined || log.duration !== undefined) && (
+                    <span className="text-zinc-400 text-[10px] shrink-0 font-mono bg-zinc-900/90 px-1.5 py-0.5 rounded border border-zinc-800">
+                      {log.responseTime ?? log.duration}ms
                     </span>
                   )}
 
-                  {log.ip && (
-                    <span className="text-zinc-600 text-[10px] shrink-0 inline-block text-xs font-mono break-all w-[150px]">
-                      {log.ip}
+                  {(log.ip || log.clientIp) && (
+                    <span
+                      className="text-amber-400/95 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded text-[11px] font-mono shrink-0 select-all"
+                      title={`Client IP: ${log.ip || log.clientIp}`}
+                    >
+                      {log.ip || log.clientIp}
                     </span>
                   )}
                 </div>

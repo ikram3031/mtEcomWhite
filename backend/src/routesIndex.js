@@ -62,6 +62,15 @@ coreRouter.use("/logs", logsRouter);
 coreRouter.use("/reports", reportsRouter);
 // Mount AI Product Image Studio routes with increased JSON payload limit for base64 image data
 coreRouter.use("/studio", express.json({ limit: "60mb" }), studioRouter);
+coreRouter.get("/client-ip", (req, res) => {
+  const ip =
+    req.headers["cf-connecting-ip"] ||
+    req.headers["x-real-ip"] ||
+    req.headers["x-forwarded-for"]?.split(",")?.[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    "";
+  res.json({ status: "success", ip });
+});
 coreRouter.get("/search-products", searchProducts);
 
 export default coreRouter;

@@ -154,14 +154,17 @@ export const sendServerPurchaseEvent = async (order, req = null) => {
     const lastName = nameParts.slice(1).join(" ") || "";
 
     const clientIp =
+      req?.headers?.["cf-connecting-ip"] ||
+      req?.headers?.["x-real-ip"] ||
       req?.headers?.["x-forwarded-for"]?.split(",")?.[0]?.trim() ||
       req?.socket?.remoteAddress ||
       "";
     const clientUserAgent = req?.headers?.["user-agent"] || "";
 
     const userData = {
-      ...(clientUserAgent ? { client_user_agent: clientUserAgent } : {}),
       ...(clientIp ? { client_ip_address: clientIp } : {}),
+      // Meta Conversions API Rule: User Agent must be paired with Client IP Address
+      ...(clientIp && clientUserAgent ? { client_user_agent: clientUserAgent } : {}),
     };
 
     if (advancedMatching) {

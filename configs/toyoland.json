@@ -47,6 +47,9 @@
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
+  "cloudFlareAnalytics": {
+    "active": false
+  },
   "logoUrl": "/src/uploads/assets/toyoland_logo.png",
   "siteIconUrl": "/src/uploads/assets/toyoland_logo.png",
   "assetsConfig": {
