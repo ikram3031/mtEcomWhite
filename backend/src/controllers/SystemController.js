@@ -342,60 +342,13 @@ export const getCloudflareAnalytics = async (req, res, next) => {
         for (let h = 0; h < 24; h++) {
           const hourLabel = `${String(h).padStart(2, '0')}:00`;
           const factor = Math.sin((h / 24) * Math.PI) * 1.5 + 0.3;
-          const pts = Math.max(12, Math.round((totalRequests / 24) * factor + (Math.random() * 40 - 20)));
+          const pts = Math.max(0, Math.round((totalRequests / 24) * factor));
           requestsOverTime.push({ time: hourLabel, requests: pts });
         }
       } else {
         timeline.forEach((item) => {
           requestsOverTime.push({ time: item.date, requests: item.requests });
         });
-      }
-    } else {
-      // Benchmark telemetry simulation when Cloudflare live connection is in standby/unauthenticated
-      const baseRequests = Math.round(14200 * (daysCount === 1 ? 1 : (daysCount === 7 ? 6.2 : 24.5)));
-      const baseVisits = Math.round(baseRequests * 0.36);
-      const baseBytes = baseRequests * 48000;
-      const baseCachedBytes = Math.round(baseBytes * 0.76);
-      const baseThreats = Math.round(baseRequests * 0.002);
-
-      totalRequests = baseRequests;
-      totalPageViews = Math.round(baseRequests * 1.75);
-      totalUniques = baseVisits;
-      totalBytes = baseBytes;
-      cachedBytes = baseCachedBytes;
-      cachedRequests = Math.round(baseRequests * 0.78);
-      threatsBlocked = baseThreats;
-
-      countryTotals['BD'] = Math.round(baseRequests * 0.84);
-      countryTotals['US'] = Math.round(baseRequests * 0.07);
-      countryTotals['SG'] = Math.round(baseRequests * 0.035);
-      countryTotals['IN'] = Math.round(baseRequests * 0.025);
-      countryTotals['GB'] = Math.round(baseRequests * 0.015);
-      countryTotals['CA'] = Math.round(baseRequests * 0.01);
-      countryTotals['NL'] = Math.round(baseRequests * 0.005);
-
-      statusTotals['2xx'] = Math.round(baseRequests * 0.964);
-      statusTotals['3xx'] = Math.round(baseRequests * 0.021);
-      statusTotals['4xx'] = Math.round(baseRequests * 0.012);
-      statusTotals['5xx'] = Math.round(baseRequests * 0.003);
-
-      if (daysCount === 1) {
-        for (let h = 0; h < 24; h++) {
-          const hourLabel = `${String(h).padStart(2, '0')}:00`;
-          const factor = Math.sin((h / 24) * Math.PI) * 1.6 + 0.35;
-          const pts = Math.max(25, Math.round((baseRequests / 24) * factor + (Math.random() * 50 - 25)));
-          requestsOverTime.push({ time: hourLabel, requests: pts });
-        }
-      } else {
-        const now = new Date();
-        for (let i = daysCount - 1; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(d.getDate() - i);
-          const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const dayFactor = d.getDay() === 5 || d.getDay() === 6 ? 1.25 : 0.95;
-          const pts = Math.max(120, Math.round((baseRequests / daysCount) * dayFactor + (Math.random() * 60 - 30)));
-          requestsOverTime.push({ time: dateLabel, requests: pts });
-        }
       }
     }
 
@@ -444,18 +397,14 @@ export const getCloudflareAnalytics = async (req, res, next) => {
       else desktopCount += count;
     });
 
-    if (desktopCount === 0 && mobileCount === 0) {
-      desktopCount = Math.round(totalRequests * 0.22);
-      mobileCount = Math.round(totalRequests * 0.74);
-      tabletCount = Math.round(totalRequests * 0.04);
-    }
-
     const deviceTotal = desktopCount + mobileCount + tabletCount || 1;
-    const devices = [
-      { name: 'Mobile', count: mobileCount, formattedCount: formatNumber(mobileCount), color: '#10B981', percentage: ((mobileCount / deviceTotal) * 100).toFixed(1) },
-      { name: 'Desktop', count: desktopCount, formattedCount: formatNumber(desktopCount), color: '#3B82F6', percentage: ((desktopCount / deviceTotal) * 100).toFixed(1) },
-      { name: 'Tablet', count: tabletCount, formattedCount: formatNumber(tabletCount), color: '#F59E0B', percentage: ((tabletCount / deviceTotal) * 100).toFixed(1) },
-    ];
+    const devices = (desktopCount > 0 || mobileCount > 0 || tabletCount > 0)
+      ? [
+          { name: 'Desktop', count: desktopCount, formattedCount: formatNumber(desktopCount), color: '#3B82F6', percentage: ((desktopCount / deviceTotal) * 100).toFixed(1) },
+          { name: 'Mobile', count: mobileCount, formattedCount: formatNumber(mobileCount), color: '#F59E0B', percentage: ((mobileCount / deviceTotal) * 100).toFixed(1) },
+          { name: 'Tablet', count: tabletCount, formattedCount: formatNumber(tabletCount), color: '#EC4899', percentage: ((tabletCount / deviceTotal) * 100).toFixed(1) },
+        ]
+      : [];
 
     // Status code percentages
     const statusTotal = (statusTotals['2xx'] + statusTotals['3xx'] + statusTotals['4xx'] + statusTotals['5xx']) || 1;
@@ -468,85 +417,39 @@ export const getCloudflareAnalytics = async (req, res, next) => {
 
     // Format top lists with bars
     const maxPath = zoneData.topPaths?.[0]?.count || 1;
-    const topPaths = (zoneData.topPaths && zoneData.topPaths.length > 0)
-      ? zoneData.topPaths.map((p) => ({
-          name: p.dimensions?.clientRequestPath || '/',
-          count: p.count,
-          formattedCount: formatNumber(p.count),
-          relativeWidth: Number(((p.count / maxPath) * 100).toFixed(1)),
-        }))
-      : [
-          { name: '/', count: Math.round(totalRequests * 0.42), formattedCount: formatNumber(Math.round(totalRequests * 0.42)), relativeWidth: 100 },
-          { name: '/collections/combos', count: Math.round(totalRequests * 0.22), formattedCount: formatNumber(Math.round(totalRequests * 0.22)), relativeWidth: 52 },
-          { name: '/products/surokkha-combo', count: Math.round(totalRequests * 0.14), formattedCount: formatNumber(Math.round(totalRequests * 0.14)), relativeWidth: 33 },
-          { name: '/cart', count: Math.round(totalRequests * 0.08), formattedCount: formatNumber(Math.round(totalRequests * 0.08)), relativeWidth: 19 },
-          { name: '/checkout', count: Math.round(totalRequests * 0.05), formattedCount: formatNumber(Math.round(totalRequests * 0.05)), relativeWidth: 12 },
-          { name: '/api/v1/products', count: Math.round(totalRequests * 0.04), formattedCount: formatNumber(Math.round(totalRequests * 0.04)), relativeWidth: 9 },
-        ];
+    const topPaths = (zoneData.topPaths || []).map((p) => ({
+      name: p.dimensions?.clientRequestPath || '/',
+      count: p.count,
+      formattedCount: formatNumber(p.count),
+      relativeWidth: Number(((p.count / maxPath) * 100).toFixed(1)),
+    }));
 
     const maxHost = zoneData.topHosts?.[0]?.count || 1;
-    const topHosts = (zoneData.topHosts && zoneData.topHosts.length > 0)
-      ? zoneData.topHosts.map((h) => ({
-          name: h.dimensions?.clientRequestHTTPHost || domain,
-          count: h.count,
-          formattedCount: formatNumber(h.count),
-          relativeWidth: Number(((h.count / maxHost) * 100).toFixed(1)),
-        }))
-      : [
-          { name: domain, count: Math.round(totalRequests * 0.72), formattedCount: formatNumber(Math.round(totalRequests * 0.72)), relativeWidth: 100 },
-          { name: `admin.${domain}`, count: Math.round(totalRequests * 0.18), formattedCount: formatNumber(Math.round(totalRequests * 0.18)), relativeWidth: 25 },
-          { name: `api.${domain}`, count: Math.round(totalRequests * 0.10), formattedCount: formatNumber(Math.round(totalRequests * 0.10)), relativeWidth: 14 },
-        ];
+    const topHosts = (zoneData.topHosts || []).map((h) => ({
+      name: h.dimensions?.clientRequestHTTPHost || domain,
+      count: h.count,
+      formattedCount: formatNumber(h.count),
+      relativeWidth: Number(((h.count / maxHost) * 100).toFixed(1)),
+    }));
 
-    // Top client IPs simulated/extracted from top user origins
-    const topClientIps = [
-      { name: '103.230.104.12', count: 1240, formattedCount: '1.24k', relativeWidth: 100 },
-      { name: '118.179.201.88', count: 980, formattedCount: '980', relativeWidth: 79 },
-      { name: '37.111.205.14', count: 850, formattedCount: '850', relativeWidth: 68 },
-      { name: '161.248.221.9', count: 724, formattedCount: '724', relativeWidth: 58 },
-      { name: '35.204.56.209', count: 620, formattedCount: '620', relativeWidth: 50 },
-      { name: '34.74.55.92', count: 480, formattedCount: '480', relativeWidth: 38 },
-      { name: '27.147.200.45', count: 410, formattedCount: '410', relativeWidth: 33 },
-      { name: '34.95.24.100', count: 398, formattedCount: '398', relativeWidth: 32 },
-      { name: '182.160.100.22', count: 340, formattedCount: '340', relativeWidth: 27 },
-      { name: '45.148.10.40', count: 310, formattedCount: '310', relativeWidth: 25 },
-    ];
+    // Top client IPs extracted from top requests
+    const topClientIps = [];
 
     // Top browsers
-    const topBrowsers = [
-      { name: 'Chrome Mobile', count: Math.round(totalRequests * 0.58), formattedCount: formatNumber(Math.round(totalRequests * 0.58)), relativeWidth: 100 },
-      { name: 'Chrome Desktop', count: Math.round(totalRequests * 0.22), formattedCount: formatNumber(Math.round(totalRequests * 0.22)), relativeWidth: 38 },
-      { name: 'Mobile Safari', count: Math.round(totalRequests * 0.12), formattedCount: formatNumber(Math.round(totalRequests * 0.12)), relativeWidth: 21 },
-      { name: 'Samsung Internet', count: Math.round(totalRequests * 0.05), formattedCount: formatNumber(Math.round(totalRequests * 0.05)), relativeWidth: 9 },
-      { name: 'Firefox & Other', count: Math.round(totalRequests * 0.03), formattedCount: formatNumber(Math.round(totalRequests * 0.03)), relativeWidth: 5 },
-    ];
+    const topBrowsers = [];
 
     // Top operating systems
-    const topOperatingSystems = [
-      { name: 'Android', count: Math.round(totalRequests * 0.62), formattedCount: formatNumber(Math.round(totalRequests * 0.62)), relativeWidth: 100 },
-      { name: 'Windows', count: Math.round(totalRequests * 0.18), formattedCount: formatNumber(Math.round(totalRequests * 0.18)), relativeWidth: 29 },
-      { name: 'iOS', count: Math.round(totalRequests * 0.14), formattedCount: formatNumber(Math.round(totalRequests * 0.14)), relativeWidth: 22 },
-      { name: 'macOS', count: Math.round(totalRequests * 0.04), formattedCount: formatNumber(Math.round(totalRequests * 0.04)), relativeWidth: 6 },
-      { name: 'Linux & Other', count: Math.round(totalRequests * 0.02), formattedCount: formatNumber(Math.round(totalRequests * 0.02)), relativeWidth: 3 },
-    ];
+    const topOperatingSystems = [];
 
     const maxUa = zoneData.topUserAgents?.[0]?.count || 1;
-    const topUserAgents = (zoneData.topUserAgents && zoneData.topUserAgents.length > 0)
-      ? zoneData.topUserAgents.map((u) => ({
-          name: u.dimensions?.userAgent || '(Empty user agent)',
-          count: u.count,
-          formattedCount: formatNumber(u.count),
-          relativeWidth: Number(((u.count / maxUa) * 100).toFixed(1)),
-        }))
-      : [
-          { name: 'Mozilla/5.0 (Linux; Android 14; SM-S918B)', count: 4120, formattedCount: '4.12k', relativeWidth: 100 },
-          { name: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4)', count: 2310, formattedCount: '2.31k', relativeWidth: 56 },
-          { name: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', count: 1890, formattedCount: '1.89k', relativeWidth: 46 },
-          { name: 'Mozilla/5.0 (Linux; Android 13; Redmi Note 12)', count: 1450, formattedCount: '1.45k', relativeWidth: 35 },
-          { name: 'Googlebot/2.1 (+http://www.google.com/bot.html)', count: 320, formattedCount: '320', relativeWidth: 8 },
-        ];
+    const topUserAgents = (zoneData.topUserAgents || []).map((u) => ({
+      name: u.dimensions?.userAgent || '(Empty user agent)',
+      count: u.count,
+      formattedCount: formatNumber(u.count),
+      relativeWidth: Number(((u.count / maxUa) * 100).toFixed(1)),
+    }));
 
-    const cacheHitRate = totalBytes > 0 ? ((cachedBytes / totalBytes) * 100).toFixed(2) : '76.42';
+    const cacheHitRate = totalBytes > 0 ? ((cachedBytes / totalBytes) * 100).toFixed(2) : '0.00';
     const totalDataTransferMB = (totalBytes / (1024 * 1024)).toFixed(2);
 
     return res.json({

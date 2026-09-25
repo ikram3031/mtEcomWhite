@@ -57,10 +57,11 @@
   },
   "googleAnalytics": {
     "measurementId": "G-3JHW9WK6GG",
+    "googleTagId": "GT-5DH5WGNX",
     "gtmId": "",
     "propertyId": "555476258",
     "streamId": "15828364152",
-    "streamName": "Surokkha Web Stream",
+    "streamName": "surokkha",
     "isVerified": true,
     "enhancedMeasurement": true
   },

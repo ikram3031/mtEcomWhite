@@ -258,6 +258,7 @@ export const router = createBrowserRouter([
             ),
           },
           { path: 'analytics', element: <Navigate to="/dashboard/analytics" replace /> },
+          { path: 'google-analytics', element: <Navigate to="/dashboard/settings/google-analytics" replace /> },
           { path: 'activity-logs', element: <Navigate to="/dashboard/activity-logs" replace /> },
           { path: 'logs', element: <Navigate to="/dashboard/logs" replace /> },
         ],
