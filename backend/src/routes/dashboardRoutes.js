@@ -28,6 +28,7 @@ import storeUtilsRouter from "./StoreUtilsRoute.js";
 import reportsRouter from "./ReportsRoute.js";
 import sizeChartRouter from "./SizeChartRoute.js";
 import settingsRouter from "./SettingsRoute.js";
+import telemetryRouter from "./TelemetryRoute.js";
 import { searchProducts } from "../controllers/SearchController.js";
 
 const dashboardRoutes = Router();
@@ -58,6 +59,7 @@ dashboardRoutes.use("/contact", contactRouter);
 dashboardRoutes.use("/webmail", webmailRouter);
 dashboardRoutes.use("/store-utils", storeUtilsRouter);
 dashboardRoutes.use("/settings", settingsRouter);
+dashboardRoutes.use("/telemetry", telemetryRouter);
 dashboardRoutes.use("/search", searchRouter);
 dashboardRoutes.use("/logs", logsRouter);
 dashboardRoutes.use("/reports", reportsRouter);

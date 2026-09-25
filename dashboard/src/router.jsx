@@ -61,6 +61,9 @@ import SupportDesk from './pages/dashboard/tools/supportDesk';
 import Studio from './pages/dashboard/studio/index';
 import BatchImagesStudio from './pages/dashboard/studio/batchImages';
 
+// Operations & cPanel Micro-Frontend
+import CPanelManager from './pages/dashboard/cpanel/index';
+
 // RBAC & Guard
 import RoleGuard from './components/RoleGuard';
 import NotFound from './components/NotFound';
@@ -91,6 +94,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleGuard menuKey="overview">
             <Overview />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'cpanel',
+        element: (
+          <RoleGuard menuKey="cpanel">
+            <CPanelManager />
           </RoleGuard>
         ),
       },

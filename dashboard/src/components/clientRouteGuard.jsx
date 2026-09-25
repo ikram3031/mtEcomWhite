@@ -30,6 +30,7 @@ const getRequiredPermission = (pathname) => {
   if (cleanPath.startsWith('/dashboard/reports')) return 'reports';
   if (cleanPath.startsWith('/dashboard/users')) return 'users';
   if (cleanPath.startsWith('/dashboard/developer')) return 'developer';
+  if (cleanPath === '/dashboard/cpanel' || cleanPath.startsWith('/dashboard/cpanel')) return 'cpanel';
 
   return null;
 };
@@ -40,6 +41,11 @@ export const ClientRouteGuard = ({ children }) => {
   const requiredPermission = getRequiredPermission(location.pathname);
   const allowedMenus = clientConfig.allowedMenus || [];
   const features = clientConfig.features || {};
+  const modules = clientConfig.modules || {};
+
+  if (requiredPermission === 'cpanel' && (modules?.cpanelAccess === false || features?.cpanelAccess === false)) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (requiredPermission === 'products.size-charts' && !features?.sizeChart) {
     return <Navigate to="/dashboard" replace />;

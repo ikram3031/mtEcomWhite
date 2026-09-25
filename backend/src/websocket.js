@@ -48,21 +48,25 @@ async function authenticateWsConnection(req) {
   }
 }
 
-/**
- * Initialize WebSocket Server attached to the HTTP server
- */
-export function initWebSocketServer(httpServer) {
+// Initializes WebSocket server attached to HTTP server for notifications and real-time events
+export const initWebSocketServer = (httpServer) => {
   const wss = new WebSocketServer({ noServer: true });
   wssInstance = wss;
 
   httpServer.on("upgrade", async (request, socket, head) => {
     const { pathname } = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
-    if (pathname === "/ws/notifications" || pathname === "/api/v1/ws/notifications") {
+    if (
+      pathname === "/ws" ||
+      pathname === "/ws/" ||
+      pathname === "/ws/notifications" ||
+      pathname === "/api/v1/ws/notifications" ||
+      pathname.startsWith("/ws")
+    ) {
       const user = await authenticateWsConnection(request);
 
       if (!user) {
-        logger.warn({ ip: request.socket.remoteAddress }, "WebSocket connection rejected: unauthorized");
+        logger.warn({ ip: request.socket.remoteAddress, pathname }, "WebSocket connection rejected: unauthorized");
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
         socket.destroy();
         return;

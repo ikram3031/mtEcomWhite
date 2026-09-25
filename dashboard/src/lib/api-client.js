@@ -2,12 +2,36 @@ import axios from 'axios';
 import { handleGlobalError } from './error-handler';
 import clientConfig from '@/clientConfig';
 
-// Dynamically determines active API Base URL from hostname or clientConfig
+// Dynamically determines active API Base URL from hostname or clientConfig for Admin Dashboard
 export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
     if (host.includes('surokkha')) {
-      return 'https://api.surokkha.store';
+      return 'https://service.surokkha.store';
+    }
+    if (host.includes('engulfic')) {
+      return 'https://service.engulfic.com';
+    }
+    if (host.includes('decantre')) {
+      return 'https://service.decantrebd.com';
+    }
+  }
+  return (
+    import.meta.env.VITE_SERVICE_API_BASE_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    clientConfig?.dashboardApiUrl ||
+    clientConfig?.serviceApiBaseUrl ||
+    clientConfig?.apiBaseUrl ||
+    'https://service.surokkha.store'
+  );
+};
+
+// Dynamically determines active Storefront API Base URL for public customer interactions
+export const getStorefrontApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host.includes('surokkha')) {
+      return 'https://server.surokkha.store';
     }
     if (host.includes('engulfic')) {
       return 'https://server.engulfic.com';
@@ -17,12 +41,23 @@ export const getApiBaseUrl = () => {
     }
   }
   return (
-    import.meta.env.VITE_SERVICE_API_BASE_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    clientConfig?.serviceApiBaseUrl ||
+    import.meta.env.VITE_STOREFRONT_API_BASE_URL ||
+    clientConfig?.storefrontApiUrl ||
     clientConfig?.apiBaseUrl ||
-    'https://api.surokkha.store'
+    'https://server.surokkha.store'
   );
+};
+
+// Dynamically determines active WebSocket URL for real-time notifications
+export const getWebSocketUrl = () => {
+  const apiBase = getApiBaseUrl();
+  try {
+    const url = new URL(apiBase);
+    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${url.host}/ws`;
+  } catch (_) {
+    return 'wss://service.decantrebd.com/ws';
+  }
 };
 
 export const baseURL = getApiBaseUrl();

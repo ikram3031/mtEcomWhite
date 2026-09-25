@@ -17,6 +17,64 @@ export const createRefreshToken = () => {
   return crypto.randomBytes(48).toString("hex");
 };
 
+// Resolves wildcard root domain for cross-subdomain SSO cookies
+export const getCookieDomain = (req) => {
+  if (env.ROOT_DOMAIN) {
+    return env.ROOT_DOMAIN.startsWith(".") ? env.ROOT_DOMAIN : `.${env.ROOT_DOMAIN}`;
+  }
+  const rawHost = req.headers["x-forwarded-host"] || req.headers.host || "";
+  const host = rawHost.split(":")[0].toLowerCase();
+  if (!host || host === "localhost" || host === "127.0.0.1" || /^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
+    return undefined;
+  }
+  const parts = host.split(".");
+  if (parts.length >= 2) {
+    return `.${parts.slice(-2).join(".")}`;
+  }
+  return undefined;
+};
+
+// Sets cross-subdomain SSO cookies for admin and cPanel authentication
+export const setAuthCookies = (res, req, accessToken, refreshToken) => {
+  const cookieDomain = getCookieDomain(req);
+  const isProd = env.NODE_ENV === "production";
+  const cookieOptions = {
+    httpOnly: false,
+    secure: isProd,
+    sameSite: "lax",
+    domain: cookieDomain,
+    path: "/",
+  };
+
+  if (accessToken) {
+    res.cookie("access_token", accessToken, {
+      ...cookieOptions,
+      maxAge: env.ACCESS_TOKEN_EXPIRES_MS || 30 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie("ops_token", accessToken, {
+      ...cookieOptions,
+      maxAge: env.ACCESS_TOKEN_EXPIRES_MS || 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  if (refreshToken) {
+    res.cookie("refresh_token", refreshToken, {
+      ...cookieOptions,
+      httpOnly: true,
+      maxAge: env.REFRESH_TOKEN_EXPIRES_MS || 90 * 24 * 60 * 60 * 1000,
+    });
+  }
+};
+
+// Clears cross-subdomain SSO cookies on logout
+export const clearAuthCookies = (res, req) => {
+  const cookieDomain = getCookieDomain(req);
+  const cookieOptions = { domain: cookieDomain, path: "/" };
+  res.clearCookie("access_token", cookieOptions);
+  res.clearCookie("ops_token", cookieOptions);
+  res.clearCookie("refresh_token", cookieOptions);
+};
+
 // POST /auth/login - Validates credentials and logs in directly or prompts 2FA if enabled
 export const login = async (req, res, next) => {
   try {
@@ -41,7 +99,6 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ status: "error", message: "Invalid credentials" });
     }
 
-    // If user has explicitly enabled 2FA, require 2FA OTP verification
     if (user.twoFactorEnabled) {
       return res.json({
         status: "success",
@@ -50,7 +107,6 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // Direct Login without 2FA
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken();
     const refreshTokenExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_EXPIRES_MS);
@@ -60,7 +116,8 @@ export const login = async (req, res, next) => {
     user.refreshTokenExpiresAt = refreshTokenExpiresAt;
     await user.save();
 
-    logger.info({ userId: user.id }, "Successfully logged in directly (2FA disabled)");
+    setAuthCookies(res, req, accessToken, refreshToken);
+    logger.info({ userId: user.id }, "Successfully logged in directly with SSO cookies");
 
     res.json({
       status: "success",
@@ -110,7 +167,8 @@ export const refreshToken = async (req, res, next) => {
 
     const accessToken = createAccessToken(user);
 
-    logger.debug({ userId: user.id }, "Rotated refresh token and issued new access token");
+    setAuthCookies(res, req, accessToken, newRefreshToken);
+    logger.debug({ userId: user.id }, "Rotated refresh token and issued new access token with SSO cookies");
 
     res.json({
       status: "success",
@@ -130,8 +188,10 @@ export const refreshToken = async (req, res, next) => {
 export const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.body ?? {};
+    clearAuthCookies(res, req);
+
     if (!refreshToken) {
-      return res.status(400).json({ status: "error", message: "refreshToken is required" });
+      return res.status(200).json({ status: "success", message: "Logged out successfully" });
     }
 
     const user = await UserModel.findOne({ refreshToken }).select("+refreshToken +refreshTokenExpiresAt");

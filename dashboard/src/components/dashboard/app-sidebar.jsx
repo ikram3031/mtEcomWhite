@@ -121,6 +121,7 @@ export const AppSidebar = ({ ...props }) => {
     if ((menuKey === "tools.messages" || menuKey === "webmail") && features?.webmail === false) return false
     if (menuKey === "products.size-charts" && !features?.sizeChart) return false
     if ((menuKey === "orders.instore" || menuKey === "orders.new") && features?.inStoreOrder === false) return false
+    if (menuKey === "cpanel" && (clientConfig?.modules?.cpanelAccess === false || features?.cpanelAccess === false)) return false
 
     return hasMenuAccess(userRole, menuKey)
   }
@@ -469,7 +470,7 @@ export const AppSidebar = ({ ...props }) => {
             </SidebarMenuItem>
           )}
 
-          {(isAllowed("admin") || isAllowed("reports") || isAllowed("users") || isAllowed("customers") || isAllowed("members") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments")) && (
+          {(isAllowed("admin") || isAllowed("reports") || isAllowed("users") || isAllowed("customers") || isAllowed("members") || isAllowed("trash") || isAllowed("billing") || isAllowed("billing.billings") || isAllowed("billing.payments") || isAllowed("cpanel")) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={
@@ -478,6 +479,7 @@ export const AppSidebar = ({ ...props }) => {
                   pathname.startsWith("/dashboard/members") ||
                   pathname.startsWith("/dashboard/billing") ||
                   pathname.startsWith("/dashboard/tools/support") ||
+                  pathname.startsWith("/dashboard/cpanel") ||
                   pathname.startsWith("/dashboard/trash")
                 }
                 tooltip="Admin"
@@ -559,6 +561,17 @@ export const AppSidebar = ({ ...props }) => {
                       >
                         <LifeBuoy className="h-3.5 w-3.5" />
                         <span>Support Desk</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {isAllowed("cpanel") && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/cpanel")}
+                        render={<Link to="/dashboard/cpanel" />}
+                      >
+                        <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">PPanel / cPanel</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}
