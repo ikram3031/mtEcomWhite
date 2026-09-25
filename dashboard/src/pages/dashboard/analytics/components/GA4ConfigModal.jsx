@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Copy, Check, ExternalLink, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { generateGtagScript, getGA4Settings, saveGA4Settings } from '../analyticsData';
+import { generateGtagScript, getGA4Settings, saveGA4Settings, cleanLookerStudioEmbedUrl } from '../analyticsData';
 
-// Modal component for viewing and managing client Google Analytics 4 integration credentials
+// Modal component for viewing and managing client Google Analytics 4 & Looker Studio integration credentials
 export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSettingsSaved }) => {
   const [config, setConfig] = useState(() => getGA4Settings());
   const [copied, setCopied] = useState(false);
@@ -39,10 +39,14 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
 
   // Persists the updated GA4 configuration parameters
   const handleSave = () => {
-    saveGA4Settings(config);
+    const cleanedConfig = {
+      ...config,
+      lookerStudioEmbedUrl: cleanLookerStudioEmbedUrl(config.lookerStudioEmbedUrl || ''),
+    };
+    saveGA4Settings(cleanedConfig);
     toast.success('Google Analytics 4 configuration saved');
     if (onSettingsSaved) {
-      onSettingsSaved(config);
+      onSettingsSaved(cleanedConfig);
     }
     onOpenChange(false);
   };
@@ -51,7 +55,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
@@ -59,10 +63,10 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-foreground">
-                Google Analytics 4 (GA4) Configuration
+                Google Analytics 4 & Looker Studio Config
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Manage measurement stream, Tag Manager IDs, and tracking scripts for {brandName}.
+                Manage measurement stream, Tag Manager IDs, and Looker Studio embed URL for {brandName}.
               </DialogDescription>
             </div>
           </div>
@@ -128,7 +132,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
                 <Input
                   value={config.propertyId || ''}
                   onChange={(e) => setConfig((prev) => ({ ...prev, propertyId: e.target.value.trim() }))}
-                  placeholder="e.g. 4XXXXXXXX"
+                  placeholder="e.g. 555476258"
                   className="font-mono text-xs"
                 />
               </div>
@@ -145,10 +149,34 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
                 className="text-xs"
               />
             </div>
+
+            <div className="pt-2 border-t border-border/50">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between mb-1">
+                <span>Google Looker Studio Embed URL</span>
+                <a
+                  href="https://lookerstudio.google.com/u/0/navigation/reporting"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 font-normal"
+                >
+                  <span>Open Looker Studio</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </label>
+              <Input
+                value={config.lookerStudioEmbedUrl || ''}
+                onChange={(e) => setConfig((prev) => ({ ...prev, lookerStudioEmbedUrl: e.target.value }))}
+                placeholder="https://lookerstudio.google.com/embed/reporting/..."
+                className="font-mono text-xs"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                File &gt; Embed report &gt; Enable embedding &gt; Copy Embed URL.
+              </p>
+            </div>
           </div>
 
           {/* Script Snippet Block */}
-          <div className="space-y-1.5 pt-1">
+          <div className="space-y-1.5 pt-2 border-t border-border/50">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
@@ -168,9 +196,6 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
             <pre className="p-2.5 rounded-lg bg-neutral-950 text-neutral-200 font-mono text-[11px] leading-relaxed overflow-x-auto border border-neutral-800">
               <code>{scriptSnippet}</code>
             </pre>
-            <p className="text-[11px] text-muted-foreground">
-              Paste this tag code into the <code className="text-primary font-mono">&lt;head&gt;</code> of your storefront index.html or theme template.
-            </p>
           </div>
         </div>
 

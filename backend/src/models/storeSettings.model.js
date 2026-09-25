@@ -122,6 +122,11 @@ const storeSettingsSchema = new Schema(
         default: "",
         trim: true,
       },
+      lookerStudioEmbedUrl: {
+        type: String,
+        default: "",
+        trim: true,
+      },
       isEnabled: {
         type: Boolean,
         default: true,

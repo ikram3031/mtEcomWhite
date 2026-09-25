@@ -48,6 +48,7 @@ const GoogleAnalyticsPage = () => {
   const [gtmId, setGtmId] = useState('');
   const [propertyId, setPropertyId] = useState('');
   const [streamName, setStreamName] = useState('');
+  const [lookerStudioEmbedUrl, setLookerStudioEmbedUrl] = useState('');
   const [isEnabled, setIsEnabled] = useState(true);
   const [enhancedMeasurement, setEnhancedMeasurement] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -71,6 +72,7 @@ const GoogleAnalyticsPage = () => {
       setGtmId(gaData.gtmId || fallbackGa.gtmId || '');
       setPropertyId(gaData.propertyId || fallbackGa.propertyId || '555476258');
       setStreamName(gaData.streamName || fallbackGa.streamName || 'surokkha');
+      setLookerStudioEmbedUrl(gaData.lookerStudioEmbedUrl || fallbackGa.lookerStudioEmbedUrl || '');
       setIsEnabled(gaData.isEnabled !== false);
       setEnhancedMeasurement(gaData.enhancedMeasurement !== false);
     }
@@ -84,6 +86,7 @@ const GoogleAnalyticsPage = () => {
         gtmId: gtmId.trim(),
         propertyId: propertyId.trim(),
         streamName: streamName.trim(),
+        lookerStudioEmbedUrl: lookerStudioEmbedUrl.trim(),
         isEnabled,
         enhancedMeasurement,
       };
@@ -277,6 +280,31 @@ const GoogleAnalyticsPage = () => {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-border/40">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Looker Studio Embed URL</span>
+                <a
+                  href="https://lookerstudio.google.com/u/0/navigation/reporting"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 font-normal"
+                >
+                  <span>Open Looker Studio</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </label>
+              <Input
+                placeholder="https://lookerstudio.google.com/embed/reporting/..."
+                value={lookerStudioEmbedUrl}
+                onChange={(e) => setLookerStudioEmbedUrl(e.target.value)}
+                disabled={isLoading}
+                className="font-mono text-xs"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                In Looker Studio, open your report &gt; <strong>File</strong> &gt; <strong>Embed report</strong> &gt; Enable embedding &gt; Copy Embed URL.
+              </p>
             </div>
           </CardContent>
         </Card>

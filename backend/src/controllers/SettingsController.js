@@ -302,6 +302,7 @@ export const getGoogleAnalyticsSettings = async (req, res, next) => {
       gtmId: dbGa.gtmId || fallbackGa.gtmId || "",
       propertyId: dbGa.propertyId || fallbackGa.propertyId || "",
       streamName: dbGa.streamName || fallbackGa.streamName || "",
+      lookerStudioEmbedUrl: dbGa.lookerStudioEmbedUrl || fallbackGa.lookerStudioEmbedUrl || "",
       isEnabled: dbGa.isEnabled ?? true,
       enhancedMeasurement: dbGa.enhancedMeasurement ?? fallbackGa.enhancedMeasurement ?? true,
       lastVerifiedAt: dbGa.lastVerifiedAt || null,
@@ -325,6 +326,7 @@ export const updateGoogleAnalyticsSettings = async (req, res, next) => {
       gtmId = "",
       propertyId = "",
       streamName = "",
+      lookerStudioEmbedUrl = "",
       isEnabled = true,
       enhancedMeasurement = true,
     } = req.body || {};
@@ -333,12 +335,14 @@ export const updateGoogleAnalyticsSettings = async (req, res, next) => {
     const cleanGtmId = String(gtmId).trim();
     const cleanPropertyId = String(propertyId).trim();
     const cleanStreamName = String(streamName).trim();
+    const cleanLookerStudioEmbedUrl = String(lookerStudioEmbedUrl).trim();
 
     const updatePayload = {
       "googleAnalytics.measurementId": cleanMeasurementId,
       "googleAnalytics.gtmId": cleanGtmId,
       "googleAnalytics.propertyId": cleanPropertyId,
       "googleAnalytics.streamName": cleanStreamName,
+      "googleAnalytics.lookerStudioEmbedUrl": cleanLookerStudioEmbedUrl,
       "googleAnalytics.isEnabled": Boolean(isEnabled),
       "googleAnalytics.enhancedMeasurement": Boolean(enhancedMeasurement),
       "googleAnalytics.lastVerifiedAt": cleanMeasurementId ? new Date() : null,
