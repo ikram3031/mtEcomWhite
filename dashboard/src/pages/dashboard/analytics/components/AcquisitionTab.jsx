@@ -1,149 +1,95 @@
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Search, Share2 } from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import { useTheme } from 'next-themes';
+import { Share2, ExternalLink, ShieldCheck, CheckCircle2, Globe, Radio } from 'lucide-react';
+import { getGA4ReportUrls } from '../analyticsData';
 
-// Tab component detailing customer traffic acquisition channels and source performance
-export const AcquisitionTab = ({ channels = [], accentColor = 'hsl(var(--primary))' }) => {
-  const { theme, systemTheme } = useTheme();
-  const [search, setSearch] = useState('');
-  const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
+// Tab component detailing configured traffic acquisition channels and direct GA4 acquisition console
+export const AcquisitionTab = ({ config = {}, brandName = 'Store' }) => {
+  const urls = getGA4ReportUrls(config?.propertyId);
 
-  const filteredChannels = channels.filter((c) =>
-    c.channel.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const chartData = channels.map((c) => ({
-    name: c.channel.replace(/\s*\(.*?\)\s*/g, ''),
-    users: c.users,
-    sessions: c.sessions,
-    revenue: c.revenue,
-  }));
+  const channels = [
+    {
+      name: 'Google Analytics 4 Tracking',
+      identifier: config?.measurementId || 'G-3JHW9WK6GG',
+      status: 'Active & Collecting',
+      type: 'Primary Web Analytics',
+      description: 'Tracks user sessions, engagement duration, pageviews, and ecommerce purchases.',
+    },
+    {
+      name: 'Cloudflare Edge Proxy & CDN',
+      identifier: 'surokkha.store (Zone Proxied)',
+      status: 'Active',
+      type: 'Edge Traffic & Security',
+      description: 'Caches static assets, handles SSL/TLS termination, and logs global HTTP requests.',
+    },
+    {
+      name: 'Direct Storefront Navigation',
+      identifier: 'https://surokkha.store',
+      status: 'Live',
+      type: 'Direct Visits',
+      description: 'Customers typing URL or returning via saved browser bookmarks.',
+    },
+    {
+      name: 'Meta Pixel & Conversion API',
+      identifier: 'Configured in Settings',
+      status: 'Enabled',
+      type: 'Social Ads Acquisition',
+      description: 'Tracks campaign visitors arriving from Facebook & Instagram ads.',
+    },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Channel Comparison Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Share2 className="h-4 w-4 text-primary" />
-            <span>Traffic & Sessions by Channel</span>
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Comparison of total user acquisition volume and overall sessions generated per marketing source
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-2">
-          <div className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#262626' : '#f0f0f0'} />
-                <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: isDark ? '#171717' : '#ffffff',
-                    borderColor: isDark ? '#333333' : '#e5e7eb',
-                    color: isDark ? '#f9fafb' : '#111827',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                <Bar dataKey="users" name="Active Users" fill={accentColor} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="sessions" name="Sessions" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Channel Breakdown Table */}
-      <Card>
+    <div className="space-y-6">
+      {/* Acquisition Overview Card */}
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-base font-semibold">
-                Acquisition Channel Performance Table
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-primary" />
+                <span>Traffic Acquisition & Marketing Channels</span>
               </CardTitle>
               <CardDescription className="text-xs">
-                Deep dive into user engagement, bounce rate, and tracked ecommerce revenue per channel
+                Acquisition channels and attribution tracking active for {brandName}.
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-[220px]">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search channel..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 text-xs"
-              />
-            </div>
+            <a
+              href={urls.acquisition}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shrink-0"
+            >
+              <span>Open GA4 Acquisition Report</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="text-xs">
-                  <TableHead>Channel Source</TableHead>
-                  <TableHead className="text-right">Users</TableHead>
-                  <TableHead className="text-right">Sessions</TableHead>
-                  <TableHead className="text-right">Engagement Rate</TableHead>
-                  <TableHead className="text-right">Bounce Rate</TableHead>
-                  <TableHead className="text-right">Avg Session</TableHead>
-                  <TableHead className="text-right">Revenue (৳)</TableHead>
-                  <TableHead className="text-right">Orders</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="text-xs">
-                {filteredChannels.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
-                      No channels found matching "{search}"
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredChannels.map((item, idx) => (
-                    <TableRow key={idx} className="hover:bg-muted/40">
-                      <TableCell className="font-semibold flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span>{item.channel}</span>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">{item.users.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-medium">{item.sessions.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border-emerald-500/20">
-                          {item.engagementRate}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">{item.bounceRate}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">{item.avgDuration}</TableCell>
-                      <TableCell className="text-right font-bold text-foreground">
-                        ৳{item.revenue.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-primary">{item.transactions}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
       </Card>
+
+      {/* Active Channels Grid */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        {channels.map((ch, idx) => (
+          <Card key={idx} className="hover:border-primary/40 transition-colors">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>{ch.name}</span>
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                  {ch.status}
+                </Badge>
+              </div>
+              <CardDescription className="text-[11px] font-mono text-muted-foreground">
+                {ch.identifier}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">{ch.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

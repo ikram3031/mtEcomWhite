@@ -582,6 +582,9 @@ export const AppSidebar = ({ ...props }) => {
                 isActive={
                   pathname.startsWith("/dashboard/analytics") ||
                   pathname.startsWith("/dashboard/tools/analytics") ||
+                  pathname.startsWith("/dashboard/cloudflare-analytics") ||
+                  pathname.startsWith("/dashboard/tools/cloudflare-analytics") ||
+                  pathname.startsWith("/dashboard/cloudflare") ||
                   pathname.startsWith("/dashboard/activity-logs") ||
                   pathname.startsWith("/dashboard/tools/activity-logs") ||
                   pathname.startsWith("/dashboard/media") ||
@@ -613,7 +616,18 @@ export const AppSidebar = ({ ...props }) => {
                         render={<Link to="/dashboard/analytics" />}
                       >
                         <BarChart3 className="h-3.5 w-3.5" />
-                        <span>Analytics</span>
+                        <span>Google Analytics</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )}
+                  {Boolean(clientConfig?.cloudFlareAnalytics?.active || clientConfig?.clientKey === "surokkha") && (isAllowed("analytics") || isAllowed("tools.analytics") || isAllowed("tools") || isAllowed("admin")) && (
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        isActive={pathname.startsWith("/dashboard/cloudflare-analytics") || pathname.startsWith("/dashboard/tools/cloudflare-analytics") || pathname.startsWith("/dashboard/cloudflare")}
+                        render={<Link to="/dashboard/cloudflare-analytics" />}
+                      >
+                        <LineChart className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Cloudflare Analytics</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

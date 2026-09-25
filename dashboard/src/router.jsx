@@ -10,6 +10,7 @@ import InvitePage from './pages/invite';
 // Dashboard
 import Overview from './pages/dashboard/overview';
 import Analytics from './pages/dashboard/analytics';
+import CloudflareAnalytics from './pages/dashboard/cloudflareAnalytics';
 import Users from './pages/dashboard/users';
 import Reports from './pages/dashboard/reportsV2';
 import Members from './pages/dashboard/members';
@@ -117,6 +118,15 @@ export const router = createBrowserRouter([
           </RoleGuard>
         ),
       },
+      {
+        path: 'cloudflare-analytics',
+        element: (
+          <RoleGuard menuKey="analytics">
+            <CloudflareAnalytics />
+          </RoleGuard>
+        ),
+      },
+      { path: 'cloudflare', element: <Navigate to="/dashboard/cloudflare-analytics" replace /> },
       {
         path: 'members',
         element: (
@@ -258,6 +268,8 @@ export const router = createBrowserRouter([
             ),
           },
           { path: 'analytics', element: <Navigate to="/dashboard/analytics" replace /> },
+          { path: 'cloudflare-analytics', element: <Navigate to="/dashboard/cloudflare-analytics" replace /> },
+          { path: 'cloudflare', element: <Navigate to="/dashboard/cloudflare-analytics" replace /> },
           { path: 'google-analytics', element: <Navigate to="/dashboard/settings/google-analytics" replace /> },
           { path: 'activity-logs', element: <Navigate to="/dashboard/activity-logs" replace /> },
           { path: 'logs', element: <Navigate to="/dashboard/logs" replace /> },
