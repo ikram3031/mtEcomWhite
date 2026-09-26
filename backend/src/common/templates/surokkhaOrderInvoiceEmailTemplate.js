@@ -213,12 +213,3 @@ export const buildSurokkhaOrderInvoiceEmailHtml = ({
 </html>
 `;
 };
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`;
-};
