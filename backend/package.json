@@ -1,6 +1,6 @@
 {
 	"name": "Backend",
-	"version": "2.3.28",
+	"version": "3.0.00",
 	"private": true,
 	"type": "module",
 	"engines": {
@@ -8,11 +8,13 @@
 	},
 	"scripts": {
 		"dev": "node --watch src/server.js",
-		"dev:storefront": "node --watch src/server.storefront.js",
-		"dev:dashboard": "node --watch src/server.dashboard.js",
+		"dev:storefront": "node --watch src/storefront/server.js",
+		"dev:service": "node --watch src/service/server.js",
+		"dev:dashboard": "node --watch src/service/server.js",
 		"prod": "node src/server.js",
-		"prod:storefront": "node src/server.storefront.js",
-		"prod:dashboard": "node src/server.dashboard.js",
+		"prod:storefront": "node src/storefront/server.js",
+		"prod:service": "node src/service/server.js",
+		"prod:dashboard": "node src/service/server.js",
 		"img": "node scripts/check-img-urls.js",
 		"lint": "eslint .",
 		"format": "prettier --write ."

@@ -1,12 +1,11 @@
 import { createApp } from "./app.js";
-// import { connectMySQL } from "./database/mysql.js";
-import { connectDatabase } from "./database/index.js";
-import { env } from "./config/env.js";
-import { logger } from "./config/logger.js";
-import { createShutdownHandler } from "./helper/sutdownHelper.js";
-import { initWebSocketServer } from "./websocket.js";
-import { initMediaSchedulers, stopMediaSchedulers } from "./schedulers/mediaScheduler.js";
-import { initHeartbeatScheduler, stopHeartbeatScheduler } from "./schedulers/heartbeat.scheduler.js";
+import { connectDatabase } from "./common/database/index.js";
+import { env } from "./common/config/env.js";
+import { logger } from "./common/config/logger.js";
+import { createShutdownHandler } from "./common/helper/sutdownHelper.js";
+import { initWebSocketServer } from "./common/websocket.js";
+import { initMediaSchedulers, stopMediaSchedulers } from "./common/schedulers/mediaScheduler.js";
+import { initHeartbeatScheduler, stopHeartbeatScheduler } from "./common/schedulers/heartbeat.scheduler.js";
 
 // Bootstraps backend server, database connections, and background schedulers
 const bootstrap = async () => {
@@ -27,7 +26,7 @@ const bootstrap = async () => {
     initHeartbeatScheduler();
 
     if (env.IMAP_SYNC_ENABLED) {
-      import("./services/imapSync.service.js")
+      import("./common/services/imapSync.service.js")
         .then(({ startImapIdleListener }) => {
           startImapIdleListener().catch((err) => {
             logger.error({ err }, "Failed to start IMAP IDLE listener");
