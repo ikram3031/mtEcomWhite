@@ -63,6 +63,13 @@ Every git commit must strictly adhere to the format:
 
 ---
 
-## 5. Deployment Guardrails
+## 5. Branch Strategy & Live Development Workflow
+- **Active Working Branch: `Live`**:
+  - All feature additions, updates, and rapid bug fixes are now performed directly on the **`Live`** branch to ensure rapid turnaround.
+  - Work directly on `Live` without switching to temporary/dev branches unless explicitly asked.
+
+---
+
+## 6. Deployment Guardrails
 - **NEVER execute VPS build, `docker compose up --build`, or deployment commands without explicit user instruction.**
 - Only when user explicitly commands *"ডিপ্লয় দাও"* (or equivalent direct deployment request), execute the deployment commands using tools.
