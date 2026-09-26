@@ -26,7 +26,7 @@ import { GA4ConfigModal } from './components/GA4ConfigModal';
 // Main Google Analytics dashboard page integrating Google Looker Studio Live GA4 Embed
 const AnalyticsPage = () => {
   const queryClient = useQueryClient();
-  const brandName = clientConfig?.brandName || 'Surokkha';
+  const brandName = clientConfig?.brandName || 'Store';
   const fallbackGa = clientConfig?.googleAnalytics || {};
 
   const [activeTab, setActiveTab] = useState('looker');
@@ -47,16 +47,16 @@ const AnalyticsPage = () => {
   // Merges server settings, local defaults, and client configuration
   const currentConfig = useMemo(() => {
     return {
-      measurementId: gaData?.measurementId || fallbackGa.measurementId || localDefaults.measurementId || 'G-3JHW9WK6GG',
-      googleTagId: gaData?.googleTagId || fallbackGa.googleTagId || localDefaults.googleTagId || 'GT-5DH5WGNX',
+      measurementId: gaData?.measurementId || fallbackGa.measurementId || localDefaults.measurementId || '',
+      googleTagId: gaData?.googleTagId || fallbackGa.googleTagId || localDefaults.googleTagId || '',
       gtmId: gaData?.gtmId || fallbackGa.gtmId || localDefaults.gtmId || '',
-      propertyId: gaData?.propertyId || fallbackGa.propertyId || localDefaults.propertyId || '555476258',
-      streamName: gaData?.streamName || fallbackGa.streamName || localDefaults.streamName || 'surokkha',
+      propertyId: gaData?.propertyId || fallbackGa.propertyId || localDefaults.propertyId || '',
+      streamName: gaData?.streamName || fallbackGa.streamName || localDefaults.streamName || (brandName ? `${brandName} Stream` : ''),
       lookerStudioEmbedUrl: gaData?.lookerStudioEmbedUrl || fallbackGa.lookerStudioEmbedUrl || localDefaults.lookerStudioEmbedUrl || '',
       isEnabled: gaData?.isEnabled !== false,
       enhancedMeasurement: gaData?.enhancedMeasurement !== false,
     };
-  }, [gaData, fallbackGa, localDefaults]);
+  }, [gaData, fallbackGa, localDefaults, brandName]);
 
   // Mutation to persist updated Looker Studio Embed URL
   const saveMutation = useMutation({

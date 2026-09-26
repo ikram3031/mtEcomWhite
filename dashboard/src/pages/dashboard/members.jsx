@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MembersTable } from '@/components/dashboard/members-table';
 import { Input } from '@/components/ui/input';
-import { Search, Trash2, UserMinus } from 'lucide-react';
+import { Search, Trash2, UserMinus, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -33,9 +34,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const MembersPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [segmentFilter, setSegmentFilter] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+  const segmentFilter = searchParams.get('segment') || 'All';
+  const urlSearch = searchParams.get('q') || '';
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -46,15 +53,51 @@ const MembersPage = () => {
 
   const queryClient = useQueryClient();
 
-  const handleSearch = (q) => {
-    setSearchQuery(q);
-    setCurrentPage(1);
+  const updateParams = (updates) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          val === 'All' ||
+          val === 'all' ||
+          (key === 'page' && Number(val) === 1)
+        ) {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    });
+  };
+
+  // Sync search input if URL changes externally (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchInput(urlSearch);
+    setDebouncedSearch(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const trimmed = searchInput.trim();
+      if (trimmed !== (searchParams.get('q') || '')) {
+        updateParams({ q: trimmed, page: 1 });
+        setSelectedIds([]);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  const handleSegment = (v) => {
+    updateParams({ segment: v ?? 'All', page: 1 });
     setSelectedIds([]);
   };
 
-  const handleSegment = (v) => {
-    setSegmentFilter(v ?? 'All');
-    setCurrentPage(1);
+  const handlePageChange = (newPage) => {
+    updateParams({ page: newPage });
     setSelectedIds([]);
   };
 
@@ -109,12 +152,21 @@ const MembersPage = () => {
         <div className="relative flex-1 w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
+            type="text"
             placeholder="Search by name or email..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8 pr-8 h-9 text-xs"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {selectedIds.length > 0 && (
@@ -156,7 +208,7 @@ const MembersPage = () => {
       <div className="bg-card text-card-foreground shadow-sm border rounded-xl overflow-hidden">
         <div className="p-6">
           <MembersTable
-            searchQuery={searchQuery}
+            searchQuery={debouncedSearch}
             segmentFilter={segmentFilter}
             page={currentPage}
             onTotalPagesChange={setTotalPages}
@@ -174,8 +226,7 @@ const MembersPage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage > 1) {
-                          setCurrentPage((p) => p - 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage - 1);
                         }
                       }}
                       aria-disabled={currentPage === 1}
@@ -208,8 +259,7 @@ const MembersPage = () => {
                           isActive={currentPage === page}
                           onClick={(e) => {
                             e.preventDefault();
-                            setCurrentPage(page);
-                            setSelectedIds([]);
+                            handlePageChange(page);
                           }}
                           className="cursor-pointer"
                         >
@@ -225,8 +275,7 @@ const MembersPage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage < totalPages) {
-                          setCurrentPage((p) => p + 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage + 1);
                         }
                       }}
                       aria-disabled={currentPage === totalPages}

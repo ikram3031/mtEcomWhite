@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ProductsTable } from '@/components/dashboard/products-table';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Trash2, PackageX } from 'lucide-react';
+import { Search, Plus, Trash2, PackageX, X } from 'lucide-react';
 import { useCategories, useBrands } from '@/lib/category-cache';
 import {
   Select,
@@ -36,11 +36,17 @@ import { toast } from 'sonner';
 
 // Renders the products management interface with search, filters, pagination, and bulk stock controls
 const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = 'Products & Inventory' }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState(fixedCategory || 'All');
-  const [brandFilter, setBrandFilter] = useState('All');
-  const [stockStatusFilter, setStockStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+  const categoryFilter = fixedCategory || searchParams.get('category') || 'All';
+  const brandFilter = searchParams.get('brand') || 'All';
+  const stockStatusFilter = searchParams.get('stock') || 'all';
+  const urlSearch = searchParams.get('q') || '';
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -53,6 +59,44 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
 
+  const updateParams = (updates) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          val === 'All' ||
+          val === 'all' ||
+          (key === 'page' && Number(val) === 1)
+        ) {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    });
+  };
+
+  // Sync search input if URL changes externally (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchInput(urlSearch);
+    setDebouncedSearch(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const trimmed = searchInput.trim();
+      if (trimmed !== (searchParams.get('q') || '')) {
+        updateParams({ q: trimmed, page: 1 });
+        setSelectedIds([]);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
   useEffect(() => {
     if (fixedCategory && categories.length > 0) {
       const match = categories.find(
@@ -62,33 +106,29 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
           c.name?.toLowerCase().includes(fixedCategory.toLowerCase()) ||
           c.slug?.toLowerCase().includes(fixedCategory.toLowerCase())
       );
-      if (match?.name) {
-        setCategoryFilter(match.name);
+      if (match?.name && categoryFilter !== match.name) {
+        updateParams({ category: match.name, page: 1 });
       }
     }
   }, [fixedCategory, categories]);
 
-  const handleSearch = (q) => {
-    setSearchQuery(q);
-    setCurrentPage(1);
-    setSelectedIds([]);
-  };
-
   const handleCategory = (v) => {
-    setCategoryFilter(v ?? 'All');
-    setCurrentPage(1);
+    updateParams({ category: v ?? 'All', page: 1 });
     setSelectedIds([]);
   };
 
   const handleBrand = (v) => {
-    setBrandFilter(v ?? 'All');
-    setCurrentPage(1);
+    updateParams({ brand: v ?? 'All', page: 1 });
     setSelectedIds([]);
   };
 
   const handleStockStatus = (v) => {
-    setStockStatusFilter(v);
-    setCurrentPage(1);
+    updateParams({ stock: v ?? 'all', page: 1 });
+    setSelectedIds([]);
+  };
+
+  const handlePageChange = (newPage) => {
+    updateParams({ page: newPage });
     setSelectedIds([]);
   };
 
@@ -150,12 +190,21 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
         <div className="relative flex-1 w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
+            type="text"
             placeholder="Search products..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8 pr-8 h-9 text-xs"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto ml-auto justify-end flex-wrap">
           {selectedIds.length === 0 && (
@@ -265,7 +314,7 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
       <div className="bg-card text-card-foreground shadow-sm border rounded-lg">
         <div className="p-6">
           <ProductsTable
-            searchQuery={searchQuery}
+            searchQuery={debouncedSearch}
             categoryFilter={categoryFilter}
             brandFilter={brandFilter}
             stockStatusFilter={stockStatusFilter}
@@ -286,8 +335,7 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage > 1) {
-                          setCurrentPage((p) => p - 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage - 1);
                         }
                       }}
                       aria-disabled={currentPage === 1}
@@ -320,8 +368,7 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
                           isActive={currentPage === page}
                           onClick={(e) => {
                             e.preventDefault();
-                            setCurrentPage(page);
-                            setSelectedIds([]);
+                            handlePageChange(page);
                           }}
                           className="cursor-pointer"
                         >
@@ -337,8 +384,7 @@ const ProductsPage = ({ fixedCategory = null, fixedOnSale = false, pageTitle = '
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage < totalPages) {
-                          setCurrentPage((p) => p + 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage + 1);
                         }
                       }}
                       aria-disabled={currentPage === totalPages}

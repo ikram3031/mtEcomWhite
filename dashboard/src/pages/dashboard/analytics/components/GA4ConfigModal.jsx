@@ -132,7 +132,7 @@ export const GA4ConfigModal = ({ open, onOpenChange, brandName = 'Store', onSett
                 <Input
                   value={config.propertyId || ''}
                   onChange={(e) => setConfig((prev) => ({ ...prev, propertyId: e.target.value.trim() }))}
-                  placeholder="e.g. 555476258"
+                  placeholder="e.g. 123456789"
                   className="font-mono text-xs"
                 />
               </div>

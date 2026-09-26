@@ -655,7 +655,11 @@ const EditProductPage = () => {
       await apiClient.put(`/api/v1/products/${id}`, body);
       toast.success("Product updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      navigate("/dashboard/products");
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate("/dashboard/products");
+      }
     } catch (err) {
       if (uploadToastId) {
         toast.dismiss(uploadToastId);
@@ -688,13 +692,16 @@ const EditProductPage = () => {
         {/* Header Actions */}
         <div className="flex items-center justify-between border-b pb-4">
           <div className="flex items-center gap-3">
-            <Link
-              to="/dashboard/products"
-              className="p-2 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard/products")}
+              className="h-9 w-9 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer"
               title="Back to products"
             >
               <ChevronLeft className="h-4 w-4" />
-            </Link>
+            </Button>
             <h2 className="text-xl font-bold tracking-tight text-foreground">
               Edit Product
             </h2>
@@ -704,7 +711,7 @@ const EditProductPage = () => {
             <Button
               variant="ghost"
               type="button"
-              onClick={() => navigate("/dashboard/products")}
+              onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard/products")}
               className="text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
             >
               Discard

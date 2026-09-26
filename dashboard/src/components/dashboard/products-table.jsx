@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 import {
   Table,
@@ -263,7 +263,7 @@ export function ProductsTable({
                 </TableCell>
                 {/* Product name + image */}
                 <TableCell className="max-w-[200px]">
-                  <a href={`/dashboard/products/${product.id}`} className="flex items-center gap-3 min-w-0 hover:underline">
+                  <Link to={`/dashboard/products/${product.id}`} className="flex items-center gap-3 min-w-0 hover:underline">
                     {product.image ? (
                       <div className="relative h-9 w-9 overflow-hidden rounded-md border flex-shrink-0">
                         <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
@@ -274,7 +274,7 @@ export function ProductsTable({
                       </div>
                     )}
                     <span className="font-medium truncate" title={product.name}>{product.name}</span>
-                  </a>
+                  </Link>
                 </TableCell>
 
                 {/* SKU */}
@@ -324,10 +324,10 @@ export function ProductsTable({
                     <DropdownMenuContent align="end" className="min-w-[150px]">
                       <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
                       <DropdownMenuItem render={
-                        <a href={`/dashboard/products/${product.id}`} className="cursor-pointer text-xs flex items-center gap-2">
+                        <Link to={`/dashboard/products/${product.id}`} className="cursor-pointer text-xs flex items-center gap-2">
                           <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                           View / Edit Product
-                        </a>
+                        </Link>
                       } />
                       <DropdownMenuItem
                         className="cursor-pointer text-xs flex items-center gap-2"

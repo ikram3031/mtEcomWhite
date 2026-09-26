@@ -23,10 +23,10 @@ import { cleanLookerStudioEmbedUrl, getGA4ReportUrls } from '../analyticsData';
 
 // Component displayed when Looker Studio Embed URL is not yet connected
 export const LookerStudioSetup = ({
-  brandName = 'Surokkha',
-  propertyId = '555476258',
-  measurementId = 'G-3JHW9WK6GG',
-  streamName = 'surokkha',
+  brandName = 'Store',
+  propertyId = '',
+  measurementId = '',
+  streamName = '',
   onSaveEmbedUrl,
   isSaving = false,
 }) => {
@@ -47,8 +47,12 @@ export const LookerStudioSetup = ({
   };
 
   const handleCopyPropertyId = async () => {
+    if (!propertyId) {
+      toast.error('No Property ID configured');
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(propertyId || '555476258');
+      await navigator.clipboard.writeText(propertyId);
       setCopiedPropId(true);
       toast.success('Property ID copied to clipboard');
       setTimeout(() => setCopiedPropId(false), 2000);
@@ -105,12 +109,14 @@ export const LookerStudioSetup = ({
               <div>
                 <CardTitle className="text-base font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 flex-wrap">
                   <span>Google Analytics 4 Stream Verified</span>
-                  <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                    {streamName}
-                  </Badge>
+                  {streamName && (
+                    <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                      {streamName}
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  Measurement ID: <span className="font-mono font-bold text-foreground">{measurementId}</span> • Property ID: <span className="font-mono font-bold text-foreground">{propertyId}</span>
+                  Measurement ID: <span className="font-mono font-bold text-foreground">{measurementId || 'Not Configured'}</span> • Property ID: <span className="font-mono font-bold text-foreground">{propertyId || 'Not Configured'}</span>
                 </CardDescription>
               </div>
             </div>
@@ -188,7 +194,7 @@ export const LookerStudioSetup = ({
               </span>
               <h4 className="text-xs font-bold text-foreground">Select GA4 Connector</h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Choose <strong>Google Analytics</strong> and select Property <strong className="font-mono">{propertyId}</strong> ({brandName}).
+                Choose <strong>Google Analytics</strong> and select Property <strong className="font-mono">{propertyId || '[Your Property ID]'}</strong> ({brandName}).
               </p>
             </div>
 

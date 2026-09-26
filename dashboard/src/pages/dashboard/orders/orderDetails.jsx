@@ -544,7 +544,7 @@ const OrderDetailsPage = () => {
       <div className="flex-1 p-8 text-center space-y-4">
         <h2 className="text-2xl font-bold text-destructive">Order Not Found</h2>
         <p className="text-muted-foreground">The order you are looking for does not exist or failed to load.</p>
-        <Button onClick={() => navigate("/dashboard/orders")}>
+        <Button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard/orders")}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders
         </Button>
       </div>
@@ -562,8 +562,8 @@ const OrderDetailsPage = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate("/dashboard/orders")}
-            className="h-9 w-9 border-border/80"
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/dashboard/orders")}
+            className="h-9 w-9 border-border/80 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>

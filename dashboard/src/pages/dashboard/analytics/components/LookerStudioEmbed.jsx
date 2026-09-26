@@ -20,8 +20,8 @@ import { cleanLookerStudioEmbedUrl } from '../analyticsData';
 export const LookerStudioEmbed = ({
   embedUrl = '',
   brandName = 'Store',
-  propertyId = '555476258',
-  measurementId = 'G-3JHW9WK6GG',
+  propertyId = '',
+  measurementId = '',
   onOpenConfig,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -73,13 +73,17 @@ export const LookerStudioEmbed = ({
             <span>GA4 Live Stream Connected</span>
           </Badge>
 
-          <span className="text-xs text-muted-foreground hidden md:inline">
-            Property ID: <strong className="text-foreground font-mono">{propertyId}</strong>
-          </span>
+          {propertyId && (
+            <span className="text-xs text-muted-foreground hidden md:inline">
+              Property ID: <strong className="text-foreground font-mono">{propertyId}</strong>
+            </span>
+          )}
 
-          <span className="text-xs text-muted-foreground hidden lg:inline">
-            Tag: <strong className="text-foreground font-mono">{measurementId}</strong>
-          </span>
+          {measurementId && (
+            <span className="text-xs text-muted-foreground hidden lg:inline">
+              Tag: <strong className="text-foreground font-mono">{measurementId}</strong>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">

@@ -262,7 +262,7 @@ export default function EditAttributePage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate('/dashboard/products/attributes')}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard/products/attributes')}
             className="h-9 w-9 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />

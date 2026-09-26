@@ -3,7 +3,7 @@ import { OrdersTable } from '@/components/dashboard/orders-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Download, PlusCircle, Trash2, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   Select,
@@ -41,11 +41,16 @@ import { clientConfig } from '@/clientConfig';
 // Renders orders list management dashboard page
 const OrdersPage = () => {
   const { user } = useAuth();
-  const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [paymentFilter, setPaymentFilter] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+  const statusFilter = searchParams.get('status') || 'All';
+  const paymentFilter = searchParams.get('payment') || 'All';
+  const urlSearch = searchParams.get('q') || '';
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -56,25 +61,56 @@ const OrdersPage = () => {
 
   const queryClient = useQueryClient();
 
+  const updateParams = (updates) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          val === 'All' ||
+          val === 'all' ||
+          (key === 'page' && Number(val) === 1)
+        ) {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    });
+  };
+
+  // Sync search input if URL changes externally (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchInput(urlSearch);
+    setDebouncedSearch(urlSearch);
+  }, [urlSearch]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-      setCurrentPage(1);
-      setSelectedIds([]);
+      const trimmed = searchInput.trim();
+      if (trimmed !== (searchParams.get('q') || '')) {
+        updateParams({ q: trimmed, page: 1 });
+        setSelectedIds([]);
+      }
     }, 300);
     return () => clearTimeout(handler);
   }, [searchInput]);
 
   const handleStatus = (v) => {
-    setStatusFilter(v ?? 'All');
-    setCurrentPage(1);
+    updateParams({ status: v ?? 'All', page: 1 });
     setSelectedIds([]);
   };
 
   const handlePayment = (v) => {
-    setPaymentFilter(v ?? 'All');
-    setCurrentPage(1);
+    updateParams({ payment: v ?? 'All', page: 1 });
     setSelectedIds([]);
+  };
+
+  const handlePageChange = (newPage) => {
+    updateParams({ page: newPage });
   };
 
   const handleBulkDelete = async () => {
@@ -262,7 +298,7 @@ const OrdersPage = () => {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage > 1) setCurrentPage((p) => p - 1);
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
                     }}
                     aria-disabled={currentPage === 1}
                     className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
@@ -294,7 +330,7 @@ const OrdersPage = () => {
                         isActive={currentPage === page}
                         onClick={(e) => {
                           e.preventDefault();
-                          setCurrentPage(page);
+                          handlePageChange(page);
                         }}
                       >
                         {page}
@@ -308,7 +344,7 @@ const OrdersPage = () => {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage((p) => p + 1);
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
                     }}
                     aria-disabled={currentPage === totalPages}
                     className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}

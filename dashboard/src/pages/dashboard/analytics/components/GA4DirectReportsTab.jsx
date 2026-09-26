@@ -20,10 +20,10 @@ import { getGA4ReportUrls } from '../analyticsData';
 
 // Tab component presenting official GA4 console deep links with zero dummy data
 export const GA4DirectReportsTab = ({
-  propertyId = '555476258',
-  measurementId = 'G-3JHW9WK6GG',
-  streamName = 'surokkha',
-  brandName = 'Surokkha',
+  propertyId = '',
+  measurementId = '',
+  streamName = '',
+  brandName = 'Store',
 }) => {
   const urls = getGA4ReportUrls(propertyId);
 
@@ -102,10 +102,10 @@ export const GA4DirectReportsTab = ({
               </div>
               <div>
                 <CardTitle className="text-base font-bold text-emerald-800 dark:text-emerald-300">
-                  Google Analytics 4 Property #{propertyId}
+                  Google Analytics 4 Property {propertyId ? `#${propertyId}` : ''}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Connected Stream: <strong className="text-foreground">{streamName}</strong> • Measurement ID: <strong className="text-foreground font-mono">{measurementId}</strong>
+                  Connected Stream: <strong className="text-foreground">{streamName || `${brandName} Stream`}</strong> • Measurement ID: <strong className="text-foreground font-mono">{measurementId || 'Not Configured'}</strong>
                 </CardDescription>
               </div>
             </div>

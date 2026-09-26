@@ -28,14 +28,14 @@ export const getGA4Settings = () => {
   const brandName = clientConfig?.brandName || 'Store';
 
   const defaults = {
-    measurementId: clientGA.measurementId || 'G-3JHW9WK6GG',
-    googleTagId: clientGA.googleTagId || 'GT-5DH5WGNX',
+    measurementId: clientGA.measurementId || '',
+    googleTagId: clientGA.googleTagId || '',
     gtmId: clientGA.gtmId || '',
-    streamId: clientGA.streamId || '15828364152',
-    streamName: clientGA.streamName || `${brandName}`,
-    propertyId: clientGA.propertyId || '555476258',
+    streamId: clientGA.streamId || '',
+    streamName: clientGA.streamName || (brandName ? `${brandName} Web Stream` : ''),
+    propertyId: clientGA.propertyId || '',
     lookerStudioEmbedUrl: clientGA.lookerStudioEmbedUrl || '',
-    isVerified: clientGA.isVerified ?? true,
+    isVerified: clientGA.isVerified ?? Boolean(clientGA.measurementId),
     enhancedMeasurement: clientGA.enhancedMeasurement ?? true,
   };
 
@@ -90,19 +90,20 @@ export const generateGtagScript = (measurementId) => {
 };
 
 // Returns verified GA4 URLs for direct reporting navigation
-export const getGA4ReportUrls = (propertyId = '555476258') => {
-  const pId = propertyId || clientConfig?.googleAnalytics?.propertyId || '555476258';
+export const getGA4ReportUrls = (propertyId = '') => {
+  const pId = propertyId || clientConfig?.googleAnalytics?.propertyId || '';
+  const pPath = pId ? `#/p${pId}/` : '';
   return {
-    console: `https://analytics.google.com/analytics/web/#/p${pId}/reports/dashboard`,
-    realtime: `https://analytics.google.com/analytics/web/#/p${pId}/realtime/overview`,
-    acquisition: `https://analytics.google.com/analytics/web/#/p${pId}/reports/acquisition-overview`,
-    engagement: `https://analytics.google.com/analytics/web/#/p${pId}/reports/engagement-overview`,
-    monetization: `https://analytics.google.com/analytics/web/#/p${pId}/reports/lifecycle-monetization-overview`,
-    demographics: `https://analytics.google.com/analytics/web/#/p${pId}/reports/user-demographics-overview`,
-    tech: `https://analytics.google.com/analytics/web/#/p${pId}/reports/tech-overview`,
-    streams: `https://analytics.google.com/analytics/web/#/p${pId}/admin/streams/table/`,
-    lookerStudioCreate: `https://lookerstudio.google.com/reporting/create?ds.ds0.datasourceId=&ds.ds0.type=GA4`,
-    lookerStudioHome: `https://lookerstudio.google.com/u/0/navigation/reporting`,
+    console: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/dashboard` : 'https://analytics.google.com/analytics/web/',
+    realtime: pId ? `https://analytics.google.com/analytics/web/${pPath}realtime/overview` : 'https://analytics.google.com/analytics/web/',
+    acquisition: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/acquisition-overview` : 'https://analytics.google.com/analytics/web/',
+    engagement: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/engagement-overview` : 'https://analytics.google.com/analytics/web/',
+    monetization: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/lifecycle-monetization-overview` : 'https://analytics.google.com/analytics/web/',
+    demographics: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/user-demographics-overview` : 'https://analytics.google.com/analytics/web/',
+    tech: pId ? `https://analytics.google.com/analytics/web/${pPath}reports/tech-overview` : 'https://analytics.google.com/analytics/web/',
+    streams: pId ? `https://analytics.google.com/analytics/web/${pPath}admin/streams/table/` : 'https://analytics.google.com/analytics/web/',
+    lookerStudioCreate: 'https://lookerstudio.google.com/reporting/create?ds.ds0.datasourceId=&ds.ds0.type=GA4',
+    lookerStudioHome: 'https://lookerstudio.google.com/u/0/navigation/reporting',
   };
 };
 

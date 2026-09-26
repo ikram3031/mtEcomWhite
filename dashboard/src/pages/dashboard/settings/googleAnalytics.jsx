@@ -54,8 +54,8 @@ const GoogleAnalyticsPage = () => {
   const [copied, setCopied] = useState(false);
 
   const fallbackGa = clientConfig?.googleAnalytics || {};
-  const brandName = clientConfig?.brandName || 'Surokkha';
-  const storefrontUrl = clientConfig?.storefrontUrl || 'https://surokkha.store';
+  const brandName = clientConfig?.brandName || 'Store';
+  const storefrontUrl = clientConfig?.storefrontUrl || '';
 
   const { data: gaData, isLoading } = useQuery({
     queryKey: ['google-analytics-settings'],
@@ -67,11 +67,11 @@ const GoogleAnalyticsPage = () => {
 
   useEffect(() => {
     if (gaData) {
-      setMeasurementId(gaData.measurementId || fallbackGa.measurementId || 'G-3JHW9WK6GG');
-      setGoogleTagId(gaData.googleTagId || fallbackGa.googleTagId || 'GT-5DH5WGNX');
+      setMeasurementId(gaData.measurementId || fallbackGa.measurementId || '');
+      setGoogleTagId(gaData.googleTagId || fallbackGa.googleTagId || '');
       setGtmId(gaData.gtmId || fallbackGa.gtmId || '');
-      setPropertyId(gaData.propertyId || fallbackGa.propertyId || '555476258');
-      setStreamName(gaData.streamName || fallbackGa.streamName || 'surokkha');
+      setPropertyId(gaData.propertyId || fallbackGa.propertyId || '');
+      setStreamName(gaData.streamName || fallbackGa.streamName || '');
       setLookerStudioEmbedUrl(gaData.lookerStudioEmbedUrl || fallbackGa.lookerStudioEmbedUrl || '');
       setIsEnabled(gaData.isEnabled !== false);
       setEnhancedMeasurement(gaData.enhancedMeasurement !== false);
@@ -108,8 +108,12 @@ const GoogleAnalyticsPage = () => {
   };
 
   const handleCopyScript = async () => {
+    if (!measurementId && !fallbackGa.measurementId) {
+      toast.error('No GA Measurement ID configured');
+      return;
+    }
     try {
-      const script = generateGtagScript(measurementId || 'G-3JHW9WK6GG');
+      const script = generateGtagScript(measurementId || fallbackGa.measurementId || 'G-XXXXXXXXXX');
       await navigator.clipboard.writeText(script);
       setCopied(true);
       toast.success('gtag.js tracking code copied to clipboard');
@@ -119,8 +123,8 @@ const GoogleAnalyticsPage = () => {
     }
   };
 
-  const isConfigured = Boolean(measurementId.trim());
-  const activeScript = generateGtagScript(measurementId || 'G-3JHW9WK6GG');
+  const isConfigured = Boolean(measurementId.trim() || fallbackGa.measurementId);
+  const activeScript = generateGtagScript(measurementId || fallbackGa.measurementId || 'G-XXXXXXXXXX');
 
   const standardEvents = [
     { name: 'page_view', desc: 'Fired automatically on every URL navigation & page load' },
@@ -181,11 +185,11 @@ const GoogleAnalyticsPage = () => {
               <CardTitle className="text-base font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                 <span>Google Analytics 4 Stream Connected</span>
                 <Badge variant="outline" className="text-[11px] font-mono border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                  {streamName || 'surokkha'}
+                  {streamName || (brandName ? `${brandName} Stream` : 'Default Stream')}
                 </Badge>
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Target URL: <span className="font-semibold text-foreground">{storefrontUrl}</span> • Stream ID: <span className="font-mono font-semibold text-foreground">{fallbackGa.streamId || '15828364152'}</span>
+                Target URL: <span className="font-semibold text-foreground">{storefrontUrl || 'N/A'}</span> • Stream ID: <span className="font-mono font-semibold text-foreground">{fallbackGa.streamId || 'N/A'}</span>
               </CardDescription>
             </div>
           </div>
@@ -194,11 +198,11 @@ const GoogleAnalyticsPage = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-emerald-500/20 text-xs">
             <div>
               <p className="text-[11px] text-muted-foreground">Measurement ID</p>
-              <p className="font-mono font-bold text-foreground text-sm">{measurementId || 'G-3JHW9WK6GG'}</p>
+              <p className="font-mono font-bold text-foreground text-sm">{measurementId || 'Not Configured'}</p>
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Google Tag ID</p>
-              <p className="font-mono font-bold text-foreground text-sm">{googleTagId || 'GT-5DH5WGNX'}</p>
+              <p className="font-mono font-bold text-foreground text-sm">{googleTagId || 'Not Configured'}</p>
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Enhanced Measurement</p>
@@ -206,7 +210,7 @@ const GoogleAnalyticsPage = () => {
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Property ID</p>
-              <p className="font-mono font-bold text-foreground">{propertyId || '555476258'}</p>
+              <p className="font-mono font-bold text-foreground">{propertyId || 'Not Configured'}</p>
             </div>
           </div>
         </CardContent>
@@ -226,7 +230,7 @@ const GoogleAnalyticsPage = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">GA4 Measurement ID</label>
                 <Input
-                  placeholder="e.g. G-3JHW9WK6GG"
+                  placeholder="e.g. G-XXXXXXXXXX"
                   value={measurementId}
                   onChange={(e) => setMeasurementId(e.target.value)}
                   disabled={isLoading}
@@ -239,7 +243,7 @@ const GoogleAnalyticsPage = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Google Tag ID</label>
                 <Input
-                  placeholder="e.g. GT-5DH5WGNX"
+                  placeholder="e.g. GT-XXXXXXXX"
                   value={googleTagId}
                   onChange={(e) => setGoogleTagId(e.target.value)}
                   disabled={isLoading}
@@ -264,7 +268,7 @@ const GoogleAnalyticsPage = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">GA4 Property ID (Optional)</label>
                 <Input
-                  placeholder="e.g. 555476258"
+                  placeholder="e.g. 123456789"
                   value={propertyId}
                   onChange={(e) => setPropertyId(e.target.value)}
                   disabled={isLoading}
@@ -274,7 +278,7 @@ const GoogleAnalyticsPage = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Stream Name</label>
                 <Input
-                  placeholder="e.g. surokkha"
+                  placeholder={`e.g. ${brandName.toLowerCase()} stream`}
                   value={streamName}
                   onChange={(e) => setStreamName(e.target.value)}
                   disabled={isLoading}

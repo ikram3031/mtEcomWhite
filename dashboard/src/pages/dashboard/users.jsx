@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SystemUsersTable } from '@/components/dashboard/system-users-table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, UserPlus, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Trash2, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -34,9 +35,15 @@ import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/error-handler';
 
 const UsersPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+  const roleFilter = searchParams.get('role') || 'All';
+  const urlSearch = searchParams.get('q') || '';
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -50,6 +57,54 @@ const UsersPage = () => {
   const [newUserRole, setNewUserRole] = useState('Admin');
 
   const queryClient = useQueryClient();
+
+  const updateParams = (updates) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          val === 'All' ||
+          val === 'all' ||
+          (key === 'page' && Number(val) === 1)
+        ) {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    });
+  };
+
+  // Sync search input if URL changes externally (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchInput(urlSearch);
+    setDebouncedSearch(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const trimmed = searchInput.trim();
+      if (trimmed !== (searchParams.get('q') || '')) {
+        updateParams({ q: trimmed, page: 1 });
+        setSelectedIds([]);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  const handleRoleFilter = (v) => {
+    updateParams({ role: v ?? 'All', page: 1 });
+    setSelectedIds([]);
+  };
+
+  const handlePageChange = (newPage) => {
+    updateParams({ page: newPage });
+    setSelectedIds([]);
+  };
 
   const handleInviteUser = async (e) => {
     e.preventDefault();
@@ -97,18 +152,6 @@ const UsersPage = () => {
     } finally {
       setIsBulkDeleting(false);
     }
-  };
-
-  const handleSearch = (q) => {
-    setSearchQuery(q);
-    setCurrentPage(1);
-    setSelectedIds([]);
-  };
-
-  const handleRoleFilter = (v) => {
-    setRoleFilter(v ?? 'All');
-    setCurrentPage(1);
-    setSelectedIds([]);
   };
 
   return (
@@ -192,12 +235,21 @@ const UsersPage = () => {
         <div className="relative flex-1 w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
+            type="text"
             placeholder="Search users..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8 pr-8 h-9 text-xs"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {selectedIds.length > 0 && (
@@ -227,7 +279,7 @@ const UsersPage = () => {
       <div className="bg-card text-card-foreground shadow-sm border rounded-lg">
         <div className="p-6">
           <SystemUsersTable
-            searchQuery={searchQuery}
+            searchQuery={debouncedSearch}
             roleFilter={roleFilter}
             page={currentPage}
             onTotalPagesChange={setTotalPages}
@@ -245,8 +297,7 @@ const UsersPage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage > 1) {
-                          setCurrentPage((p) => p - 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage - 1);
                         }
                       }}
                       aria-disabled={currentPage === 1}
@@ -279,8 +330,7 @@ const UsersPage = () => {
                           isActive={currentPage === pageNum}
                           onClick={(e) => {
                             e.preventDefault();
-                            setCurrentPage(pageNum);
-                            setSelectedIds([]);
+                            handlePageChange(pageNum);
                           }}
                           className="cursor-pointer"
                         >
@@ -296,8 +346,7 @@ const UsersPage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         if (currentPage < totalPages) {
-                          setCurrentPage((p) => p + 1);
-                          setSelectedIds([]);
+                          handlePageChange(currentPage + 1);
                         }
                       }}
                       aria-disabled={currentPage === totalPages}

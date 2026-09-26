@@ -14,6 +14,7 @@ import CloudflareAnalytics from './pages/dashboard/cloudflareAnalytics';
 import Users from './pages/dashboard/users';
 import Reports from './pages/dashboard/reportsV2';
 import Members from './pages/dashboard/members';
+import MemberDetails from './pages/dashboard/memberDetails';
 import Trash from './pages/dashboard/trash';
 import ActivityLogs from './pages/dashboard/activityLogs';
 import Reviews from './pages/dashboard/reviews';
@@ -143,6 +144,22 @@ export const router = createBrowserRouter([
         element: (
           <RoleGuard menuKey="members">
             <Members />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'members/:id',
+        element: (
+          <RoleGuard menuKey="members">
+            <MemberDetails />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'customers/:id',
+        element: (
+          <RoleGuard menuKey="members">
+            <MemberDetails />
           </RoleGuard>
         ),
       },
