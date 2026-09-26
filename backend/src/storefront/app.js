@@ -4,7 +4,6 @@ import cors from "cors";
 import { errorHandler } from "../common/middlewares/errorHandler.js";
 import { logger } from "../common/config/logger.js";
 import storefrontRouter from "./routes.js";
-import swaggerRouter from "./routes/SwaggerRoute.js";
 import { env } from "../common/config/env.js";
 import { getDynamicCorsConfig } from "../common/config/index.js";
 
@@ -69,20 +68,8 @@ export const createStorefrontApp = async () => {
       status: "success",
       service: "Storefront API",
       message: "Storefront Customer API is live",
-      documentation: {
-        swaggerUI: "/api-docs",
-        openApiJson: "/api/v1/swagger.json",
-      },
     });
   });
-
-  app.use("/api-docs", swaggerRouter);
-  app.use("/docs", swaggerRouter);
-  app.use("/swagger", swaggerRouter);
-  app.use("/api/v1/docs", swaggerRouter);
-  app.use("/api/v1/swagger", swaggerRouter);
-  app.get("/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
-  app.get("/api/v1/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
 
   app.use("/api/v1", storefrontRouter);
 

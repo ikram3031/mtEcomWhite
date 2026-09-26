@@ -222,24 +222,29 @@ export const createApp = async (options = {}) => {
     });
   });
 
-  // Swagger Documentation Routes
-  app.use("/api-docs", swaggerRouter);
-  app.use("/docs", swaggerRouter);
-  app.use("/swagger", swaggerRouter);
-  app.use("/api/v1/docs", swaggerRouter);
-  app.use("/api/v1/swagger", swaggerRouter);
-  app.get("/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
-  app.get("/api/v1/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
-
   if (role === "storefront") {
     app.use("/api/v1", storefrontRouter);
-  } else if (role === "dashboard" || role === "service") {
-    app.use("/api/v2", serviceRouter);
-    app.use("/api/v1", serviceRouter);
   } else {
-    app.use("/api/v2", serviceRouter);
-    app.use("/api/v1", coreRouter);
-    app.use("/api/v1/developer", developerRouter);
+    // Swagger Documentation Routes protected for Owner/Admin only
+    app.use("/api-docs", swaggerRouter);
+    app.use("/docs", swaggerRouter);
+    app.use("/swagger", swaggerRouter);
+    app.use("/api/v2/docs", swaggerRouter);
+    app.use("/api/v2/swagger", swaggerRouter);
+    app.use("/api/v1/docs", swaggerRouter);
+    app.use("/api/v1/swagger", swaggerRouter);
+    app.get("/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
+    app.get("/api/v2/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
+    app.get("/api/v1/swagger.json", (req, res) => res.redirect("/api-docs/swagger.json"));
+
+    if (role === "dashboard" || role === "service") {
+      app.use("/api/v2", serviceRouter);
+      app.use("/api/v1", serviceRouter);
+    } else {
+      app.use("/api/v2", serviceRouter);
+      app.use("/api/v1", coreRouter);
+      app.use("/api/v1/developer", developerRouter);
+    }
   }
 
   const getVersionHandler = (req, res) => {
