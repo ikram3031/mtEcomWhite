@@ -9,7 +9,11 @@ import { initHeartbeatScheduler, stopHeartbeatScheduler } from "../common/schedu
 
 // Bootstraps dedicated business logic dashboard and management API server instance
 export const bootstrapService = async () => {
-  await connectDatabase();
+  try {
+    await connectDatabase();
+  } catch (err) {
+    logger.warn({ err: err.message }, "⚠️ MongoDB connection failed. Starting Service in offline/fallback mode...");
+  }
 
   const app = await createServiceApp();
   const port = Number.parseInt(process.env.DASHBOARD_PORT ?? process.env.PORT ?? "4002", 10);

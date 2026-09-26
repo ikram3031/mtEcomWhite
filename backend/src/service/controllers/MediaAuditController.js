@@ -1,11 +1,11 @@
 import {
   runOrphanMediaScan,
   deleteOrphanFiles,
-} from "../../services/mediaAudit.service.js";
-import { syncUploadsToR2 } from "../../services/r2Sync.service.js";
-import { MediaCleanupAuditModel } from "../../models/mediaCleanupAudit.model.js";
-import { R2SyncLogModel } from "../../models/r2SyncLog.model.js";
-import { env } from "../../config/env.js";
+} from "../../common/services/mediaAudit.service.js";
+import { syncUploadsToR2 } from "../../common/services/r2Sync.service.js";
+import { MediaCleanupAuditModel } from "../../common/models/mediaCleanupAudit.model.js";
+import { R2SyncLogModel } from "../../common/models/r2SyncLog.model.js";
+import { env } from "../../common/config/env.js";
 
 // Returns high-level media storage stats, orphan counts, and R2 sync status
 export const getMediaAuditSummary = async (req, res, next) => {

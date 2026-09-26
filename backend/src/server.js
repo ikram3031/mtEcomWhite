@@ -10,7 +10,11 @@ import { initHeartbeatScheduler, stopHeartbeatScheduler } from "./common/schedul
 
 // Bootstraps backend server instances (Storefront on 4001, Service on 4002, or both in dual mode)
 const bootstrap = async () => {
-  await connectDatabase();
+  try {
+    await connectDatabase();
+  } catch (err) {
+    logger.warn({ err: err.message }, "⚠️ MongoDB connection failed. Starting HTTP servers in offline/fallback mode...");
+  }
 
   const role = (process.env.APP_ROLE || "all").toLowerCase();
   const servers = [];

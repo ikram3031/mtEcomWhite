@@ -12,6 +12,7 @@ export async function connectDatabase() {
   try {
     await mongoose.connect(env.MONGODB_URI, {
       dbName: env.MONGODB_DB_NAME,
+      serverSelectionTimeoutMS: 3000,
       serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -20,7 +21,7 @@ export async function connectDatabase() {
     });
     console.log("✅ Connected to MongoDB");
   } catch (err) {
-    console.error("❌ Failed to connect to MongoDB:", err);
+    console.error("❌ Failed to connect to MongoDB:", err.message);
     throw err; // rethrow to let the app handle it
   }
 }

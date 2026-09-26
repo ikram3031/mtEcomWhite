@@ -3,7 +3,7 @@ import { searchDashProducts } from "../controllers/dashProduct.controller.js";
 import {
   authenticateToken,
   authorizeRoles,
-} from "../../middlewares/auth.middleware.js";
+} from "../../common/middlewares/auth.middleware.js";
 
 const dashProductRouter = Router();
 

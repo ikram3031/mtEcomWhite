@@ -98,6 +98,8 @@ export const sendContactAcknowledgment = async ({ name, email, message }) => {
   }
 };
 
+export const sendContactAcknowledgementEmail = sendContactAcknowledgment;
+
 // Sends an email reply from the dashboard admin to the customer
 export const sendContactReplyEmail = async ({
   toEmail,

@@ -1,5 +1,5 @@
 import { logger } from "../config/logger.js";
-// import { closeMySQL } from "../database/mysql.js";
+// 
 import { closeDatabase } from "../database/index.js";
 
 export const createShutdownHandler = (server) => {

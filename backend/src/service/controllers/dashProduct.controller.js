@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
-import { ProductModel } from "../../models/product.model.js";
-import { CategoryModel } from "../../models/category.model.js";
-import { BrandModel } from "../../models/brand.model.js";
-import { serializeProduct } from "../../utils/productUtils.js";
+import { ProductModel } from "../../common/models/product.model.js";
+import { CategoryModel } from "../../common/models/category.model.js";
+import { BrandModel } from "../../common/models/brand.model.js";
+import { serializeProduct } from "../../common/utils/productUtils.js";
 
 // Helper: Safely converts string or array of strings into trimmed lowercase array
 const normalizeArray = (input) => {

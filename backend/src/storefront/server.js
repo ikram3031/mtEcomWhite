@@ -6,7 +6,11 @@ import { createShutdownHandler } from "../common/helper/sutdownHelper.js";
 
 // Bootstraps dedicated high-throughput storefront customer API server instance
 export const bootstrapStorefront = async () => {
-  await connectDatabase();
+  try {
+    await connectDatabase();
+  } catch (err) {
+    logger.warn({ err: err.message }, "⚠️ MongoDB connection failed. Starting Storefront in offline/fallback mode...");
+  }
 
   const app = await createStorefrontApp();
   const port = Number.parseInt(process.env.STOREFRONT_PORT ?? process.env.PORT ?? "4001", 10);

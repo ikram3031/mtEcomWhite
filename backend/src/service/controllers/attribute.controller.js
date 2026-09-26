@@ -1,6 +1,6 @@
 import { AttributeModel } from "../../common/models/attribute.model.js";
-import { UserModel } from "../../models/user.model.js";
-import { logger } from "../../config/logger.js";
+import { UserModel } from "../../common/models/user.model.js";
+import { logger } from "../../common/config/logger.js";
 
 const DEFAULT_ATTRIBUTES = [
   {

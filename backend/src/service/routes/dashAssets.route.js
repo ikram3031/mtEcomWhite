@@ -5,11 +5,11 @@ import {
   deleteAsset,
   downloadAsset,
   assetUploadMiddleware,
-} from "../controllers/assets.controller.js";
+} from "../controllers/dashAssets.controller.js";
 import {
   authenticateToken,
   authorizeRoles,
-} from "../../middlewares/auth.middleware.js";
+} from "../../common/middlewares/auth.middleware.js";
 
 const dashAssetsRouter = Router();
 

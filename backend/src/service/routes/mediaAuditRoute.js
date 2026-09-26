@@ -7,7 +7,7 @@ import {
   whitelistOrphanFiles,
   confirmDeleteOrphanFiles,
 } from "../controllers/MediaAuditController.js";
-import { authenticateToken, authorizeRoles } from "../../middlewares/auth.middleware.js";
+import { authenticateToken, authorizeRoles } from "../../common/middlewares/auth.middleware.js";
 
 const mediaAuditRouter = Router();
 
