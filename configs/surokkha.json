@@ -47,14 +47,14 @@
     "variantImage": false,
     "sizeChart": false,
     "webmail": true,
-    "inStoreOrder": false
+    "inStoreOrder": true
   },
   "stockManagement": {
     "simpleProduct": true,
     "variableProduct": false
   },
   "reports": {
-    "enableInStoreFilter": false,
+    "enableInStoreFilter": true,
     "enableExport": true,
     "enabledTabs": ["sales", "products", "payments", "inventory"]
   },
@@ -114,6 +114,7 @@
     "orders",
     "orders.new",
     "orders.list",
+    "orders.instore",
     "products",
     "products.new",
     "products.list",

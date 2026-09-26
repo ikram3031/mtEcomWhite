@@ -164,6 +164,17 @@ export const extractClientIp = (req) => {
 // Sends server-side Purchase event to Meta Conversions API asynchronously
 export const sendServerPurchaseEvent = async (order, req = null) => {
   try {
+    // Strictly prevent in-store walk-in counter sales or manual orders from being sent to Meta CAPI
+    const isInstore =
+      order?.orderType === "instore" ||
+      req?.body?.orderType === "instore" ||
+      String(order?.orderNumber || "").startsWith("IS") ||
+      String(order?.billingInfo?.email || "").includes("instore@");
+
+    if (isInstore) {
+      return;
+    }
+
     const metaConfig = await getMetaPixelConfig();
 
     if (!metaConfig.isEnabled || !metaConfig.enableCapi) {

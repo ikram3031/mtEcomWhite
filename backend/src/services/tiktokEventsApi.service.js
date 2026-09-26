@@ -150,6 +150,17 @@ export const testTikTokEventsApiConnection = async ({ pixelId, accessToken, test
 // Sends server-side CompletePayment event to TikTok Events API asynchronously
 export const sendTikTokServerPurchaseEvent = async (order, req = null) => {
   try {
+    // Strictly prevent in-store walk-in counter sales or manual orders from being sent to TikTok Events API
+    const isInstore =
+      order?.orderType === "instore" ||
+      req?.body?.orderType === "instore" ||
+      String(order?.orderNumber || "").startsWith("IS") ||
+      String(order?.billingInfo?.email || "").includes("instore@");
+
+    if (isInstore) {
+      return;
+    }
+
     const tiktokConfig = await getTikTokPixelConfig();
 
     if (!tiktokConfig.isEnabled || !tiktokConfig.enableEventsApi) {

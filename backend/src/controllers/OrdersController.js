@@ -107,11 +107,19 @@ export const createOrder = async (req, res, next) => {
     // Safely trigger non-blocking email notifications for Customer and Admin
     sendOrderEmailsAsynchronously(createdOrder);
 
-    // Safely dispatch server-side Meta Conversions API (CAPI) Purchase event
-    sendServerPurchaseEvent(createdOrder, req);
+    const isInstoreOrder =
+      payload.orderType === "instore" ||
+      createdOrder.orderType === "instore" ||
+      String(createdOrder.orderNumber || "").startsWith("IS") ||
+      String(createdOrder.billingInfo?.email || "").includes("instore@");
 
-    // Safely dispatch server-side TikTok Events API CompletePayment event
-    sendTikTokServerPurchaseEvent(createdOrder, req);
+    if (!isInstoreOrder) {
+      // Safely dispatch server-side Meta Conversions API (CAPI) Purchase event for online customer orders only
+      sendServerPurchaseEvent(createdOrder, req);
+
+      // Safely dispatch server-side TikTok Events API CompletePayment event for online customer orders only
+      sendTikTokServerPurchaseEvent(createdOrder, req);
+    }
 
     // Automatically record newOrder activity log
     try {
