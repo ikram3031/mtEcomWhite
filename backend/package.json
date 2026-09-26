@@ -17,6 +17,7 @@
 		"prod:storefront": "node src/storefront/server.js",
 		"prod:service": "node src/service/server.js",
 		"prod:dashboard": "node src/service/server.js",
+		"mongo": "node scripts/start-local-mongo.js",
 		"img": "node scripts/check-img-urls.js",
 		"lint": "eslint .",
 		"format": "prettier --write ."
@@ -50,6 +51,7 @@
 	"devDependencies": {
 		"@eslint/js": "^9.34.0",
 		"eslint": "^10.8.0",
+		"mongodb-memory-server": "^11.3.0",
 		"prettier": "^3.6.2"
 	}
 }
